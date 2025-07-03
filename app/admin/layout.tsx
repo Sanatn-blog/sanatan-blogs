@@ -90,7 +90,7 @@ export default function AdminLayout({
       description: 'Manage user accounts'
     },
     {
-      href: '/admin/blogs',
+      href: '/admin/content',
       icon: FileText,
       label: 'Content Management',
       description: 'Manage blog posts'

@@ -1,20 +1,23 @@
 'use client';
 
-import { useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { 
   Save, 
   Eye, 
   Send, 
-  Image as ImageIcon, 
   Bold, 
   Italic, 
   List, 
   Hash,
   Quote,
   Link2,
-  Trash2
+  Trash2,
+  Loader2,
+  Upload,
+  AlertCircle,
+  CheckCircle
 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -33,17 +36,35 @@ const categories = [
   'Other'
 ];
 
+interface BlogData {
+  _id?: string;
+  title: string;
+  excerpt: string;
+  content: string;
+  category: string;
+  tags: string[];
+  featuredImage: string;
+  status: 'draft' | 'published' | 'archived';
+  seo: {
+    title: string;
+    description: string;
+    keywords: string;
+  };
+}
+
 export default function WriteBlog() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const editBlogId = searchParams.get('edit');
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<BlogData>({
     title: '',
     excerpt: '',
     content: '',
     category: '',
-    tags: [] as string[],
+    tags: [],
     featuredImage: '',
     status: 'draft',
     seo: {
@@ -54,9 +75,104 @@ export default function WriteBlog() {
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showPreview, setShowPreview] = useState(false);
   const [tagInput, setTagInput] = useState('');
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+
+  const autoSave = useCallback(async () => {
+    if (!formData.title && !formData.content) return;
+    
+    setAutoSaveStatus('saving');
+    try {
+      const response = await fetch('/api/blogs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        },
+        body: JSON.stringify({
+          ...formData,
+          status: 'draft'
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (!formData._id) {
+          // Update the form data with the new blog ID
+          setFormData(prev => ({ ...prev, _id: data.blog._id }));
+        }
+        setAutoSaveStatus('saved');
+        setLastSaved(new Date());
+      } else {
+        setAutoSaveStatus('error');
+      }
+    } catch {
+      setAutoSaveStatus('error');
+    }
+  }, [formData]);
+
+  // Auto-save functionality
+  useEffect(() => {
+    if (!formData.title && !formData.content) return;
+
+    const autoSaveTimer = setTimeout(async () => {
+      if (formData.title || formData.content) {
+        await autoSave();
+      }
+    }, 3000); // Auto-save after 3 seconds of inactivity
+
+    return () => clearTimeout(autoSaveTimer);
+  }, [formData.title, formData.content, formData.excerpt, autoSave]);
+
+  // Load existing blog for editing
+  useEffect(() => {
+    if (editBlogId) {
+      loadBlogForEditing();
+    }
+  }, [editBlogId]);
+
+  const loadBlogForEditing = async () => {
+    if (!editBlogId) return;
+    
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/blogs/${editBlogId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        }
+      });
+
+      if (response.ok) {
+        const blog = await response.json();
+        setFormData({
+          _id: blog._id,
+          title: blog.title,
+          excerpt: blog.excerpt,
+          content: blog.content,
+          category: blog.category,
+          tags: blog.tags || [],
+          featuredImage: blog.featuredImage || '',
+          status: blog.status,
+          seo: blog.seo || {
+            title: '',
+            description: '',
+            keywords: ''
+          }
+        });
+      } else {
+        setErrors({ submit: 'Failed to load blog for editing' });
+      }
+    } catch {
+      setErrors({ submit: 'Failed to load blog for editing' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Redirect if not authenticated
   if (!loading && !user) {
@@ -102,6 +218,49 @@ export default function WriteBlog() {
     }));
   };
 
+  const handleImageUpload = async (file: File) => {
+    if (!file) return;
+
+    // Validate file size (10MB limit)
+    if (file.size > 10 * 1024 * 1024) {
+      setErrors({ image: 'Image size must be less than 10MB' });
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setErrors({ image: 'Please select a valid image file' });
+      return;
+    }
+
+    setUploadingImage(true);
+    setErrors({ image: '' });
+
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setFormData(prev => ({
+          ...prev,
+          featuredImage: data.url
+        }));
+      } else {
+        setErrors({ image: 'Failed to upload image' });
+      }
+    } catch {
+      setErrors({ image: 'Failed to upload image' });
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
@@ -135,9 +294,14 @@ export default function WriteBlog() {
     if (!validateForm()) return;
 
     setIsSubmitting(true);
+    setErrors({ submit: '' });
+
     try {
-      const response = await fetch('/api/blogs', {
-        method: 'POST',
+      const url = formData._id ? `/api/blogs/${formData._id}` : '/api/blogs';
+      const method = formData._id ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
@@ -151,12 +315,13 @@ export default function WriteBlog() {
       const data = await response.json();
 
       if (response.ok) {
+        // Show success message and redirect
         router.push('/dashboard/blogs');
       } else {
-        setErrors({ submit: data.error || 'Failed to create blog' });
+        setErrors({ submit: data.error || 'Failed to save blog' });
       }
     } catch {
-      setErrors({ submit: 'Failed to create blog' });
+      setErrors({ submit: 'Failed to save blog' });
     } finally {
       setIsSubmitting(false);
     }
@@ -205,12 +370,14 @@ export default function WriteBlog() {
     }, 0);
   };
 
-  if (loading) {
+  if (loading || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <Loader2 className="animate-spin h-12 w-12 text-orange-600 mx-auto"></Loader2>
+          <p className="mt-4 text-gray-600">
+            {isLoading ? 'Loading blog for editing...' : 'Loading...'}
+          </p>
         </div>
       </div>
     );
@@ -223,10 +390,36 @@ export default function WriteBlog() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">✍️ Write New Blog</h1>
-              <p className="text-gray-600 mt-2">Share your thoughts with the world</p>
+              <h1 className="text-3xl font-bold text-gray-900">
+                {editBlogId ? '✏️ Edit Blog' : '✍️ Write New Blog'}
+              </h1>
+              <p className="text-gray-600 mt-2">
+                {editBlogId ? 'Update your blog post' : 'Share your thoughts with the world'}
+              </p>
             </div>
             <div className="flex items-center space-x-3">
+              {/* Auto-save status */}
+              <div className="flex items-center space-x-2 text-sm">
+                {autoSaveStatus === 'saving' && (
+                  <div className="flex items-center space-x-1 text-blue-600">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Saving...</span>
+                  </div>
+                )}
+                {autoSaveStatus === 'saved' && lastSaved && (
+                  <div className="flex items-center space-x-1 text-green-600">
+                    <CheckCircle className="h-4 w-4" />
+                    <span>Saved {lastSaved.toLocaleTimeString()}</span>
+                  </div>
+                )}
+                {autoSaveStatus === 'error' && (
+                  <div className="flex items-center space-x-1 text-red-600">
+                    <AlertCircle className="h-4 w-4" />
+                    <span>Save failed</span>
+                  </div>
+                )}
+              </div>
+              
               <button
                 onClick={() => setShowPreview(!showPreview)}
                 className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:text-orange-600 border border-gray-300 rounded-lg hover:border-orange-300 transition-colors"
@@ -467,20 +660,36 @@ You can write your thoughts here...
                   onClick={() => fileInputRef.current?.click()}
                   className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-orange-400 hover:bg-orange-50 transition-all group"
                 >
-                  <ImageIcon className="h-12 w-12 text-gray-400 group-hover:text-orange-500 mx-auto mb-4 transition-colors" />
-                  <p className="text-gray-600 group-hover:text-orange-600 font-medium">
-                    📸 Click to upload featured image
-                  </p>
-                  <p className="text-gray-400 text-sm mt-1">
-                    JPG, PNG up to 10MB
-                  </p>
+                  {uploadingImage ? (
+                    <div className="flex flex-col items-center">
+                      <Loader2 className="h-12 w-12 text-orange-500 animate-spin mx-auto mb-4" />
+                      <p className="text-orange-600 font-medium">Uploading...</p>
+                    </div>
+                  ) : (
+                    <>
+                      <Upload className="h-12 w-12 text-gray-400 group-hover:text-orange-500 mx-auto mb-4 transition-colors" />
+                      <p className="text-gray-600 group-hover:text-orange-600 font-medium">
+                        📸 Click to upload featured image
+                      </p>
+                      <p className="text-gray-400 text-sm mt-1">
+                        JPG, PNG up to 10MB
+                      </p>
+                    </>
+                  )}
                   <input
                     ref={fileInputRef}
                     type="file"
                     accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleImageUpload(file);
+                    }}
                     className="hidden"
                   />
                 </div>
+              )}
+              {errors.image && (
+                <p className="text-red-600 text-sm mt-2">⚠️ {errors.image}</p>
               )}
             </div>
 

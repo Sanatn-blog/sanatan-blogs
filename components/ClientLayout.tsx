@@ -16,7 +16,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   const pathname = usePathname();
 
   // Pages where navbar should be hidden
-  const hideNavbarPages = ['/login', '/register', '/admin', '/admin/users', '/admin/settings', '/dashboard', '/dashboard/blogs'];
+  const hideNavbarPages = ['/login', '/register', '/admin', '/admin/users', '/admin/settings', '/admin/content', '/dashboard', '/dashboard/blogs'];
   const shouldHideNavbar = hideNavbarPages.includes(pathname);
 
   if (loading) {
