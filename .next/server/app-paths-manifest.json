@@ -3,6 +3,7 @@
   "/admin/page": "app/admin/page.js",
   "/admin/settings/page": "app/admin/settings/page.js",
   "/admin/users/page": "app/admin/users/page.js",
+  "/api/admin/users/route": "app/api/admin/users/route.js",
   "/api/auth/login/route": "app/api/auth/login/route.js",
   "/api/auth/me/route": "app/api/auth/me/route.js",
   "/api/blogs/route": "app/api/blogs/route.js",
@@ -11,5 +12,6 @@
   "/donate/page": "app/donate/page.js",
   "/favicon.ico/route": "app/favicon.ico/route.js",
   "/login/page": "app/login/page.js",
-  "/page": "app/page.js"
+  "/page": "app/page.js",
+  "/write-blog/page": "app/write-blog/page.js"
 }

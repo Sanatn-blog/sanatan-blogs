@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import Link from 'next/link';
-import { PenTool, Eye, Edit, Trash2, Plus, Loader2, Calendar, User, Tag, Search, Filter } from 'lucide-react';
+import { PenTool, Eye, Edit, Trash2, Plus, Loader2, Calendar, Tag, Search, Filter } from 'lucide-react';
 
 interface Blog {
   _id: string;

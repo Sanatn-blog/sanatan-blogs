@@ -2277,7 +2277,12 @@ function ClientLayout({ children }) {
     // Pages where navbar should be hidden
     const hideNavbarPages = [
         '/login',
-        '/register'
+        '/register',
+        '/admin',
+        '/admin/users',
+        '/admin/settings',
+        '/dashboard',
+        '/dashboard/blogs'
     ];
     const shouldHideNavbar = hideNavbarPages.includes(pathname);
     if (loading) {
