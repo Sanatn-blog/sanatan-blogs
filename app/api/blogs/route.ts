@@ -93,9 +93,13 @@ async function getBlogsHandler(request: Request) {
 // POST - Create new blog (authenticated users only)
 async function createBlogHandler(request: AuthenticatedRequest) {
   try {
+    console.log('Creating blog...');
     await connectDB();
+    console.log('Database connected');
 
     const body = await request.json();
+    console.log('Request body:', body);
+    
     const {
       title,
       excerpt,
@@ -116,7 +120,10 @@ async function createBlogHandler(request: AuthenticatedRequest) {
     }
 
     // Verify user exists and is approved
+    console.log('User ID:', request.user?._id);
     const user = await User.findById(request.user?._id);
+    console.log('User found:', user ? 'Yes' : 'No', 'Status:', user?.status);
+    
     if (!user || user.status !== 'approved') {
       return NextResponse.json(
         { error: 'User not found or not approved' },
@@ -139,6 +146,13 @@ async function createBlogHandler(request: AuthenticatedRequest) {
       counter++;
     }
 
+    // Transform SEO data to match model structure
+    const transformedSeo = seo ? {
+      metaTitle: seo.title,
+      metaDescription: seo.description,
+      metaKeywords: seo.keywords ? seo.keywords.split(',').map((k: string) => k.trim().toLowerCase()) : []
+    } : {};
+
     // Create new blog
     const newBlog = new Blog({
       title: title.trim(),
@@ -150,7 +164,7 @@ async function createBlogHandler(request: AuthenticatedRequest) {
       tags: Array.isArray(tags) ? tags.map((tag: string) => tag.trim().toLowerCase()) : [],
       featuredImage,
       status,
-      seo: seo || {}
+      seo: transformedSeo
     });
 
     // If status is published, set publication date
@@ -159,31 +173,52 @@ async function createBlogHandler(request: AuthenticatedRequest) {
       newBlog.isPublished = true;
     }
 
+    console.log('Saving blog...');
     await newBlog.save();
+    console.log('Blog saved successfully');
 
     // Populate author information for response
     await newBlog.populate('author', 'name avatar bio email');
 
-    return NextResponse.json({
+    const response = {
       message: 'Blog created successfully',
       blog: newBlog
-    }, { status: 201 });
+    };
+    
+    console.log('Sending response:', response);
+    return NextResponse.json(response, { status: 201 });
 
   } catch (error) {
     console.error('Create blog error:', error);
 
     // Handle mongoose validation errors
     if (error instanceof Error && error.name === 'ValidationError') {
-      return NextResponse.json(
-        { error: 'Validation failed', details: error.message },
-        { status: 400 }
-      );
+      const errorResponse = { error: 'Validation failed', details: error.message };
+      console.log('Sending validation error response:', errorResponse);
+      return NextResponse.json(errorResponse, { status: 400 });
     }
 
-    return NextResponse.json(
-      { error: 'Failed to create blog' },
-      { status: 500 }
-    );
+    // Handle duplicate key errors
+    if (error instanceof Error && error.name === 'MongoServerError' && (error as { code?: number }).code === 11000) {
+      const errorResponse = { error: 'Blog with this title already exists' };
+      console.log('Sending duplicate key error response:', errorResponse);
+      return NextResponse.json(errorResponse, { status: 409 });
+    }
+
+    // Handle database connection errors
+    if (error instanceof Error && error.message.includes('ECONNREFUSED')) {
+      const errorResponse = { error: 'Database connection failed' };
+      console.log('Sending database connection error response:', errorResponse);
+      return NextResponse.json(errorResponse, { status: 500 });
+    }
+
+    const errorResponse = { 
+      error: 'Failed to create blog', 
+      details: error instanceof Error ? error.message : 'Unknown error',
+      stack: process.env.NODE_ENV === 'development' ? error instanceof Error ? error.stack : undefined : undefined
+    };
+    console.log('Sending error response:', errorResponse);
+    return NextResponse.json(errorResponse, { status: 500 });
   }
 }
 

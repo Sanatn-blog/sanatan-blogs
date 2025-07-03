@@ -15,28 +15,38 @@ export async function authenticateUser(request: AuthenticatedRequest): Promise<{
   error?: string;
 }> {
   try {
+    console.log('Authenticating user...');
     const authHeader = request.headers.get('authorization');
+    console.log('Auth header:', authHeader ? 'Present' : 'Missing');
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('No valid authorization header');
       return { success: false, error: 'No token provided' };
     }
 
     const token = authHeader.substring(7);
+    console.log('Token length:', token.length);
     const decoded = verifyToken(token);
 
     if (!decoded) {
+      console.log('Token verification failed');
       return { success: false, error: 'Invalid token' };
     }
+
+    console.log('Token decoded successfully, userId:', decoded.userId);
 
     // Connect to database and verify user exists and is approved
     await connectDB();
     const user = await User.findById(decoded.userId);
 
     if (!user) {
+      console.log('User not found in database');
       return { success: false, error: 'User not found' };
     }
 
+    console.log('User found, status:', user.status);
     if (user.status !== 'approved') {
+      console.log('User not approved');
       return { success: false, error: 'User not approved' };
     }
 
@@ -45,6 +55,7 @@ export async function authenticateUser(request: AuthenticatedRequest): Promise<{
       _id: user._id.toString()
     };
 
+    console.log('Authentication successful');
     return { success: true, user: userWithId };
   } catch (error) {
     console.error('Authentication error:', error);
@@ -52,25 +63,32 @@ export async function authenticateUser(request: AuthenticatedRequest): Promise<{
   }
 }
 
-export function requireAuth(handler: (req: AuthenticatedRequest) => Promise<NextResponse>) {
-  return async (request: AuthenticatedRequest) => {
+export function requireAuth<T extends { params: Promise<any> }>(
+  handler: (req: AuthenticatedRequest, context: T) => Promise<NextResponse>
+) {
+  return async (request: AuthenticatedRequest, context: T) => {
+    console.log('requireAuth middleware called');
     const authResult = await authenticateUser(request);
     
     if (!authResult.success) {
+      console.log('Authentication failed:', authResult.error);
       return NextResponse.json(
         { error: authResult.error },
         { status: 401 }
       );
     }
 
+    console.log('Authentication successful, calling handler');
     request.user = authResult.user;
-    return handler(request);
+    return handler(request, context);
   };
 }
 
 export function requireRole(roles: string[]) {
-  return function (handler: (req: AuthenticatedRequest) => Promise<NextResponse>) {
-    return async (request: AuthenticatedRequest) => {
+  return function <T extends { params: Promise<any> }>(
+    handler: (req: AuthenticatedRequest, context: T) => Promise<NextResponse>
+  ) {
+    return async (request: AuthenticatedRequest, context: T) => {
       const authResult = await authenticateUser(request);
       
       if (!authResult.success) {
@@ -88,16 +106,20 @@ export function requireRole(roles: string[]) {
       }
 
       request.user = authResult.user;
-      return handler(request);
+      return handler(request, context);
     };
   };
 }
 
-export function requireAdmin(handler: (req: AuthenticatedRequest) => Promise<NextResponse>) {
+export function requireAdmin<T extends { params: Promise<any> }>(
+  handler: (req: AuthenticatedRequest, context: T) => Promise<NextResponse>
+) {
   return requireRole(['admin', 'super_admin'])(handler);
 }
 
-export function requireSuperAdmin(handler: (req: AuthenticatedRequest) => Promise<NextResponse>) {
+export function requireSuperAdmin<T extends { params: Promise<any> }>(
+  handler: (req: AuthenticatedRequest, context: T) => Promise<NextResponse>
+) {
   return requireRole(['super_admin'])(handler);
 }
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
@@ -47,21 +47,7 @@ export default function LoginPage() {
 
   const { login, loading: authLoading } = useAuth();
 
-  useEffect(() => {
-    checkExistingAuth();
-  }, []);
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (otpTimer > 0) {
-      interval = setInterval(() => {
-        setOtpTimer(prev => prev - 1);
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [otpTimer]);
-
-  const checkExistingAuth = async () => {
+  const checkExistingAuth = useCallback(async () => {
     try {
       const token = localStorage.getItem('accessToken');
       if (token) {
@@ -81,7 +67,21 @@ export default function LoginPage() {
     } finally {
       setCheckingAuth(false);
     }
-  };
+  }, [router]);
+
+  useEffect(() => {
+    checkExistingAuth();
+  }, [checkExistingAuth]);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (otpTimer > 0) {
+      interval = setInterval(() => {
+        setOtpTimer(prev => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [otpTimer]);
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();

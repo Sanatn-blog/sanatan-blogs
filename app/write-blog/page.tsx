@@ -15,9 +15,7 @@ import {
   Link2,
   Trash2,
   Loader2,
-  Upload,
-  AlertCircle,
-  CheckCircle
+  Upload
 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -80,63 +78,58 @@ export default function WriteBlog() {
   const [showPreview, setShowPreview] = useState(false);
   const [tagInput, setTagInput] = useState('');
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [autoSaveStatus, setAutoSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  // const [autoSaveStatus, setAutoSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
+  // const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
 
-  const autoSave = useCallback(async () => {
-    if (!formData.title && !formData.content) return;
+  // Auto-save functionality (temporarily disabled for debugging)
+  // const autoSave = useCallback(async () => {
+  //   if (!formData.title && !formData.content) return;
     
-    setAutoSaveStatus('saving');
-    try {
-      const response = await fetch('/api/blogs', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-        },
-        body: JSON.stringify({
-          ...formData,
-          status: 'draft'
-        })
-      });
+  //   setAutoSaveStatus('saving');
+  //   try {
+  //     const response = await fetch('/api/blogs', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+  //       },
+  //       body: JSON.stringify({
+  //         ...formData,
+  //         status: 'draft'
+  //       })
+  //     });
 
-      if (response.ok) {
-        const data = await response.json();
-        if (!formData._id) {
-          // Update the form data with the new blog ID
-          setFormData(prev => ({ ...prev, _id: data.blog._id }));
-        }
-        setAutoSaveStatus('saved');
-        setLastSaved(new Date());
-      } else {
-        setAutoSaveStatus('error');
-      }
-    } catch {
-      setAutoSaveStatus('error');
-    }
-  }, [formData]);
+  //     if (response.ok) {
+  //       const data = await response.json();
+  //       if (!formData._id) {
+  //         // Update the form data with the new blog ID
+  //         setFormData(prev => ({ ...prev, _id: data.blog._id }));
+  //       }
+  //       setAutoSaveStatus('saved');
+  //       setLastSaved(new Date());
+  //     } else {
+  //       setAutoSaveStatus('error');
+  //     }
+  //   } catch {
+  //     setAutoSaveStatus('error');
+  //   }
+  // }, [formData]);
 
-  // Auto-save functionality
-  useEffect(() => {
-    if (!formData.title && !formData.content) return;
+  // Auto-save functionality (temporarily disabled for debugging)
+  // useEffect(() => {
+  //   if (!formData.title && !formData.content) return;
 
-    const autoSaveTimer = setTimeout(async () => {
-      if (formData.title || formData.content) {
-        await autoSave();
-      }
-    }, 3000); // Auto-save after 3 seconds of inactivity
+  //   const autoSaveTimer = setTimeout(async () => {
+  //     if (formData.title || formData.content) {
+  //       await autoSave();
+  //     }
+  //   }, 3000); // Auto-save after 3 seconds of inactivity
 
-    return () => clearTimeout(autoSaveTimer);
-  }, [formData.title, formData.content, formData.excerpt, autoSave]);
+  //   return () => clearTimeout(autoSaveTimer);
+  // }, [formData.title, formData.content, formData.excerpt, autoSave]);
 
-  // Load existing blog for editing
-  useEffect(() => {
-    if (editBlogId) {
-      loadBlogForEditing();
-    }
-  }, [editBlogId]);
-
-  const loadBlogForEditing = async () => {
+  const loadBlogForEditing = useCallback(async () => {
     if (!editBlogId) return;
     
     setIsLoading(true);
@@ -172,7 +165,14 @@ export default function WriteBlog() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [editBlogId]);
+
+  // Load existing blog for editing
+  useEffect(() => {
+    if (editBlogId) {
+      loadBlogForEditing();
+    }
+  }, [editBlogId, loadBlogForEditing]);
 
   // Redirect if not authenticated
   if (!loading && !user) {
@@ -233,35 +233,20 @@ export default function WriteBlog() {
       return;
     }
 
-    setUploadingImage(true);
+    // Store the file for later upload and create preview
+    setSelectedImageFile(file);
     setErrors({ image: '' });
 
-    try {
-      const formData = new FormData();
-      formData.append('image', file);
-
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setFormData(prev => ({
-          ...prev,
-          featuredImage: data.url
-        }));
-      } else {
-        setErrors({ image: 'Failed to upload image' });
-      }
-    } catch {
-      setErrors({ image: 'Failed to upload image' });
-    } finally {
-      setUploadingImage(false);
-    }
+    // Create preview URL and update form data
+    const previewUrl = URL.createObjectURL(file);
+    setFormData(prev => ({
+      ...prev,
+      featuredImage: previewUrl
+    }));
   };
 
   const validateForm = (): boolean => {
+    console.log('Validating form...');
     const newErrors: Record<string, string> = {};
 
     if (!formData.title.trim()) {
@@ -286,19 +271,80 @@ export default function WriteBlog() {
       newErrors.category = 'Category is required';
     }
 
+    console.log('Validation errors:', newErrors);
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const isValid = Object.keys(newErrors).length === 0;
+    console.log('Form is valid:', isValid);
+    return isValid;
   };
 
   const handleSubmit = async (status: 'draft' | 'published') => {
-    if (!validateForm()) return;
+    console.log('Submitting blog with status:', status);
+    console.log('Form data:', formData);
+    
+    if (!validateForm()) {
+      console.log('Form validation failed');
+      return;
+    }
 
     setIsSubmitting(true);
     setErrors({ submit: '' });
 
     try {
+      let finalImageUrl = formData.featuredImage;
+
+      // Upload image to Cloudinary only when publishing
+      if (status === 'published' && selectedImageFile && formData.featuredImage.startsWith('blob:')) {
+        console.log('Uploading image to Cloudinary...');
+        setUploadingImage(true);
+        
+        const formDataUpload = new FormData();
+        formDataUpload.append('image', selectedImageFile);
+
+        const uploadResponse = await fetch('/api/upload', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+          },
+          body: formDataUpload
+        });
+
+        if (uploadResponse.ok) {
+          const uploadResponseText = await uploadResponse.text();
+          let uploadData;
+          try {
+            uploadData = uploadResponseText ? JSON.parse(uploadResponseText) : {};
+          } catch (parseError) {
+            console.error('Failed to parse upload response as JSON:', parseError);
+            throw new Error('Invalid upload response');
+          }
+          
+          finalImageUrl = uploadData.url;
+          console.log('Image uploaded successfully:', finalImageUrl);
+        } else {
+          const uploadResponseText = await uploadResponse.text();
+          let errorData;
+          try {
+            errorData = uploadResponseText ? JSON.parse(uploadResponseText) : {};
+          } catch (parseError) {
+            console.error('Failed to parse upload error response:', parseError);
+            errorData = { error: 'Upload failed' };
+          }
+          throw new Error(errorData.error || `Failed to upload image (Status: ${uploadResponse.status})`);
+        }
+      }
+
       const url = formData._id ? `/api/blogs/${formData._id}` : '/api/blogs';
       const method = formData._id ? 'PUT' : 'POST';
+      
+      const requestBody = {
+        ...formData,
+        featuredImage: finalImageUrl,
+        status
+      };
+      
+      console.log('Making request to:', url);
+      console.log('Request body:', requestBody);
 
       const response = await fetch(url, {
         method,
@@ -306,24 +352,40 @@ export default function WriteBlog() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
         },
-        body: JSON.stringify({
-          ...formData,
-          status
-        })
+        body: JSON.stringify(requestBody)
       });
 
-      const data = await response.json();
+      console.log('Response status:', response.status);
+      
+      // Check if response has content
+      const responseText = await response.text();
+      console.log('Response text:', responseText);
+      
+      let data;
+      try {
+        data = responseText ? JSON.parse(responseText) : {};
+      } catch (parseError) {
+        console.error('Failed to parse response as JSON:', parseError);
+        data = { error: 'Invalid server response' };
+      }
+      
+      console.log('Response data:', data);
 
       if (response.ok) {
+        console.log('Blog saved successfully');
         // Show success message and redirect
+        alert(status === 'published' ? '🎉 Blog published successfully!' : '💾 Draft saved successfully!');
         router.push('/dashboard/blogs');
       } else {
-        setErrors({ submit: data.error || 'Failed to save blog' });
+        console.error('Blog save failed:', data.error);
+        setErrors({ submit: data.error || `Failed to save blog (Status: ${response.status})` });
       }
-    } catch {
-      setErrors({ submit: 'Failed to save blog' });
+    } catch (error) {
+      console.error('Blog save error:', error);
+      setErrors({ submit: error instanceof Error ? error.message : 'Failed to save blog. Please check your internet connection.' });
     } finally {
       setIsSubmitting(false);
+      setUploadingImage(false);
     }
   };
 
@@ -398,8 +460,8 @@ export default function WriteBlog() {
               </p>
             </div>
             <div className="flex items-center space-x-3">
-              {/* Auto-save status */}
-              <div className="flex items-center space-x-2 text-sm">
+              {/* Auto-save status (temporarily disabled) */}
+              {/* <div className="flex items-center space-x-2 text-sm">
                 {autoSaveStatus === 'saving' && (
                   <div className="flex items-center space-x-1 text-blue-600">
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -418,7 +480,7 @@ export default function WriteBlog() {
                     <span>Save failed</span>
                   </div>
                 )}
-              </div>
+              </div> */}
               
               <button
                 onClick={() => setShowPreview(!showPreview)}
@@ -446,7 +508,7 @@ export default function WriteBlog() {
                     value={formData.title}
                     onChange={(e) => handleInputChange('title', e.target.value)}
                     placeholder="Enter an engaging title for your blog..."
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-lg placeholder-gray-400"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-lg placeholder-gray-400 text-gray-900 bg-white"
                   />
                   {errors.title && (
                     <p className="text-red-600 text-sm mt-2 flex items-center">
@@ -466,7 +528,7 @@ export default function WriteBlog() {
                     placeholder="Write a compelling summary that makes readers want to know more..."
                     rows={3}
                     maxLength={300}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none placeholder-gray-400"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none placeholder-gray-400 text-gray-900 bg-white"
                   />
                   <div className="flex justify-between items-center mt-2">
                     {errors.excerpt && (
@@ -555,7 +617,7 @@ You can write your thoughts here...
 
 > 'A good quote will come here'"
                     rows={20}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none font-mono text-sm placeholder-gray-400 leading-relaxed"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none font-mono text-sm placeholder-gray-400 leading-relaxed text-gray-900 bg-white"
                   />
                   {errors.content && (
                     <p className="text-red-600 text-sm mt-2">⚠️ {errors.content}</p>
@@ -649,7 +711,13 @@ You can write your thoughts here...
                     className="w-full h-40 object-cover rounded-lg"
                   />
                   <button
-                    onClick={() => setFormData(prev => ({ ...prev, featuredImage: '' }))}
+                    onClick={() => {
+                      setFormData(prev => ({ ...prev, featuredImage: '' }));
+                      setSelectedImageFile(null);
+                      if (formData.featuredImage.startsWith('blob:')) {
+                        URL.revokeObjectURL(formData.featuredImage);
+                      }
+                    }}
                     className="absolute top-2 right-2 p-2 bg-red-600 text-white rounded-full hover:bg-red-700 opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -699,7 +767,7 @@ You can write your thoughts here...
               <select
                 value={formData.category}
                 onChange={(e) => handleInputChange('category', e.target.value)}
-                className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white"
+                className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white text-gray-900"
               >
                 <option value="">Select category...</option>
                 {categories.map(category => (
@@ -721,7 +789,7 @@ You can write your thoughts here...
                   onChange={(e) => setTagInput(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
                   placeholder="Add a tag..."
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-gray-900 bg-white"
                 />
                 <button
                   onClick={addTag}
@@ -769,7 +837,7 @@ You can write your thoughts here...
                       seo: { ...prev.seo, title: e.target.value }
                     }))}
                     placeholder="SEO friendly title..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-gray-900 bg-white"
                   />
                 </div>
                 <div>
@@ -785,7 +853,7 @@ You can write your thoughts here...
                     placeholder="Brief description for search engines..."
                     rows={3}
                     maxLength={160}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none text-gray-900 bg-white"
                   />
                   <p className="text-gray-400 text-xs mt-1">
                     {formData.seo.description.length}/160 characters
@@ -803,7 +871,7 @@ You can write your thoughts here...
                       seo: { ...prev.seo, keywords: e.target.value }
                     }))}
                     placeholder="keyword1, keyword2, keyword3..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-gray-900 bg-white"
                   />
                   <p className="text-gray-400 text-xs mt-1">
                     Separate keywords with commas

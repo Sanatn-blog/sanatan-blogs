@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
@@ -51,21 +51,7 @@ export default function RegisterPage() {
   const [authLoading, setAuthLoading] = useState(true);
   const router = useRouter();
 
-  useEffect(() => {
-    checkExistingAuth();
-  }, []);
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (otpTimer > 0) {
-      interval = setInterval(() => {
-        setOtpTimer(prev => prev - 1);
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [otpTimer]);
-
-  const checkExistingAuth = async () => {
+  const checkExistingAuth = useCallback(async () => {
     try {
       const token = localStorage.getItem('accessToken');
       if (token) {
@@ -85,7 +71,21 @@ export default function RegisterPage() {
     } finally {
       setAuthLoading(false);
     }
-  };
+  }, [router]);
+
+  useEffect(() => {
+    checkExistingAuth();
+  }, [checkExistingAuth]);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (otpTimer > 0) {
+      interval = setInterval(() => {
+        setOtpTimer(prev => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [otpTimer]);
 
   const handleEmailRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -217,7 +217,8 @@ export default function RegisterPage() {
 
   const resendOtp = () => {
     if (otpTimer === 0) {
-      sendPhoneOtp(new Event('submit') as any);
+      const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
+      sendPhoneOtp(fakeEvent);
     }
   };
 

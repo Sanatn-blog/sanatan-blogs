@@ -1,25 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   Users, 
   Search, 
-  Filter, 
-  MoreVertical, 
-  Edit,
   Trash2,
-  Ban,
   CheckCircle,
   XCircle,
   Crown,
   Shield,
   User as UserIcon,
-  Mail,
-  Calendar,
-  Activity,
   Plus,
-  Download,
-  Upload
+  Download
 } from 'lucide-react';
 
 interface User {
@@ -46,12 +38,9 @@ export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [showUserModal, setShowUserModal] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [userStats, setUserStats] = useState<UserStats>({
     total: 0,
@@ -61,31 +50,7 @@ export default function UserManagement() {
     admins: 0
   });
 
-  useEffect(() => {
-    fetchCurrentUser();
-    fetchUsers();
-  }, []);
-
-  useEffect(() => {
-    filterUsers();
-  }, [users, searchTerm, roleFilter, statusFilter]);
-
-  const fetchCurrentUser = async () => {
-    try {
-      const token = localStorage.getItem('accessToken');
-      const response = await fetch('/api/auth/me', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setCurrentUser(data.user);
-      }
-    } catch (error) {
-      console.error('Failed to fetch current user:', error);
-    }
-  };
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       const token = localStorage.getItem('accessToken');
       const response = await fetch('/api/admin/users', {
@@ -158,6 +123,51 @@ export default function UserManagement() {
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  const filterUsers = useCallback(() => {
+    let filtered = users;
+
+    if (searchTerm) {
+      filtered = filtered.filter(user => 
+        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (roleFilter !== 'all') {
+      filtered = filtered.filter(user => user.role === roleFilter);
+    }
+
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(user => user.status === statusFilter);
+    }
+
+    setFilteredUsers(filtered);
+  }, [users, searchTerm, roleFilter, statusFilter]);
+
+  useEffect(() => {
+    fetchCurrentUser();
+    fetchUsers();
+  }, [fetchUsers]);
+
+  useEffect(() => {
+    filterUsers();
+  }, [filterUsers]);
+
+  const fetchCurrentUser = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch('/api/auth/me', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setCurrentUser(data.user);
+      }
+    } catch (error) {
+      console.error('Failed to fetch current user:', error);
+    }
   };
 
   const calculateStats = (userList: User[]) => {
@@ -178,43 +188,22 @@ export default function UserManagement() {
     setUserStats(stats);
   };
 
-  const filterUsers = () => {
-    let filtered = users;
-
-    if (searchTerm) {
-      filtered = filtered.filter(user => 
-        user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    if (roleFilter !== 'all') {
-      filtered = filtered.filter(user => user.role === roleFilter);
-    }
-
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(user => user.status === statusFilter);
-    }
-
-    setFilteredUsers(filtered);
-  };
-
-  const updateUserStatus = async (userId: string, newStatus: string) => {
+  const updateUserStatus = async (userId: string, newStatus: 'active' | 'inactive' | 'banned') => {
     try {
       // API call would go here
       setUsers(users.map(user => 
-        user._id === userId ? { ...user, status: newStatus as any } : user
+        user._id === userId ? { ...user, status: newStatus } : user
       ));
     } catch (error) {
       console.error('Failed to update user status:', error);
     }
   };
 
-  const updateUserRole = async (userId: string, newRole: string) => {
+  const updateUserRole = async (userId: string, newRole: 'user' | 'admin' | 'super_admin') => {
     try {
       // API call would go here
       setUsers(users.map(user => 
-        user._id === userId ? { ...user, role: newRole as any } : user
+        user._id === userId ? { ...user, role: newRole } : user
       ));
     } catch (error) {
       console.error('Failed to update user role:', error);
@@ -469,7 +458,7 @@ export default function UserManagement() {
                         <>
                           <select
                             value={user.role}
-                            onChange={(e) => updateUserRole(user._id, e.target.value)}
+                            onChange={(e) => updateUserRole(user._id, e.target.value as 'user' | 'admin' | 'super_admin')}
                             className="text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                           >
                             <option value="user">User</option>
@@ -481,7 +470,7 @@ export default function UserManagement() {
                           
                           <select
                             value={user.status}
-                            onChange={(e) => updateUserStatus(user._id, e.target.value)}
+                            onChange={(e) => updateUserStatus(user._id, e.target.value as 'active' | 'inactive' | 'banned')}
                             className="text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                           >
                             <option value="active">Active</option>

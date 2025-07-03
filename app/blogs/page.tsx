@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
-import { Search, Filter, Calendar, User, Eye, Heart, Clock, Tag, ChevronRight, TrendingUp, Star, Loader2 } from 'lucide-react';
+import { Search, Filter, Calendar, Eye, Heart, Clock, ChevronRight, TrendingUp, Star } from 'lucide-react';
 
 interface Blog {
   _id: string;
@@ -62,8 +61,6 @@ export default function BlogsPage() {
     hasNext: false,
     hasPrev: false
   });
-  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
-  const [popularTags, setPopularTags] = useState<Array<{name: string, count: number}>>([]);
   const blogsPerPage = 6;
 
   // Fetch blogs from API
@@ -96,8 +93,6 @@ export default function BlogsPage() {
       setBlogs(data.blogs);
       setFilteredBlogs(data.blogs);
       setPagination(data.pagination);
-      setAvailableCategories(data.categories);
-      setPopularTags(data.popularTags);
       
     } catch (err) {
       console.error('Error fetching blogs:', err);
@@ -139,9 +134,7 @@ export default function BlogsPage() {
     });
   };
 
-  const getAuthorAvatar = (author: Blog['author']) => {
-    return author.avatar || '/avatar-default.jpg';
-  };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-yellow-50">

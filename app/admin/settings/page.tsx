@@ -9,16 +9,12 @@ import {
   Bell, 
   Shield, 
   Database,
-  Mail,
   Upload,
-  Image as ImageIcon,
-  Eye,
-  EyeOff,
   RefreshCw,
   AlertTriangle,
-  CheckCircle,
-  Info
+  CheckCircle
 } from 'lucide-react';
+import Image from 'next/image';
 
 interface SiteSettings {
   siteName: string;
@@ -40,7 +36,6 @@ interface SiteSettings {
 }
 
 export default function AdminSettings() {
-  const [currentUser, setCurrentUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
@@ -82,7 +77,6 @@ export default function AdminSettings() {
           window.location.href = '/admin';
           return;
         }
-        setCurrentUser(data.user);
       } else {
         window.location.href = '/login';
       }
@@ -117,7 +111,7 @@ export default function AdminSettings() {
     }
   };
 
-  const handleInputChange = (key: keyof SiteSettings, value: any) => {
+  const handleInputChange = (key: keyof SiteSettings, value: string | number | boolean | string[]) => {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
 
@@ -316,7 +310,7 @@ export default function AdminSettings() {
                       <span>Upload Logo</span>
                     </button>
                     {settings.siteLogo && (
-                      <img src={settings.siteLogo} alt="Logo" className="h-10 w-10 object-cover rounded" />
+                      <Image src={settings.siteLogo} alt="Logo" width={40} height={40} className="object-cover rounded" />
                     )}
                   </div>
                 </div>
@@ -330,7 +324,7 @@ export default function AdminSettings() {
                       <span>Upload Favicon</span>
                     </button>
                     {settings.favicon && (
-                      <img src={settings.favicon} alt="Favicon" className="h-8 w-8 object-cover rounded" />
+                      <Image src={settings.favicon} alt="Favicon" width={32} height={32} className="object-cover rounded" />
                     )}
                   </div>
                 </div>

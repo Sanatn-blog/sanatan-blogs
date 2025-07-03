@@ -14,8 +14,7 @@ import {
   BarChart3,
   PieChart,
   ArrowUpRight,
-  ArrowDownRight,
-  Loader2
+  ArrowDownRight
 } from 'lucide-react';
 
 interface DashboardStats {
@@ -60,9 +59,7 @@ export default function AdminDashboard() {
     averageRating: 0
   });
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
-  const [recentBlogs, setRecentBlogs] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchDashboardData();
@@ -71,7 +68,6 @@ export default function AdminDashboard() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      setError(null);
 
       // Fetch blogs data
       const blogsResponse = await fetch('/api/blogs?limit=100');
@@ -83,7 +79,7 @@ export default function AdminDashboard() {
       // Calculate stats from blogs data
       const totalBlogs = blogsData.pagination.totalBlogs;
       const totalViews = blogsData.blogs.reduce((sum: number, blog: Blog) => sum + blog.views, 0);
-      const publishedBlogs = blogsData.blogs.filter((blog: Blog) => blog.status === 'published');
+      // const publishedBlogs = blogsData.blogs.filter((blog: Blog) => blog.status === 'published');
       const blogsToday = blogsData.blogs.filter((blog: Blog) => {
         if (!blog.publishedAt) return false;
         const today = new Date();
@@ -93,7 +89,6 @@ export default function AdminDashboard() {
 
       // Get recent blogs for activity feed
       const recentBlogsData = blogsData.blogs.slice(0, 5);
-      setRecentBlogs(recentBlogsData);
 
       // Create activity feed from recent blogs
       const activityFeed: RecentActivity[] = recentBlogsData.map((blog: Blog, index: number) => ({
@@ -120,7 +115,6 @@ export default function AdminDashboard() {
 
     } catch (err) {
       console.error('Failed to fetch dashboard data:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load dashboard data');
     } finally {
       setLoading(false);
     }
@@ -285,7 +279,7 @@ export default function AdminDashboard() {
         {/* Today's Stats */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Today's Overview</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Today&apos;s Overview</h2>
             <Calendar className="h-5 w-5 text-gray-400" />
           </div>
           <div className="space-y-4">

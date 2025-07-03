@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
@@ -39,12 +39,7 @@ export default function AdminLayout({
   const [currentPath, setCurrentPath] = useState('');
   const router = useRouter();
 
-  useEffect(() => {
-    setCurrentPath(window.location.pathname);
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     try {
       const token = localStorage.getItem('accessToken');
       if (!token) {
@@ -74,7 +69,12 @@ export default function AdminLayout({
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
+
+  useEffect(() => {
+    setCurrentPath(window.location.pathname);
+    checkAuth();
+  }, [checkAuth]);
 
   const adminNavItems = [
     {

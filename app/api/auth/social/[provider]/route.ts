@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
 const socialConfigs = {
   google: {
@@ -30,10 +31,10 @@ const socialConfigs = {
 };
 
 export async function GET(
-  request: Request,
-  { params }: { params: { provider: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ provider: string }> }
 ) {
-  const { provider } = params;
+  const { provider } = await params;
   const { searchParams } = new URL(request.url);
   const redirectUrl = searchParams.get('redirect') || '/dashboard';
 

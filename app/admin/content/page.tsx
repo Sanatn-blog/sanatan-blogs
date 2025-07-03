@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FileText, Eye, Edit, Trash2, Plus, Loader2, Search, Filter } from 'lucide-react';
+import { FileText, Eye, Plus, Loader2, Search } from 'lucide-react';
 
 export default function ContentManagement() {
   const [loading, setLoading] = useState(true);

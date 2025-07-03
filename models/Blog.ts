@@ -135,7 +135,6 @@ const BlogSchema = new Schema<IBlog>({
 });
 
 // Indexes for better query performance
-BlogSchema.index({ slug: 1 });
 BlogSchema.index({ author: 1 });
 BlogSchema.index({ status: 1 });
 BlogSchema.index({ isPublished: 1 });

@@ -3,12 +3,36 @@ import connectDB from '@/lib/mongodb';
 import Blog from '@/models/Blog';
 import { requireAuth, AuthenticatedRequest } from '@/middleware/auth';
 
+interface LeanBlog {
+  _id: string;
+  category: string;
+  publishedAt: Date;
+  views: number;
+  title: string;
+  slug: string;
+  excerpt: string;
+  content: string;
+  featuredImage?: string;
+  author: {
+    name?: string;
+    avatar?: string;
+    bio?: string;
+    socialLinks?: unknown;
+  };
+  status: string;
+  isPublished: boolean;
+  seo?: unknown;
+  readingTime: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // GET - Get single blog by ID (public endpoint)
-async function getBlogHandler(request: Request, { params }: { params: { id: string } }) {
+async function getBlogHandler(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB();
 
-    const { id } = params;
+    const { id } = await params;
 
     // Find blog by ID or slug
     const blog = await Blog.findOne({
@@ -20,7 +44,7 @@ async function getBlogHandler(request: Request, { params }: { params: { id: stri
       isPublished: true
     })
     .populate('author', 'name avatar bio socialLinks')
-    .lean();
+    .lean<LeanBlog>();
 
     if (!blog) {
       return NextResponse.json(
@@ -28,16 +52,17 @@ async function getBlogHandler(request: Request, { params }: { params: { id: stri
         { status: 404 }
       );
     }
+    const { _id, category } = blog;
 
     // Increment view count
-    await Blog.findByIdAndUpdate(blog._id, {
+    await Blog.findByIdAndUpdate(_id, {
       $inc: { views: 1 }
     });
 
     // Get related blogs (same category, excluding current blog)
     const relatedBlogs = await Blog.find({
-      category: blog.category,
-      _id: { $ne: blog._id },
+      category,
+      _id: { $ne: _id },
       status: 'published',
       isPublished: true
     })
@@ -88,11 +113,11 @@ async function getBlogHandler(request: Request, { params }: { params: { id: stri
 }
 
 // PUT - Update blog (authenticated author/admin only)
-async function updateBlogHandler(request: AuthenticatedRequest, { params }: { params: { id: string } }) {
+async function updateBlogHandler(request: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB();
 
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
 
     // Find existing blog
@@ -188,11 +213,11 @@ async function updateBlogHandler(request: AuthenticatedRequest, { params }: { pa
 }
 
 // DELETE - Delete blog (authenticated author/admin only)
-async function deleteBlogHandler(request: AuthenticatedRequest, { params }: { params: { id: string } }) {
+async function deleteBlogHandler(request: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB();
 
-    const { id } = params;
+    const { id } = await params;
 
     // Find existing blog
     const existingBlog = await Blog.findById(id);

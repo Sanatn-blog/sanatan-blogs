@@ -1,9 +1,19 @@
 import { NextResponse } from 'next/server';
 import { requireAuth, AuthenticatedRequest } from '@/middleware/auth';
+import { uploadBlogImage } from '@/lib/cloudinary';
 
 // POST - Upload image
 async function uploadImageHandler(request: AuthenticatedRequest) {
   try {
+    // Check if Cloudinary environment variables are configured
+    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+      console.error('Cloudinary environment variables not configured');
+      return NextResponse.json(
+        { error: 'Image upload service not configured. Please contact administrator.' },
+        { status: 500 }
+      );
+    }
+
     const formData = await request.formData();
     const file = formData.get('image') as File;
 
@@ -30,15 +40,21 @@ async function uploadImageHandler(request: AuthenticatedRequest) {
       );
     }
 
-    // For now, we'll use a placeholder URL
-    // In a real application, you would upload to Cloudinary, AWS S3, or similar
-    const placeholderUrl = `https://via.placeholder.com/800x400/FF6B35/FFFFFF?text=${encodeURIComponent(file.name)}`;
+    // Convert File to Buffer
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+
+    // Upload to Cloudinary
+    const uploadResult = await uploadBlogImage(buffer);
 
     return NextResponse.json({
-      url: placeholderUrl,
+      url: uploadResult.secure_url,
+      publicId: uploadResult.public_id,
       filename: file.name,
-      size: file.size,
-      type: file.type
+      size: uploadResult.bytes,
+      type: file.type,
+      width: uploadResult.width,
+      height: uploadResult.height
     });
 
   } catch (error) {
