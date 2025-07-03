@@ -9,7 +9,7 @@ export default function ContentManagement() {
   useEffect(() => {
     // Simulate loading
     setTimeout(() => setLoading(false), 1000);
-  }, []);
+  }, []); 
 
   if (loading) {
     return (
