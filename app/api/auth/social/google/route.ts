@@ -1,6 +1,16 @@
+// TEMPORARILY DISABLED: Google OAuth
+// This endpoint is commented out for maintenance/development purposes
+
 import { NextResponse } from 'next/server';
 
-export async function GET(request: Request) {
+export async function GET() {
+  // Google OAuth temporarily disabled
+  return NextResponse.json(
+    { message: 'Google OAuth is temporarily disabled' },
+    { status: 501 }
+  );
+
+  /* ORIGINAL CODE - COMMENTED OUT
   const { searchParams } = new URL(request.url);
   const redirectUrl = searchParams.get('redirect') || '/dashboard';
 
@@ -29,4 +39,5 @@ export async function GET(request: Request) {
   const authUrl = `${googleAuthUrl}?${params.toString()}`;
   
   return NextResponse.redirect(authUrl);
+  */
 } 

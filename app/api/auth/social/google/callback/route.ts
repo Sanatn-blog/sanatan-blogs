@@ -1,9 +1,19 @@
-import { NextResponse } from 'next/server';
-import jwt from 'jsonwebtoken';
-import connectDB from '@/lib/mongodb';
-import User from '@/models/User';
+// TEMPORARILY DISABLED: Google OAuth Callback
+// This endpoint is commented out for maintenance/development purposes
 
-export async function GET(request: Request) {
+import { NextResponse } from 'next/server';
+// import jwt from 'jsonwebtoken';
+// import connectDB from '@/lib/mongodb';
+// import User from '@/models/User';
+
+export async function GET() {
+  // Google OAuth callback temporarily disabled
+  return NextResponse.json(
+    { message: 'Google OAuth callback is temporarily disabled' },
+    { status: 501 }
+  );
+
+  /* ORIGINAL CODE - COMMENTED OUT
   try {
     await connectDB();
     
@@ -111,4 +121,5 @@ export async function GET(request: Request) {
     console.error('Google OAuth callback error:', error);
     return NextResponse.redirect(`${process.env.NEXTAUTH_URL}/login?error=oauth_error`);
   }
+  */
 } 

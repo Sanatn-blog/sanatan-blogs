@@ -1,9 +1,19 @@
-import { NextResponse } from 'next/server';
-import jwt from 'jsonwebtoken';
-import connectDB from '@/lib/mongodb';
-import User from '@/models/User';
+// TEMPORARILY DISABLED: Registration OTP Verification
+// This endpoint is commented out for maintenance/development purposes
 
-export async function POST(request: Request) {
+import { NextResponse } from 'next/server';
+// import jwt from 'jsonwebtoken';
+// import connectDB from '@/lib/mongodb';
+// import User from '@/models/User';
+
+export async function POST() {
+  // Registration OTP verification temporarily disabled
+  return NextResponse.json(
+    { message: 'Registration OTP verification is temporarily disabled' },
+    { status: 501 }
+  );
+
+  /* ORIGINAL CODE - COMMENTED OUT
   try {
     await connectDB();
     
@@ -104,4 +114,5 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
+  */
 } 
