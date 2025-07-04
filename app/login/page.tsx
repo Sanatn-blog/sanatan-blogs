@@ -412,7 +412,7 @@ export default function LoginPage() {
                         required
                         value={otpData.phoneNumber}
                         onChange={(e) => setOtpData({ ...otpData, phoneNumber: e.target.value })}
-                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
+                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors text-gray-900"
                         placeholder="+91 98765 43210"
                       />
                     </div>
@@ -461,7 +461,7 @@ export default function LoginPage() {
                       required
                       value={otpData.otp}
                       onChange={(e) => setOtpData({ ...otpData, otp: e.target.value.replace(/\D/g, '') })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors text-center text-2xl font-mono tracking-widest"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors text-center text-2xl font-mono tracking-widest text-gray-900"
                       placeholder="123456"
                     />
                   </div>
