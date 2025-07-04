@@ -22,10 +22,29 @@ export async function POST(request: NextRequest) {
     // Get admin details from environment or request body
     const body = await request.json().catch(() => ({}));
     
+    // Validate required fields
+    const email = body.email || process.env.ADMIN_EMAIL;
+    const password = body.password || process.env.DEFAULT_ADMIN_PASSWORD;
+    
+    if (!email || !password) {
+      return NextResponse.json(
+        { error: 'Admin email and password must be provided via request body or environment variables' },
+        { status: 400 }
+      );
+    }
+    
+    // Validate password strength
+    if (password.length < 8) {
+      return NextResponse.json(
+        { error: 'Admin password must be at least 8 characters long' },
+        { status: 400 }
+      );
+    }
+    
     const adminData = {
       name: body.name || 'Super Admin',
-      email: body.email || process.env.ADMIN_EMAIL || 'admin@sanatanblogs.com',
-      password: body.password || process.env.DEFAULT_ADMIN_PASSWORD || 'admin123',
+      email: email,
+      password: password,
       role: 'super_admin' as const,
       status: 'approved' as const,
       emailVerified: true
