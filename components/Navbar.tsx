@@ -193,7 +193,7 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                     </div>
                     
                     <div className="hidden lg:block text-left">
-                      <div className="font-semibold text-gray-900 text-sm">{user.name}</div>
+                      <div className="font-semibold text-gray-900 text-sm">{user.name.split(' ')[0]}</div>
                       <div className={`text-xs ${
                         user.role === 'super_admin' 
                           ? 'text-purple-600' 
@@ -235,7 +235,7 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                             {user.name.charAt(0).toUpperCase()}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-gray-900 truncate">{user.name}</h3>
+                            <h3 className="font-semibold text-gray-900 truncate">{user.name.split(' ')[0]}</h3>
                             <p className="text-sm text-gray-500 truncate">{user.email}</p>
                             <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full mt-1 ${
                               user.role === 'super_admin' 

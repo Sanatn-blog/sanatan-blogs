@@ -687,7 +687,7 @@ You can write your thoughts here...
                     className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-orange-600 to-orange-700 text-white hover:from-orange-700 hover:to-orange-800 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
                   >
                     <Send className="h-4 w-4" />
-                    <span>🚀 Publish Now</span>
+                    <span>🚀 {editBlogId ? 'Update And Publish' : 'Publish Now'}</span>
                   </button>
                 </div>
               </div>
