@@ -7,7 +7,18 @@ import { requireAuth, AuthenticatedRequest } from '@/middleware/auth';
 // GET - List all published blogs with pagination and filtering (public endpoint)
 async function getBlogsHandler(request: Request) {
   try {
+    // Check for required environment variables
+    if (!process.env.MONGODB_URI) {
+      console.error('MONGODB_URI environment variable is not set');
+      return NextResponse.json(
+        { error: 'Database configuration error' },
+        { status: 500 }
+      );
+    }
+
+    console.log('Connecting to database...');
     await connectDB();
+    console.log('Database connected successfully');
 
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
@@ -17,6 +28,8 @@ async function getBlogsHandler(request: Request) {
     const author = searchParams.get('author');
     const tag = searchParams.get('tag');
     const status = searchParams.get('status'); // New parameter for admin panel
+
+    console.log('Query parameters:', { page, limit, category, search, author, tag, status });
 
     // Build query - allow all statuses if status parameter is provided (for admin)
     const query: Record<string, unknown> = {};
@@ -37,10 +50,13 @@ async function getBlogsHandler(request: Request) {
       query.$text = { $search: search };
     }
 
+    console.log('Final query:', JSON.stringify(query, null, 2));
+
     // Calculate pagination
     const skip = (page - 1) * limit;
 
     // Get blogs with author information
+    console.log('Fetching blogs...');
     const blogs = await Blog.find(query)
       .populate('author', 'name avatar bio')
       .select('-content') // Exclude full content for list view
@@ -48,6 +64,8 @@ async function getBlogsHandler(request: Request) {
       .skip(skip)
       .limit(limit)
       .lean();
+
+    console.log(`Found ${blogs.length} blogs`);
 
     // Get total count for pagination
     const totalBlogs = await Blog.countDocuments(query);
@@ -65,7 +83,7 @@ async function getBlogsHandler(request: Request) {
       { $limit: 20 }
     ]);
 
-    return NextResponse.json({
+    const response = {
       blogs,
       pagination: {
         currentPage: page,
@@ -79,12 +97,40 @@ async function getBlogsHandler(request: Request) {
         name: tag._id,
         count: tag.count
       }))
-    });
+    };
+
+    console.log('Sending response with', blogs.length, 'blogs');
+    return NextResponse.json(response);
 
   } catch (error) {
     console.error('Get blogs error:', error);
+    
+    // Provide more specific error messages
+    if (error instanceof Error) {
+      if (error.message.includes('ECONNREFUSED')) {
+        return NextResponse.json(
+          { error: 'Database connection failed. Please try again later.' },
+          { status: 503 }
+        );
+      }
+      
+      if (error.message.includes('MONGODB_URI')) {
+        return NextResponse.json(
+          { error: 'Database configuration error' },
+          { status: 500 }
+        );
+      }
+      
+      if (error.message.includes('timeout')) {
+        return NextResponse.json(
+          { error: 'Request timeout. Please try again.' },
+          { status: 408 }
+        );
+      }
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to fetch blogs' },
+      { error: 'Failed to fetch blogs. Please try again later.' },
       { status: 500 }
     );
   }

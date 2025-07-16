@@ -59,22 +59,57 @@ export default function MyBlogs() {
       setLoadingBlogs(true);
       setError(null);
 
+      // Get the access token
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        setError('Please log in to view your blogs');
+        setLoadingBlogs(false);
+        return;
+      }
+
+      console.log('Fetching user blogs with token...');
+      
       // Fetch user's blogs using the dedicated endpoint
-      const response = await fetch('/api/blogs/my-blogs');
+      const response = await fetch('/api/blogs/my-blogs', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       
       if (!response.ok) {
-        throw new Error('Failed to fetch blogs');
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error || `HTTP ${response.status}: ${response.statusText}`;
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
       
+      if (!data.blogs || !Array.isArray(data.blogs)) {
+        throw new Error('Invalid response format from server');
+      }
+      
+      console.log('Received user blogs:', data.blogs.length);
       setBlogs(data.blogs);
       setFilteredBlogs(data.blogs);
       setStats(data.stats);
 
     } catch (err) {
-      console.error('Error fetching blogs:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load blogs');
+      console.error('Error fetching user blogs:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load blogs';
+      setError(errorMessage);
+      
+      // Show more specific error messages to user
+      if (errorMessage.includes('User not authenticated')) {
+        setError('Please log in to view your blogs');
+      } else if (errorMessage.includes('Database connection failed')) {
+        setError('Unable to connect to the database. Please try again in a few moments.');
+      } else if (errorMessage.includes('Database configuration error')) {
+        setError('System configuration issue. Please contact support.');
+      } else if (errorMessage.includes('timeout')) {
+        setError('Request timed out. Please check your internet connection and try again.');
+      } else {
+        setError('Unable to load your blogs. Please try again later.');
+      }
     } finally {
       setLoadingBlogs(false);
     }
@@ -126,20 +161,44 @@ export default function MyBlogs() {
     if (!confirm('Are you sure you want to delete this blog?')) return;
 
     try {
+      // Get the access token
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        alert('Please log in to delete blogs');
+        return;
+      }
+
       const response = await fetch(`/api/blogs/${blogId}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
 
       if (!response.ok) {
-        throw new Error('Failed to delete blog');
+        const errorData = await response.json().catch(() => ({}));
+        if (response.status === 401) {
+          alert('Please log in to delete blogs');
+        } else if (response.status === 403) {
+          alert('You can only delete your own blogs');
+        } else if (response.status === 404) {
+          alert('Blog not found');
+        } else {
+          alert(errorData.error || 'Failed to delete blog');
+        }
+        return;
       }
 
       // Remove from local state
       setBlogs(blogs.filter(blog => blog._id !== blogId));
+      setFilteredBlogs(filteredBlogs.filter(blog => blog._id !== blogId));
+      
+      // Show success message
+      alert('Blog deleted successfully');
       
     } catch (err) {
       console.error('Error deleting blog:', err);
-      alert('Failed to delete blog');
+      alert('Failed to delete blog. Please try again.');
     }
   };
 
@@ -279,14 +338,27 @@ export default function MyBlogs() {
             <div className="text-center py-12">
               <div className="text-6xl mb-4">⚠️</div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">Error Loading Blogs</h3>
-              <p className="text-gray-600 mb-6">{error}</p>
-              <button
-                onClick={fetchUserBlogs}
-                className="inline-flex items-center space-x-2 bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition-colors"
-              >
-                <Loader2 className="h-5 w-5" />
-                <span>Try Again</span>
-              </button>
+              <p className="text-gray-600 mb-4 max-w-md mx-auto">{error}</p>
+              <div className="text-sm text-gray-500 mb-6">
+                If this problem persists, please check your login status or try again later.
+              </div>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <button
+                  onClick={fetchUserBlogs}
+                  className="inline-flex items-center space-x-2 bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition-colors"
+                >
+                  <Loader2 className="h-5 w-5" />
+                  <span>Try Again</span>
+                </button>
+                {error.includes('log in') && (
+                  <Link
+                    href="/login"
+                    className="inline-flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    <span>Go to Login</span>
+                  </Link>
+                )}
+              </div>
             </div>
           ) : filteredBlogs.length === 0 ? (
             <div className="text-center py-12">
@@ -335,7 +407,8 @@ export default function MyBlogs() {
                       </div>
                       
                       <div className="flex flex-wrap gap-1">
-                        {blog.tags.slice(0, 3).map((tag) => (
+                        {(blog.tags || []).slice(0, 3).map((tag) => (
+                          
                           <span
                             key={tag}
                             className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs"
@@ -343,8 +416,8 @@ export default function MyBlogs() {
                             #{tag}
                           </span>
                         ))}
-                        {blog.tags.length > 3 && (
-                          <span className="text-gray-500 text-xs">+{blog.tags.length - 3} more</span>
+                        {(blog.tags || []).length > 3 && (
+                          <span className="text-gray-500 text-xs">+{(blog.tags || []).length - 3} more</span>
                         )}
                       </div>
                     </div>

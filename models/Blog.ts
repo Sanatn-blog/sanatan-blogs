@@ -82,11 +82,12 @@ const BlogSchema = new Schema<IBlog>({
       'Other'
     ]
   },
-  tags: [{
-    type: String,
+  tags: {
+    type: [String],
+    default: [],
     trim: true,
     lowercase: true
-  }],
+  },
   status: {
     type: String,
     enum: ['draft', 'published', 'archived'],
@@ -103,14 +104,16 @@ const BlogSchema = new Schema<IBlog>({
     type: Number,
     default: 0
   },
-  likes: [{
-    type: Schema.Types.ObjectId,
-    ref: 'User'
-  }],
-  comments: [{
-    type: Schema.Types.ObjectId,
-    ref: 'Comment'
-  }],
+  likes: {
+    type: [Schema.Types.ObjectId],
+    ref: 'User',
+    default: []
+  },
+  comments: {
+    type: [Schema.Types.ObjectId],
+    ref: 'Comment',
+    default: []
+  },
   seo: {
     metaTitle: {
       type: String,
@@ -120,11 +123,12 @@ const BlogSchema = new Schema<IBlog>({
       type: String,
       maxLength: [160, 'Meta description cannot exceed 160 characters']
     },
-    metaKeywords: [{
-      type: String,
+    metaKeywords: {
+      type: [String],
+      default: [],
       trim: true,
       lowercase: true
-    }]
+    }
   },
   readingTime: {
     type: Number,

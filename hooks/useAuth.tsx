@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface User {
@@ -12,13 +12,28 @@ interface User {
   avatar?: string;
 }
 
-export function useAuth() {
+interface AuthContextType {
+  user: User | null;
+  loading: boolean;
+  mounted: boolean;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  register: (userData: { name: string; email: string; password: string; bio?: string; socialLinks?: object }) => Promise<{ success: boolean; error?: string; message?: string }>;
+  logout: () => void;
+  checkAuth: () => Promise<void>;
+  refreshToken: () => Promise<string | null>;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
 
   // Check if user is authenticated on mount
   useEffect(() => {
+    setMounted(true);
     checkAuth();
   }, []);
 
@@ -42,9 +57,11 @@ export function useAuth() {
       } else {
         localStorage.removeItem('accessToken');
         document.cookie = 'refreshToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+        setUser(null);
       }
     } catch (error) {
       console.error('Auth check failed:', error);
+      setUser(null);
     } finally {
       setLoading(false);
     }
@@ -64,7 +81,10 @@ export function useAuth() {
 
       if (response.ok) {
         localStorage.setItem('accessToken', data.accessToken);
+        // Immediately set the user state
         setUser(data.user);
+        // Force a re-render by updating loading state
+        setLoading(false);
         return { success: true };
       } else {
         return { success: false, error: data.error };
@@ -129,13 +149,28 @@ export function useAuth() {
     return null;
   };
 
-  return {
+  const value = {
     user,
-    loading,
+    loading: loading || !mounted,
+    mounted,
     login,
     register,
     logout,
     checkAuth,
     refreshToken
   };
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 } 

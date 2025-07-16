@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ClientLayout from "@/components/ClientLayout";
+import GlobalErrorHandler from "@/components/GlobalErrorHandler";
+import HydrationErrorHandler from "@/components/HydrationErrorHandler";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -50,18 +52,36 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              try {
-                const savedTheme = localStorage.getItem('theme');
-                const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-                const theme = savedTheme || systemTheme;
-                document.documentElement.classList.add(theme);
-              } catch (e) {
-                document.documentElement.classList.add('light');
+              // Remove browser extension attributes that cause hydration mismatches
+              if (typeof document !== 'undefined') {
+                const html = document.documentElement;
+                if (html.hasAttribute('foxified')) {
+                  html.removeAttribute('foxified');
+                }
+              }
+              
+              // Handle HMR errors gracefully
+              if (typeof window !== 'undefined') {
+                window.addEventListener('error', function(event) {
+                  if (event.error && event.error.message && 
+                      (event.error.message.includes('module factory is not available') ||
+                       event.error.message.includes('error-boundary.js'))) {
+                    console.warn('HMR error detected, attempting to recover...');
+                    event.preventDefault();
+                    
+                    // Try to recover by reloading the page after a short delay
+                    setTimeout(() => {
+                      if (window.location.href.includes('localhost')) {
+                        window.location.reload();
+                      }
+                    }, 1000);
+                  }
+                });
               }
             `,
           }}
@@ -69,7 +89,10 @@ export default function RootLayout({
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        suppressHydrationWarning
       >
+        <GlobalErrorHandler />
+        <HydrationErrorHandler />
         <ClientLayout>
           {children}
         </ClientLayout>

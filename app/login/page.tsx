@@ -9,9 +9,7 @@ import {
   Mail, 
   Lock, 
   LogIn,
-  // Smartphone,
-  // ArrowLeft,
-  // CheckCircle
+  
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import toast from 'react-hot-toast';
@@ -21,28 +19,19 @@ interface LoginFormData {
   password: string;
 }
 
-// interface OtpFormData {
-//   phoneNumber: string;
-//   otp: string;
-// }
+
 
 export default function LoginPage() {
   const [formData, setFormData] = useState<LoginFormData>({
     email: '',
     password: ''
   });
-  // const [otpData, setOtpData] = useState<OtpFormData>({
-  //   phoneNumber: '',
-  //   otp: ''
-  // });
+
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  // const [socialLoading, setSocialLoading] = useState<string | null>(null);
   const [error, setError] = useState('');
-  // const [loginMethod, setLoginMethod] = useState<'email' | 'phone'>('email');
-  // const [otpSent, setOtpSent] = useState(false);
-  // const [otpTimer, setOtpTimer] = useState(0);
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
 
   const { login, loading: authLoading } = useAuth();
@@ -70,18 +59,11 @@ export default function LoginPage() {
   }, [router]);
 
   useEffect(() => {
+    setMounted(true);
     checkExistingAuth();
   }, [checkExistingAuth]);
 
-  // useEffect(() => {
-  //   let interval: NodeJS.Timeout;
-  //   if (otpTimer > 0) {
-  //     interval = setInterval(() => {
-  //       setOtpTimer(prev => prev - 1);
-  //     }, 1000);
-  //   }
-  //   return () => clearInterval(interval);
-  // }, [otpTimer]);
+
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -243,7 +225,7 @@ export default function LoginPage() {
   //   }
   // ];
 
-  if (checkingAuth || authLoading) {
+  if (!mounted || checkingAuth || authLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-pink-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
@@ -324,7 +306,7 @@ export default function LoginPage() {
                   required
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors text-gray-900"
                   placeholder="Enter your email"
                 />
               </div>
@@ -343,7 +325,7 @@ export default function LoginPage() {
                   required
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors"
+                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors text-gray-900"
                   placeholder="Enter your password"
                 />
                 <button

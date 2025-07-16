@@ -54,6 +54,7 @@ export default function BlogsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
@@ -62,6 +63,8 @@ export default function BlogsPage() {
     hasPrev: false
   });
   const blogsPerPage = 6;
+
+
 
   // Fetch blogs from API
   const fetchBlogs = async (page: number = 1, category?: string, search?: string) => {
@@ -82,21 +85,41 @@ export default function BlogsPage() {
         params.append('search', search);
       }
 
+      console.log('Fetching blogs with params:', params.toString());
       const response = await fetch(`/api/blogs?${params}`);
       
       if (!response.ok) {
-        throw new Error('Failed to fetch blogs');
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error || `HTTP ${response.status}: ${response.statusText}`;
+        throw new Error(errorMessage);
       }
 
       const data: BlogResponse = await response.json();
       
+      if (!data.blogs || !Array.isArray(data.blogs)) {
+        throw new Error('Invalid response format from server');
+      }
+      
+      console.log('Received blogs:', data.blogs.length);
       setBlogs(data.blogs);
       setFilteredBlogs(data.blogs);
       setPagination(data.pagination);
       
     } catch (err) {
       console.error('Error fetching blogs:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load blogs');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load blogs';
+      setError(errorMessage);
+      
+      // Show more specific error messages to user
+      if (errorMessage.includes('Database connection failed')) {
+        setError('Unable to connect to the database. Please try again in a few moments.');
+      } else if (errorMessage.includes('Database configuration error')) {
+        setError('System configuration issue. Please contact support.');
+      } else if (errorMessage.includes('timeout')) {
+        setError('Request timed out. Please check your internet connection and try again.');
+      } else {
+        setError('Unable to load articles. Please try again later.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -138,18 +161,6 @@ export default function BlogsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-yellow-50">
-      {/* SEO Meta Tags */}
-      <head>
-        <title>Sanatan Blogs - Spiritual Knowledge and Life Philosophy</title>
-        <meta name="description" content="Read excellent articles on Sanatan Dharma, Yoga, Meditation, and spiritual knowledge. Study ancient Indian philosophy to improve your life." />
-        <meta name="keywords" content="Sanatan Dharma, Yoga, Meditation, Spirituality, Gita, Vedanta, Indian Philosophy" />
-        <meta name="robots" content="index, follow" />
-        <meta property="og:title" content="Sanatan Blogs - Spiritual Knowledge and Life Philosophy" />
-        <meta property="og:description" content="Deep articles connecting ancient Indian knowledge with modern life" />
-        <meta property="og:type" content="website" />
-        <link rel="canonical" href="/blogs" />
-      </head>
-
       {/* Hero Section */}
       <section className="relative bg-gradient-to-r from-orange-600 to-orange-800 text-white py-20 overflow-hidden">
         <div className="absolute inset-0 bg-black opacity-20"></div>
@@ -175,41 +186,55 @@ export default function BlogsPage() {
       </section>
 
       {/* Search and Filter Section */}
-      <section className="py-12 bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-            {/* Search Bar */}
-            <div className="relative flex-1 max-w-lg">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-5 w-5 text-gray-400" />
+      <section className="py-16 bg-gradient-to-br from-orange-100 via-white to-yellow-100">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Search Bar - Centered and Prominent */}
+          <div className="text-center mb-12">
+            <h3 className="text-2xl font-bold text-gray-800 mb-6">Find Your Spiritual Path</h3>
+            <div className="relative max-w-2xl mx-auto">
+              <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
+                <Search className="h-7 w-7 text-orange-500" />
               </div>
               <input
                 type="text"
-                placeholder="Search articles..."
+                placeholder="Search for wisdom, spirituality, yoga, philosophy, meditation..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="block w-full pl-10 pr-3 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
+                className="block w-full pl-16 pr-16 py-5 bg-white border-0 rounded-3xl focus:outline-none focus:ring-4 focus:ring-orange-300 shadow-2xl text-xl placeholder-gray-400 font-medium"
               />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute inset-y-0 right-0 pr-6 flex items-center text-gray-400 hover:text-orange-600 transition-colors"
+                >
+                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
             </div>
+          </div>
 
-            {/* Category Filter */}
-            <div className="flex items-center space-x-2">
-              <Filter className="h-5 w-5 text-gray-600" />
-              <div className="flex flex-wrap gap-2">
-                {categories.map((category) => (
-                  <button
-                    key={category}
-                    onClick={() => setSelectedCategory(category)}
-                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
-                      selectedCategory === category
-                        ? 'bg-orange-600 text-white shadow-lg transform scale-105'
-                        : 'bg-gray-100 text-gray-700 hover:bg-orange-100 hover:text-orange-600'
-                    }`}
-                  >
-                    {category}
-                  </button>
-                ))}
-              </div>
+          {/* Category Filter - Redesigned */}
+          <div className="text-center">
+            <div className="inline-flex items-center space-x-3 bg-white px-6 py-3 rounded-2xl shadow-lg mb-6">
+              <Filter className="h-5 w-5 text-orange-600" />
+              <span className="text-sm font-bold text-gray-700">Browse Categories:</span>
+            </div>
+            <div className="flex flex-wrap justify-center gap-4">
+              {categories.map((category) => (
+                <button
+                  key={category}
+                  onClick={() => setSelectedCategory(category)}
+                  className={`px-6 py-3 rounded-full text-sm font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 ${
+                    selectedCategory === category
+                      ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-2xl scale-110'
+                      : 'bg-white text-gray-700 hover:bg-orange-50 hover:text-orange-600 border-2 border-orange-200'
+                  }`}
+                >
+                  {category}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -238,8 +263,23 @@ export default function BlogsPage() {
                   key={blog._id}
                   className="bg-white rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
                 >
-                  <div className="relative h-48 bg-gradient-to-r from-orange-400 to-orange-600">
-                    <div className="absolute inset-0 bg-black opacity-20"></div>
+                  <div className="relative h-48">
+                    {blog.featuredImage ? (
+                      <img
+                        src={blog.featuredImage}
+                        alt={blog.title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          // Fallback to gradient if image fails to load
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          target.nextElementSibling?.classList.remove('hidden');
+                        }}
+                      />
+                    ) : null}
+                    <div className={`absolute inset-0 bg-gradient-to-r from-orange-400 to-orange-600 ${blog.featuredImage ? 'hidden' : ''}`}>
+                      <div className="absolute inset-0 bg-black opacity-20"></div>
+                    </div>
                     <div className="absolute top-4 left-4">
                       <span className="bg-yellow-400 text-gray-900 px-3 py-1 rounded-full text-xs font-bold">
                         ⭐ Featured
@@ -329,13 +369,24 @@ export default function BlogsPage() {
             <div className="text-center py-16">
               <div className="text-6xl mb-4">⚠️</div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">Error Loading Articles</h3>
-              <p className="text-gray-600 mb-8">{error}</p>
-              <button
-                onClick={() => fetchBlogs(1)}
-                className="bg-orange-600 text-white px-6 py-3 rounded-xl hover:bg-orange-700 transition-colors"
-              >
-                Try Again
-              </button>
+              <p className="text-gray-600 mb-4 max-w-md mx-auto">{error}</p>
+              <div className="text-sm text-gray-500 mb-8">
+                If this problem persists, please check your internet connection or try again later.
+              </div>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <button
+                  onClick={() => fetchBlogs(1)}
+                  className="bg-orange-600 text-white px-6 py-3 rounded-xl hover:bg-orange-700 transition-colors"
+                >
+                  Try Again
+                </button>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="bg-gray-600 text-white px-6 py-3 rounded-xl hover:bg-gray-700 transition-colors"
+                >
+                  Refresh Page
+                </button>
+              </div>
             </div>
           ) : filteredBlogs.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -344,8 +395,23 @@ export default function BlogsPage() {
                   key={blog._id}
                   className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
                 >
-                  <div className="relative h-48 bg-gradient-to-r from-gray-400 to-gray-600">
-                    <div className="absolute inset-0 bg-black opacity-20"></div>
+                  <div className="relative h-48">
+                    {blog.featuredImage ? (
+                      <img
+                        src={blog.featuredImage}
+                        alt={blog.title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          // Fallback to gradient if image fails to load
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          target.nextElementSibling?.classList.remove('hidden');
+                        }}
+                      />
+                    ) : null}
+                    <div className={`absolute inset-0 bg-gradient-to-r from-gray-400 to-gray-600 ${blog.featuredImage ? 'hidden' : ''}`}>
+                      <div className="absolute inset-0 bg-black opacity-20"></div>
+                    </div>
                     <div className="absolute top-4 left-4">
                       <span className="bg-white bg-opacity-90 text-gray-900 px-2 py-1 rounded-full text-xs font-medium">
                         {blog.category}
@@ -353,7 +419,7 @@ export default function BlogsPage() {
                     </div>
                     <div className="absolute bottom-4 left-4 right-4">
                       <div className="flex flex-wrap gap-1">
-                        {blog.tags.slice(0, 2).map((tag) => (
+                        {(blog.tags || []).slice(0, 2).map((tag) => (
                           <span
                             key={tag}
                             className="bg-orange-600 text-white px-2 py-1 rounded text-xs"
@@ -404,7 +470,7 @@ export default function BlogsPage() {
                         </span>
                         <span className="flex items-center">
                           <Heart className="h-3 w-3 mr-1" />
-                          {blog.likes.length}
+                          {(blog.likes || []).length}
                         </span>
                       </div>
                     </div>
@@ -439,49 +505,50 @@ export default function BlogsPage() {
           )}
 
           {/* Pagination */}
-          {pagination.totalPages > 1 && (
-            <div className="mt-12 flex justify-center">
-              <nav className="flex items-center space-x-2">
-                <button
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className={`px-4 py-2 rounded-lg ${
-                    currentPage === 1
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-white text-gray-700 hover:bg-orange-50 border border-gray-200'
-                  }`}
-                >
-                  Previous
-                </button>
-
-                {[...Array(pagination.totalPages)].map((_, i) => (
-                  <button
-                    key={i + 1}
-                    onClick={() => handlePageChange(i + 1)}
-                    className={`px-4 py-2 rounded-lg ${
-                      currentPage === i + 1
-                        ? 'bg-orange-600 text-white'
-                        : 'bg-white text-gray-700 hover:bg-orange-50 border border-gray-200'
-                    }`}
-                  >
-                    {i + 1}
-                  </button>
-                ))}
-
-                <button
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === pagination.totalPages}
-                  className={`px-4 py-2 rounded-lg ${
-                    currentPage === pagination.totalPages
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-white text-gray-700 hover:bg-orange-50 border border-gray-200'
-                  }`}
-                >
-                  Next
-                </button>
-              </nav>
+          <div className="mt-12 flex flex-col items-center justify-center gap-2">
+            <div className="text-gray-600 text-sm mb-2">
+              Page <span className="font-bold">{currentPage}</span> of <span className="font-bold">{pagination.totalPages}</span>
             </div>
-          )}
+            <nav className="flex items-center space-x-2">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className={`px-4 py-2 rounded-lg transition-colors duration-200 ${
+                  currentPage === 1
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-white text-gray-700 hover:bg-orange-50 border border-gray-200'
+                }`}
+              >
+                Previous
+              </button>
+
+              {[...Array(pagination.totalPages)].map((_, i) => (
+                <button
+                  key={i + 1}
+                  onClick={() => handlePageChange(i + 1)}
+                  className={`px-4 py-2 rounded-lg transition-colors duration-200 ${
+                    currentPage === i + 1
+                      ? 'bg-orange-600 text-white font-bold shadow-md'
+                      : 'bg-white text-gray-700 hover:bg-orange-50 border border-gray-200'
+                  }`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === pagination.totalPages}
+                className={`px-4 py-2 rounded-lg transition-colors duration-200 ${
+                  currentPage === pagination.totalPages
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-white text-gray-700 hover:bg-orange-50 border border-gray-200'
+                }`}
+              >
+                Next
+              </button>
+            </nav>
+          </div>
         </div>
       </section>
 

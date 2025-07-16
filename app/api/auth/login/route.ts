@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
-import { generateToken, generateRefreshToken } from '@/lib/jwt';
+import { generateAccessToken, generateRefreshToken } from '@/lib/jwt';
 import { rateLimit } from '@/middleware/auth';
 
 async function loginHandler(request: NextRequest) {
@@ -58,15 +58,8 @@ async function loginHandler(request: NextRequest) {
     await user.save();
 
     // Generate tokens
-    const tokenPayload = {
-      userId: user._id.toString(),
-      email: user.email,
-      role: user.role,
-      status: user.status
-    };
-
-    const accessToken = generateToken(tokenPayload);
-    const refreshToken = generateRefreshToken(tokenPayload);
+    const accessToken = generateAccessToken(user._id.toString());
+    const refreshToken = generateRefreshToken(user._id.toString());
 
     // Prepare user response (without sensitive data)
     const userResponse = {

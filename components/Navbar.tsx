@@ -41,6 +41,8 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const router = useRouter();
 
+
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Element;
@@ -439,68 +441,24 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                 )}
               </div>
 
-              {/* Mobile User Section */}
-              {user ? (
+                            {/* Mobile Admin Section */}
+              {user && (user.role === 'admin' || user.role === 'super_admin') && (
                 <div className="pt-4 border-t border-gray-200">
-                  <div className="flex items-center space-x-3 px-4 py-3 bg-gray-50 rounded-xl">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold ${
-                      user.role === 'super_admin' 
-                        ? 'bg-gradient-to-r from-purple-600 to-orange-600' 
-                        : user.role === 'admin' 
-                        ? 'bg-gradient-to-r from-blue-600 to-orange-600'
-                        : 'bg-gradient-to-r from-orange-600 to-orange-700'
-                    }`}>
-                      {user.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-semibold text-gray-900">{user.name}</p>
-                      <p className="text-sm text-gray-500">{user.email}</p>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 space-y-1">
+                  <div className="space-y-1">
                     <Link
-                      href="/dashboard"
+                      href="/admin/users"
                       className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-xl transition-colors"
                       onClick={() => setIsOpen(false)}
                     >
-                      <User className="h-5 w-5" />
-                      <span>Profile</span>
+                      <Users className="h-5 w-5" />
+                      <span>Manage Users</span>
                     </Link>
-                    
-                    <Link
-                      href="/dashboard/blogs"
-                      className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-xl transition-colors"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      <BookOpen className="h-5 w-5" />
-                      <span>My Blogs</span>
-                    </Link>
-
-                    {(user.role === 'admin' || user.role === 'super_admin') && (
-                      <Link
-                        href="/admin/users"
-                        className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-xl transition-colors"
-                        onClick={() => setIsOpen(false)}
-                      >
-                        <Users className="h-5 w-5" />
-                        <span>Manage Users</span>
-                      </Link>
-                    )}
-
-                    <button
-                      onClick={() => {
-                        handleLogout();
-                        setIsOpen(false);
-                      }}
-                      className="w-full flex items-center space-x-3 px-4 py-2 text-red-600 hover:bg-red-50 rounded-xl transition-colors"
-                    >
-                      <LogOut className="h-5 w-5" />
-                      <span>Logout</span>
-                    </button>
                   </div>
                 </div>
-              ) : (
+              )}
+
+              {/* Mobile Auth Section */}
+              {!user && (
                 <div className="pt-4 border-t border-gray-200 space-y-3">
                   <Link
                     href="/login"

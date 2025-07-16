@@ -8,6 +8,7 @@ interface ThemeContextType {
   theme: Theme;
   toggleTheme: () => void;
   setTheme: (theme: Theme) => void;
+  mounted: boolean;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -17,15 +18,16 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+    
     // Check localStorage first, then system preference
     const savedTheme = localStorage.getItem('theme') as Theme;
     const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     const initialTheme = savedTheme || systemTheme;
     
     setThemeState(initialTheme);
-    setMounted(true);
     
-    // Ensure theme is applied consistently
+    // Apply theme to HTML element
     const root = document.documentElement;
     root.classList.remove('light', 'dark');
     root.classList.add(initialTheme);
@@ -51,9 +53,19 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     setThemeState(current => current === 'light' ? 'dark' : 'light');
   };
 
-  // Always provide the context to avoid hydration mismatch
+  // Prevent hydration mismatch by not rendering theme-dependent content until mounted
+  if (!mounted) {
+    return (
+      <ThemeContext.Provider value={{ theme: 'light', toggleTheme, setTheme, mounted: false }}>
+        <div className="light">
+          {children}
+        </div>
+      </ThemeContext.Provider>
+    );
+  }
+
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme, setTheme, mounted }}>
       {children}
     </ThemeContext.Provider>
   );

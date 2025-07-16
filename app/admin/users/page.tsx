@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   Users, 
   Search, 
@@ -11,19 +12,25 @@ import {
   Shield,
   User as UserIcon,
   Plus,
-  Download
+  Download,
+  Eye,
+  RefreshCw
 } from 'lucide-react';
 
 interface User {
   _id: string;
   name: string;
-  email: string;
+  email?: string;
+  phoneNumber?: string;
   role: 'user' | 'admin' | 'super_admin';
-  status: 'active' | 'inactive' | 'banned';
+  status: 'pending' | 'approved' | 'rejected' | 'suspended';
   createdAt: string;
   lastLogin?: string;
   blogsCount: number;
   avatar?: string;
+  emailVerified: boolean;
+  isVerified: boolean;
+  isActive: boolean;
 }
 
 interface UserStats {
@@ -35,6 +42,7 @@ interface UserStats {
 }
 
 export default function UserManagement() {
+  const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,8 +57,14 @@ export default function UserManagement() {
     banned: 0,
     admins: 0
   });
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
-  const fetchUsers = useCallback(async () => {
+  const fetchUsers = useCallback(async (showRefreshing = false) => {
+    if (showRefreshing) {
+      setRefreshing(true);
+    }
+    
     try {
       const token = localStorage.getItem('accessToken');
       const response = await fetch('/api/admin/users', {
@@ -61,67 +75,86 @@ export default function UserManagement() {
         const data = await response.json();
         setUsers(data.users || []);
         calculateStats(data.users || []);
+        setLastRefresh(new Date());
       } else {
-        // Mock data for development
+        // Mock data for development with current timestamps
+        const now = new Date();
         const mockUsers: User[] = [
           {
             _id: '1',
             name: 'Priya Sharma',
             email: 'priya@example.com',
             role: 'user',
-            status: 'active',
+            status: 'approved',
             createdAt: '2024-01-15T10:30:00Z',
-            lastLogin: '2024-01-20T14:22:00Z',
-            blogsCount: 5
+            lastLogin: new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
+            blogsCount: 5,
+            emailVerified: true,
+            isVerified: true,
+            isActive: true
           },
           {
             _id: '2',
             name: 'Raj Patel',
             email: 'raj@example.com',
             role: 'admin',
-            status: 'active',
+            status: 'approved',
             createdAt: '2024-01-10T08:15:00Z',
-            lastLogin: '2024-01-20T16:45:00Z',
-            blogsCount: 12
+            lastLogin: new Date(now.getTime() - 30 * 60 * 1000).toISOString(), // 30 minutes ago
+            blogsCount: 12,
+            emailVerified: true,
+            isVerified: true,
+            isActive: true
           },
           {
             _id: '3',
             name: 'Anita Singh',
             email: 'anita@example.com',
             role: 'user',
-            status: 'inactive',
+            status: 'pending',
             createdAt: '2024-01-12T12:00:00Z',
             lastLogin: '2024-01-18T09:30:00Z',
-            blogsCount: 2
+            blogsCount: 2,
+            emailVerified: false,
+            isVerified: false,
+            isActive: false
           },
           {
             _id: '4',
             name: 'Vikram Joshi',
             email: 'vikram@example.com',
             role: 'user',
-            status: 'banned',
+            status: 'suspended',
             createdAt: '2024-01-08T16:20:00Z',
             lastLogin: '2024-01-15T11:10:00Z',
-            blogsCount: 0
+            blogsCount: 0,
+            emailVerified: true,
+            isVerified: false,
+            isActive: false
           },
           {
             _id: '5',
             name: 'Admin User',
             email: 'admin@example.com',
             role: 'super_admin',
-            status: 'active',
+            status: 'approved',
             createdAt: '2024-01-01T00:00:00Z',
-            lastLogin: '2024-01-20T18:00:00Z',
-            blogsCount: 25
+            lastLogin: new Date(now.getTime() - 5 * 60 * 1000).toISOString(), // 5 minutes ago
+            blogsCount: 25,
+            emailVerified: true,
+            isVerified: true,
+            isActive: true
           }
         ];
         setUsers(mockUsers);
         calculateStats(mockUsers);
+        setLastRefresh(new Date());
       }
     } catch (error) {
       console.error('Failed to fetch users:', error);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, []);
 
@@ -131,7 +164,7 @@ export default function UserManagement() {
     if (searchTerm) {
       filtered = filtered.filter(user => 
         user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase())
+        (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
 
@@ -155,6 +188,15 @@ export default function UserManagement() {
     filterUsers();
   }, [filterUsers]);
 
+  // Auto-refresh every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchUsers(true);
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
+  }, [fetchUsers]);
+
   const fetchCurrentUser = async () => {
     try {
       const token = localStorage.getItem('accessToken');
@@ -173,9 +215,9 @@ export default function UserManagement() {
   const calculateStats = (userList: User[]) => {
     const stats = userList.reduce((acc, user) => {
       acc.total++;
-      if (user.status === 'active') acc.active++;
-      if (user.status === 'inactive') acc.inactive++;
-      if (user.status === 'banned') acc.banned++;
+      if (user.status === 'approved') acc.active++;
+      if (user.status === 'pending') acc.inactive++;
+      if (user.status === 'suspended') acc.banned++;
       if (user.role === 'admin' || user.role === 'super_admin') acc.admins++;
       return acc;
     }, {
@@ -188,35 +230,79 @@ export default function UserManagement() {
     setUserStats(stats);
   };
 
-  const updateUserStatus = async (userId: string, newStatus: 'active' | 'inactive' | 'banned') => {
+  const updateUserStatus = async (userId: string, newStatus: 'pending' | 'approved' | 'rejected' | 'suspended') => {
     try {
-      // API call would go here
-      setUsers(users.map(user => 
-        user._id === userId ? { ...user, status: newStatus } : user
-      ));
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: 'PATCH',
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}` 
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+      
+      if (response.ok) {
+        setUsers(users.map(user => 
+          user._id === userId ? { ...user, status: newStatus } : user
+        ));
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to update user status: ${errorData.error || 'Unknown error'}`);
+      }
     } catch (error) {
       console.error('Failed to update user status:', error);
+      alert('Failed to update user status. Please try again.');
     }
   };
 
   const updateUserRole = async (userId: string, newRole: 'user' | 'admin' | 'super_admin') => {
     try {
-      // API call would go here
-      setUsers(users.map(user => 
-        user._id === userId ? { ...user, role: newRole } : user
-      ));
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: 'PATCH',
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}` 
+        },
+        body: JSON.stringify({ role: newRole })
+      });
+      
+      if (response.ok) {
+        setUsers(users.map(user => 
+          user._id === userId ? { ...user, role: newRole } : user
+        ));
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to update user role: ${errorData.error || 'Unknown error'}`);
+      }
     } catch (error) {
       console.error('Failed to update user role:', error);
+      alert('Failed to update user role. Please try again.');
     }
   };
 
   const deleteUser = async (userId: string) => {
     if (window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
       try {
-        // API call would go here
-        setUsers(users.filter(user => user._id !== userId));
+        const token = localStorage.getItem('accessToken');
+        const response = await fetch(`/api/admin/users/${userId}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        if (response.ok) {
+          // Remove user from local state
+          setUsers(users.filter(user => user._id !== userId));
+          // Recalculate stats
+          calculateStats(users.filter(user => user._id !== userId));
+        } else {
+          const errorData = await response.json();
+          alert(`Failed to delete user: ${errorData.error || 'Unknown error'}`);
+        }
       } catch (error) {
         console.error('Failed to delete user:', error);
+        alert('Failed to delete user. Please try again.');
       }
     }
   };
@@ -231,11 +317,12 @@ export default function UserManagement() {
 
   const getStatusBadge = (status: string) => {
     const badges = {
-      active: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-      inactive: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-      banned: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+      pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
+      approved: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
+      rejected: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+      suspended: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400'
     };
-    return badges[status as keyof typeof badges] || badges.active;
+    return badges[status as keyof typeof badges] || badges.pending;
   };
 
   const formatDate = (dateString: string) => {
@@ -244,6 +331,27 @@ export default function UserManagement() {
       month: 'short',
       day: 'numeric'
     });
+  };
+
+  const formatRelativeTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    
+    if (diffInSeconds < 60) {
+      return 'Just now';
+    } else if (diffInSeconds < 3600) {
+      const minutes = Math.floor(diffInSeconds / 60);
+      return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+    } else if (diffInSeconds < 86400) {
+      const hours = Math.floor(diffInSeconds / 3600);
+      return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    } else if (diffInSeconds < 2592000) {
+      const days = Math.floor(diffInSeconds / 86400);
+      return `${days} day${days > 1 ? 's' : ''} ago`;
+    } else {
+      return formatDate(dateString);
+    }
   };
 
   const statsCards = [
@@ -301,8 +409,20 @@ export default function UserManagement() {
           <p className="text-gray-600 dark:text-gray-400 mt-1">
             Manage user accounts, roles, and permissions
           </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Last updated: {lastRefresh.toLocaleTimeString()}
+          </p>
         </div>
         <div className="flex items-center space-x-3 mt-4 sm:mt-0">
+          <button 
+            onClick={() => fetchUsers(true)}
+            disabled={refreshing}
+            className="flex items-center space-x-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition-colors disabled:opacity-50"
+            title="Refresh data"
+          >
+            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+            <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
+          </button>
           <button className="flex items-center space-x-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition-colors">
             <Download className="h-4 w-4" />
             <span>Export</span>
@@ -369,9 +489,10 @@ export default function UserManagement() {
               className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
             >
               <option value="all">All Status</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="banned">Banned</option>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+              <option value="suspended">Suspended</option>
             </select>
           </div>
         </div>
@@ -408,7 +529,11 @@ export default function UserManagement() {
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {filteredUsers.map((user) => (
-                <tr key={user._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                <tr 
+                  key={user._id} 
+                  className="hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer"
+                  onClick={() => router.push(`/admin/users/${user._id}`)}
+                >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm ${
@@ -450,10 +575,25 @@ export default function UserManagement() {
                     {formatDate(user.createdAt)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                    {user.lastLogin ? formatDate(user.lastLogin) : 'Never'}
+                    {user.lastLogin ? (
+                      <div>
+                        <div>{formatRelativeTime(user.lastLogin)}</div>
+                        <div className="text-xs text-gray-400 dark:text-gray-500">
+                          {formatDate(user.lastLogin)}
+                        </div>
+                      </div>
+                    ) : 'Never'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end space-x-2">
+                      <button
+                        onClick={() => router.push(`/admin/users/${user._id}`)}
+                        className="p-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                        title="View Details"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </button>
+                      
                       {currentUser?.role === 'super_admin' && user._id !== currentUser._id && (
                         <>
                           <select
@@ -470,17 +610,19 @@ export default function UserManagement() {
                           
                           <select
                             value={user.status}
-                            onChange={(e) => updateUserStatus(user._id, e.target.value as 'active' | 'inactive' | 'banned')}
+                            onChange={(e) => updateUserStatus(user._id, e.target.value as 'pending' | 'approved' | 'rejected' | 'suspended')}
                             className="text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                           >
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
-                            <option value="banned">Banned</option>
+                            <option value="pending">Pending</option>
+                            <option value="approved">Approved</option>
+                            <option value="rejected">Rejected</option>
+                            <option value="suspended">Suspended</option>
                           </select>
 
                           <button
                             onClick={() => deleteUser(user._id)}
                             className="p-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                            title="Delete User"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>

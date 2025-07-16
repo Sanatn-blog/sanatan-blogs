@@ -1,38 +1,53 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
+import Blog from '@/models/Blog';
 
 export async function GET() {
   try {
-    console.log('Testing API connection...');
-    
+    // Check environment variables
+    const envCheck = {
+      MONGODB_URI: !!process.env.MONGODB_URI,
+      JWT_SECRET: !!process.env.JWT_SECRET,
+      NODE_ENV: process.env.NODE_ENV
+    };
+
+    console.log('Environment check:', envCheck);
+
+    if (!process.env.MONGODB_URI) {
+      return NextResponse.json({
+        status: 'error',
+        message: 'MONGODB_URI environment variable is not set',
+        envCheck
+      }, { status: 500 });
+    }
+
     // Test database connection
+    console.log('Testing database connection...');
     await connectDB();
     console.log('Database connected successfully');
-    
-    // Test environment variables
-    const envCheck = {
-      mongodb: !!process.env.MONGODB_URI,
-      jwt: !!process.env.JWT_SECRET,
-      cloudinary: {
-        cloudName: !!process.env.CLOUDINARY_CLOUD_NAME,
-        apiKey: !!process.env.CLOUDINARY_API_KEY,
-        apiSecret: !!process.env.CLOUDINARY_API_SECRET
-      }
-    };
-    
-    console.log('Environment check:', envCheck);
-    
+
+    // Test basic database operations
+    const blogCount = await Blog.countDocuments();
+    const categories = await Blog.distinct('category');
+
     return NextResponse.json({
-      message: 'API is working',
-      database: 'Connected',
-      environment: envCheck
+      status: 'success',
+      message: 'Database connection successful',
+      data: {
+        blogCount,
+        categories,
+        timestamp: new Date().toISOString()
+      },
+      envCheck
     });
-    
+
   } catch (error) {
-    console.error('Test API error:', error);
+    console.error('Test endpoint error:', error);
+    
     return NextResponse.json({
-      error: 'API test failed',
-      details: error instanceof Error ? error.message : 'Unknown error'
+      status: 'error',
+      message: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString()
     }, { status: 500 });
   }
 } 

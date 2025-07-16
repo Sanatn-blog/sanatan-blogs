@@ -141,16 +141,20 @@ export default function WriteBlog() {
       });
 
       if (response.ok) {
-        const blog = await response.json();
+        const data = await response.json();
+        
+        // Handle both direct blog object (for drafts) and nested blog object (for published)
+        const blog = data.blog || data;
+        
         setFormData({
           _id: blog._id,
-          title: blog.title,
-          excerpt: blog.excerpt,
-          content: blog.content,
-          category: blog.category,
-          tags: blog.tags || [],
+          title: blog.title || '',
+          excerpt: blog.excerpt || '',
+          content: blog.content || '',
+          category: blog.category || '',
+          tags: Array.isArray(blog.tags) ? blog.tags : [],
           featuredImage: blog.featuredImage || '',
-          status: blog.status,
+          status: blog.status || 'draft',
           seo: blog.seo || {
             title: '',
             description: '',
@@ -201,11 +205,11 @@ export default function WriteBlog() {
   };
 
   const addTag = () => {
-    if (tagInput.trim() && !formData.tags.includes(tagInput.trim().toLowerCase())) {
+    if (tagInput.trim() && !(formData.tags || []).includes(tagInput.trim().toLowerCase())) {
       const newTag = tagInput.trim().toLowerCase();
       setFormData(prev => ({
         ...prev,
-        tags: [...prev.tags, newTag]
+        tags: [...(prev.tags || []), newTag]
       }));
       setTagInput('');
     }
@@ -214,7 +218,7 @@ export default function WriteBlog() {
   const removeTag = (tagToRemove: string) => {
     setFormData(prev => ({
       ...prev,
-      tags: prev.tags.filter(tag => tag !== tagToRemove)
+      tags: (prev.tags || []).filter(tag => tag !== tagToRemove)
     }));
   };
 
@@ -249,21 +253,21 @@ export default function WriteBlog() {
     console.log('Validating form...');
     const newErrors: Record<string, string> = {};
 
-    if (!formData.title.trim()) {
+    if (!(formData.title || '').trim()) {
       newErrors.title = 'Title is required';
-    } else if (formData.title.length < 3) {
+    } else if ((formData.title || '').length < 3) {
       newErrors.title = 'Title must be at least 3 characters';
     }
 
-    if (!formData.excerpt.trim()) {
+    if (!(formData.excerpt || '').trim()) {
       newErrors.excerpt = 'Excerpt is required';
-    } else if (formData.excerpt.length < 10) {
+    } else if ((formData.excerpt || '').length < 10) {
       newErrors.excerpt = 'Excerpt must be at least 10 characters';
     }
 
-    if (!formData.content.trim()) {
+    if (!(formData.content || '').trim()) {
       newErrors.content = 'Content is required';
-    } else if (formData.content.length < 50) {
+    } else if ((formData.content || '').length < 50) {
       newErrors.content = 'Content must be at least 50 characters';
     }
 
@@ -291,10 +295,10 @@ export default function WriteBlog() {
     setErrors({ submit: '' });
 
     try {
-      let finalImageUrl = formData.featuredImage;
+      let finalImageUrl = formData.featuredImage || '';
 
       // Upload image to Cloudinary only when publishing
-      if (status === 'published' && selectedImageFile && formData.featuredImage.startsWith('blob:')) {
+      if (status === 'published' && selectedImageFile && (formData.featuredImage || '').startsWith('blob:')) {
         console.log('Uploading image to Cloudinary...');
         setUploadingImage(true);
         
@@ -420,9 +424,9 @@ export default function WriteBlog() {
     }
 
     const newContent = 
-      formData.content.slice(0, start) + 
+      (formData.content || '').slice(0, start) + 
       replacement + 
-      formData.content.slice(end);
+      (formData.content || '').slice(end);
     
     setFormData(prev => ({ ...prev, content: newContent }));
     
@@ -505,7 +509,7 @@ export default function WriteBlog() {
                   </label>
                   <input
                     type="text"
-                    value={formData.title}
+                    value={formData.title || ''}
                     onChange={(e) => handleInputChange('title', e.target.value)}
                     placeholder="Enter an engaging title for your blog..."
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-lg placeholder-gray-400 text-gray-900 bg-white"
@@ -523,7 +527,7 @@ export default function WriteBlog() {
                     📄 Excerpt *
                   </label>
                   <textarea
-                    value={formData.excerpt}
+                    value={formData.excerpt || ''}
                     onChange={(e) => handleInputChange('excerpt', e.target.value)}
                     placeholder="Write a compelling summary that makes readers want to know more..."
                     rows={3}
@@ -535,7 +539,7 @@ export default function WriteBlog() {
                       <p className="text-red-600 text-sm">⚠️ {errors.excerpt}</p>
                     )}
                     <p className="text-gray-500 text-sm ml-auto">
-                      {formData.excerpt.length}/300
+                      {(formData.excerpt || '').length}/300
                     </p>
                   </div>
                 </div>
@@ -602,7 +606,7 @@ export default function WriteBlog() {
 
                   <textarea
                     id="content"
-                    value={formData.content}
+                    value={formData.content || ''}
                     onChange={(e) => handleInputChange('content', e.target.value)}
                     placeholder="Start writing your amazing content here...
 
@@ -624,10 +628,10 @@ You can write your thoughts here...
                   )}
                   <div className="flex justify-between items-center mt-2">
                     <p className="text-gray-500 text-sm">
-                      📊 {formData.content.length} characters
+                      📊 {(formData.content || '').length} characters
                     </p>
                     <p className="text-gray-500 text-sm">
-                      ⏱️ ~{Math.ceil(formData.content.length / 1000)} min read
+                      ⏱️ ~{Math.ceil((formData.content || '').length / 1000)} min read
                     </p>
                   </div>
                 </div>
@@ -664,7 +668,7 @@ You can write your thoughts here...
               <div className="flex items-center justify-between">
                 <div className="text-sm text-gray-500">
                   {isSubmitting 
-                    ? (formData.status === 'draft' ? '💾 Saving draft...' : '🚀 Publishing...') 
+                    ? ((formData.status || 'draft') === 'draft' ? '💾 Saving draft...' : '🚀 Publishing...') 
                     : '✅ Ready to save'
                   }
                 </div>
@@ -701,7 +705,7 @@ You can write your thoughts here...
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">🖼️ Featured Image</h3>
               
-              {formData.featuredImage ? (
+              {formData.featuredImage && formData.featuredImage !== '' ? (
                 <div className="relative group">
                   <Image
                     src={formData.featuredImage}
@@ -714,8 +718,8 @@ You can write your thoughts here...
                     onClick={() => {
                       setFormData(prev => ({ ...prev, featuredImage: '' }));
                       setSelectedImageFile(null);
-                      if (formData.featuredImage.startsWith('blob:')) {
-                        URL.revokeObjectURL(formData.featuredImage);
+                      if ((formData.featuredImage || '').startsWith('blob:')) {
+                        URL.revokeObjectURL(formData.featuredImage || '');
                       }
                     }}
                     className="absolute top-2 right-2 p-2 bg-red-600 text-white rounded-full hover:bg-red-700 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -765,7 +769,7 @@ You can write your thoughts here...
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">🏷️ Category *</h3>
               <select
-                value={formData.category}
+                value={formData.category || ''}
                 onChange={(e) => handleInputChange('category', e.target.value)}
                 className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white text-gray-900"
               >
@@ -831,7 +835,7 @@ You can write your thoughts here...
                   </label>
                   <input
                     type="text"
-                    value={formData.seo.title}
+                    value={formData.seo.title || ''}
                     onChange={(e) => setFormData(prev => ({
                       ...prev,
                       seo: { ...prev.seo, title: e.target.value }
@@ -845,7 +849,7 @@ You can write your thoughts here...
                     Meta Description
                   </label>
                   <textarea
-                    value={formData.seo.description}
+                    value={formData.seo.description || ''}
                     onChange={(e) => setFormData(prev => ({
                       ...prev,
                       seo: { ...prev.seo, description: e.target.value }
@@ -856,7 +860,7 @@ You can write your thoughts here...
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none text-gray-900 bg-white"
                   />
                   <p className="text-gray-400 text-xs mt-1">
-                    {formData.seo.description.length}/160 characters
+                    {(formData.seo.description || '').length}/160 characters
                   </p>
                 </div>
                 <div>
@@ -865,7 +869,7 @@ You can write your thoughts here...
                   </label>
                   <input
                     type="text"
-                    value={formData.seo.keywords}
+                    value={formData.seo.keywords || ''}
                     onChange={(e) => setFormData(prev => ({
                       ...prev,
                       seo: { ...prev.seo, keywords: e.target.value }

@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { 
   Calendar, 
   User, 
@@ -16,93 +17,131 @@ import {
   Facebook,
   Twitter,
   Linkedin,
-  Copy
+  Copy,
+  Loader2
 } from 'lucide-react';
 
-// Mock data - Replace with actual API call
-const mockBlog = {
-  _id: '1',
-  title: 'Timeless Wisdom from Gita: Finding Peace in Life',
-  content: `
-    <div class="prose max-w-none">
-      <p class="lead">The Bhagavad Gita is a precious gem of Indian philosophy that provides guidance in every aspect of life. In this article, we will understand some important verses of the Gita that help bring peace and satisfaction in life.</p>
-      
-      <h2>The Principle of Karma</h2>
-      <blockquote class="border-l-4 border-orange-500 pl-4 italic text-gray-700 my-6">
-        "You have the right to perform your prescribed duty, but not to the fruits of action.<br>
-        Never consider yourself the cause of the results of your activities, and never be attached to not doing your duty."
-      </blockquote>
-      
-      <p>This verse teaches us that our right is only in doing karma, not in the results. When we leave the worry of results and follow our duty, peace comes to the mind.</p>
-      
-      <h2>Immortality of the Soul</h2>
-      <p>In the Gita, Lord Krishna explains to Arjuna that the soul is immortal. This knowledge liberates from the fear of death and gives life a new perspective.</p>
-      
-      <h2>Importance of Yoga</h2>
-      <p>In the Gita, yoga is described as the art of living life. Yoga means balance - in action, in food, in sleep, and in contemplation.</p>
-      
-      <h2>Conclusion</h2>
-      <p>These teachings of the Gita are as relevant today as they were thousands of years ago. By adopting them in our lives, we can find peace and happiness.</p>
-    </div>
-  `,
-  excerpt: 'Learn from the verses of Bhagavad Gita how to find peace and satisfaction in life.',
-  author: {
-    _id: 'author1',
-    name: 'Ram Sharma',
-    bio: 'Spiritual Writer and Yoga Teacher',
-    avatar: '/avatar1.jpg',
-    socialLinks: {
-      twitter: 'https://twitter.com/ramsharma',
-      linkedin: 'https://linkedin.com/in/ramsharma'
-    }
-  },
-  featuredImage: '/blog1.jpg',
-  category: 'Spirituality',
-  tags: ['Gita', 'Peace', 'Life', 'Yoga', 'Karma'],
-  publishedAt: '2024-01-15T10:30:00Z',
-  updatedAt: '2024-01-15T10:30:00Z',
-  readingTime: '5 min',
-  views: 1250,
-  likes: 89,
-  bookmarks: 45,
-  comments: 12,
-  featured: true,
-  status: 'published',
-  seo: {
-    metaTitle: 'Timeless Wisdom from Gita: Finding Peace in Life | Sanatan Blogs',
-    metaDescription: 'Learn from the verses of Bhagavad Gita how to find peace and satisfaction in life. Deep discussion on Karma Yoga and spiritual knowledge.',
-    keywords: ['Bhagavad Gita', 'Spirituality', 'Yoga', 'Peace', 'Life Philosophy', 'Karma Yoga']
-  }
-};
+// TypeScript interfaces
+interface Author {
+  _id: string;
+  name: string;
+  bio?: string;
+  avatar?: string;
+  socialLinks?: {
+    twitter?: string;
+    linkedin?: string;
+    website?: string;
+  };
+}
 
-const relatedBlogs = [
-  {
-    _id: '2',
-    title: 'Yoga and Meditation: Foundation of Healthy Living',
-    excerpt: 'How to improve your life with the power of yoga and meditation.',
-    featuredImage: '/blog2.jpg',
-    category: 'Yoga',
-    readingTime: '7 min'
-  },
-  {
-    _id: '3',
-    title: 'Vedanta Philosophy: Search for Truth',
-    excerpt: 'Understand and adopt the deep principles of Vedanta philosophy in life.',
-    featuredImage: '/blog3.jpg',
-    category: 'Philosophy',
-    readingTime: '10 min'
-  }
-];
+interface Blog {
+  _id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  content: string;
+  featuredImage?: string;
+  author: Author;
+  category: string;
+  tags: string[];
+  publishedAt?: string;
+  updatedAt: string;
+  readingTime: number;
+  views: number;
+  likes: string[];
+  comments: string[];
+  featured?: boolean;
+  status: 'draft' | 'published' | 'archived';
+  seo?: {
+    metaTitle?: string;
+    metaDescription?: string;
+    metaKeywords?: string[];
+  };
+}
+
+interface RelatedBlog {
+  _id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  featuredImage?: string;
+  category: string;
+  readingTime: number;
+  author: {
+    name: string;
+    avatar?: string;
+  };
+}
+
+interface BlogResponse {
+  blog: Blog;
+  relatedBlogs: RelatedBlog[];
+  navigation?: {
+    next?: { title: string; slug: string };
+    previous?: { title: string; slug: string };
+  };
+}
 
 export default function BlogDetailPage() {
-  const [blog] = useState(mockBlog);
+  const params = useParams();
+  const blogId = params.id as string;
+  
+  const [blog, setBlog] = useState<Blog | null>(null);
+  const [relatedBlogs, setRelatedBlogs] = useState<RelatedBlog[]>([]);
   const [isLiked, setIsLiked] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
-  const [likes, setLikes] = useState(blog.likes);
-  const [bookmarks, setBookmarks] = useState(blog.bookmarks);
+  const [likes, setLikes] = useState(0);
+  const [bookmarks, setBookmarks] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const formatDate = (dateString: string) => {
+  // Fetch blog data
+  useEffect(() => {
+    const fetchBlog = async () => {
+      if (!blogId) return;
+      
+      try {
+        setLoading(true);
+        setError(null);
+        
+        console.log('Fetching blog with ID:', blogId);
+        const response = await fetch(`/api/blogs/${blogId}`);
+        
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error('Blog not found');
+          }
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data: BlogResponse = await response.json();
+        
+        if (!data.blog) {
+          throw new Error('Invalid blog data received');
+        }
+        
+        console.log('Blog data received:', data.blog);
+        setBlog(data.blog);
+        setRelatedBlogs(data.relatedBlogs || []);
+        setLikes(data.blog.likes?.length || 0);
+        setBookmarks(0); // Bookmarks not implemented in backend yet
+        
+      } catch (err) {
+        console.error('Error fetching blog:', err);
+        const errorMessage = err instanceof Error ? err.message : 'Failed to load blog';
+        setError(errorMessage);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBlog();
+  }, [blogId]);
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'Recently';
     const date = new Date(dateString);
     return date.toLocaleDateString('hi-IN', {
       year: 'numeric',
@@ -111,14 +150,28 @@ export default function BlogDetailPage() {
     });
   };
 
-  const handleLike = () => {
+  const handleLike = async () => {
+    if (!blog) return;
+    
     setIsLiked(!isLiked);
     setLikes(isLiked ? likes - 1 : likes + 1);
+    
+    // TODO: Implement like API call
+    // const response = await fetch(`/api/blogs/${blog._id}/like`, {
+    //   method: 'POST',
+    //   headers: {
+    //     'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+    //   }
+    // });
   };
 
-  const handleBookmark = () => {
+  const handleBookmark = async () => {
+    if (!blog) return;
+    
     setIsBookmarked(!isBookmarked);
     setBookmarks(isBookmarked ? bookmarks - 1 : bookmarks + 1);
+    
+    // TODO: Implement bookmark API call
   };
 
   const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
@@ -133,7 +186,7 @@ export default function BlogDetailPage() {
     {
       name: 'Twitter',
       icon: Twitter,
-      url: `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(blog.title)}`,
+      url: `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(blog?.title || '')}`,
       color: 'text-blue-400'
     },
     {
@@ -150,12 +203,54 @@ export default function BlogDetailPage() {
     setShowShareMenu(false);
   };
 
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 animate-spin text-orange-600 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Loading article...</h2>
+          <p className="text-gray-600">Please wait while we fetch the content</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">📖</div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Article Not Found</h2>
+          <p className="text-gray-600 mb-8">{error}</p>
+          <Link
+            href="/blogs"
+            className="inline-flex items-center space-x-2 text-orange-600 hover:text-orange-700 font-medium"
+          >
+            <ChevronLeft className="h-5 w-5" />
+            <span>Back to All Articles</span>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // No blog data
   if (!blog) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="text-6xl mb-4">📖</div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Loading article...</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Article Not Found</h2>
+          <p className="text-gray-600 mb-8">The requested article could not be found.</p>
+          <Link
+            href="/blogs"
+            className="inline-flex items-center space-x-2 text-orange-600 hover:text-orange-700 font-medium"
+          >
+            <ChevronLeft className="h-5 w-5" />
+            <span>Back to All Articles</span>
+          </Link>
         </div>
       </div>
     );
@@ -163,37 +258,6 @@ export default function BlogDetailPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* SEO Meta Tags */}
-      <head>
-        <title>{blog.seo.metaTitle}</title>
-        <meta name="description" content={blog.seo.metaDescription} />
-        <meta name="keywords" content={blog.seo.keywords.join(', ')} />
-        <meta name="author" content={blog.author.name} />
-        <meta name="robots" content="index, follow" />
-        
-        {/* Open Graph */}
-        <meta property="og:title" content={blog.title} />
-        <meta property="og:description" content={blog.excerpt} />
-        <meta property="og:image" content={blog.featuredImage} />
-        <meta property="og:url" content={shareUrl} />
-        <meta property="og:type" content="article" />
-        <meta property="article:author" content={blog.author.name} />
-        <meta property="article:published_time" content={blog.publishedAt} />
-        <meta property="article:modified_time" content={blog.updatedAt} />
-        <meta property="article:section" content={blog.category} />
-        {blog.tags.map((tag) => (
-          <meta key={tag} property="article:tag" content={tag} />
-        ))}
-        
-        {/* Twitter Card */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={blog.title} />
-        <meta name="twitter:description" content={blog.excerpt} />
-        <meta name="twitter:image" content={blog.featuredImage} />
-        
-        <link rel="canonical" href={shareUrl} />
-      </head>
-
       {/* Navigation Breadcrumb */}
       <nav className="bg-gray-50 py-4">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -238,7 +302,7 @@ export default function BlogDetailPage() {
               </div>
               <div className="flex items-center">
                 <Clock className="h-5 w-5 mr-2" />
-                <span>{blog.readingTime}</span>
+                <span>{blog.readingTime} min read</span>
               </div>
               <div className="flex items-center">
                 <Eye className="h-5 w-5 mr-2" />
@@ -247,33 +311,42 @@ export default function BlogDetailPage() {
             </div>
 
             {/* Tags */}
-            <div className="flex flex-wrap justify-center gap-2">
-              {blog.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm hover:bg-orange-100 hover:text-orange-700 transition-colors"
-                >
-                  #{tag}
-                </span>
-              ))}
-            </div>
+            {blog.tags && blog.tags.length > 0 && (
+              <div className="flex flex-wrap justify-center gap-2">
+                {blog.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm hover:bg-orange-100 hover:text-orange-700 transition-colors"
+                  >
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </header>
 
       {/* Featured Image */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 mb-12">
-        <div className="relative h-96 bg-gradient-to-r from-orange-400 to-orange-600 rounded-2xl overflow-hidden shadow-2xl">
-          <div className="absolute inset-0 bg-black opacity-20"></div>
-          <div className="absolute bottom-6 left-6 right-6">
-            <div className="bg-white bg-opacity-90 backdrop-blur-sm rounded-lg p-4">
-              <p className="text-gray-800 font-medium">
-                📖 Estimated reading time: {blog.readingTime}
-              </p>
+      {blog.featuredImage && (
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 mb-12">
+          <div className="relative h-96 bg-gradient-to-r from-orange-400 to-orange-600 rounded-2xl overflow-hidden shadow-2xl">
+            <img 
+              src={blog.featuredImage} 
+              alt={blog.title}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-black opacity-20"></div>
+            <div className="absolute bottom-6 left-6 right-6">
+              <div className="bg-white bg-opacity-90 backdrop-blur-sm rounded-lg p-4">
+                <p className="text-gray-800 font-medium">
+                  📖 Estimated reading time: {blog.readingTime} min
+                </p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Article Content */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -349,7 +422,7 @@ export default function BlogDetailPage() {
                 className="w-full flex items-center justify-center space-x-2 py-3 px-4 rounded-xl bg-gray-100 text-gray-700 hover:bg-green-50 hover:text-green-600 transition-colors"
               >
                 <MessageCircle className="h-5 w-5" />
-                <span className="font-medium">{blog.comments}</span>
+                <span className="font-medium">{blog.comments?.length || 0}</span>
               </Link>
             </div>
           </div>
@@ -372,29 +445,33 @@ export default function BlogDetailPage() {
                 </div>
                 <div className="flex-1">
                   <h4 className="text-lg font-bold text-gray-900">{blog.author.name}</h4>
-                  <p className="text-gray-600 mb-3">{blog.author.bio}</p>
-                  <div className="flex space-x-2">
-                    {blog.author.socialLinks?.twitter && (
-                      <a
-                        href={blog.author.socialLinks.twitter}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-400 hover:text-blue-500"
-                      >
-                        <Twitter className="h-5 w-5" />
-                      </a>
-                    )}
-                    {blog.author.socialLinks?.linkedin && (
-                      <a
-                        href={blog.author.socialLinks.linkedin}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-700"
-                      >
-                        <Linkedin className="h-5 w-5" />
-                      </a>
-                    )}
-                  </div>
+                  {blog.author.bio && (
+                    <p className="text-gray-600 mb-3">{blog.author.bio}</p>
+                  )}
+                  {blog.author.socialLinks && (
+                    <div className="flex space-x-2">
+                      {blog.author.socialLinks.twitter && (
+                        <a
+                          href={blog.author.socialLinks.twitter}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-400 hover:text-blue-500"
+                        >
+                          <Twitter className="h-5 w-5" />
+                        </a>
+                      )}
+                      {blog.author.socialLinks.linkedin && (
+                        <a
+                          href={blog.author.socialLinks.linkedin}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-700"
+                        >
+                          <Linkedin className="h-5 w-5" />
+                        </a>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -403,56 +480,65 @@ export default function BlogDetailPage() {
       </main>
 
       {/* Related Articles */}
-      <section className="py-16 bg-gray-50 mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
-            Related Articles
-          </h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {relatedBlogs.map((relatedBlog) => (
-              <article
-                key={relatedBlog._id}
-                className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2"
-              >
-                <div className="relative h-48 bg-gradient-to-r from-gray-400 to-gray-600">
-                  <div className="absolute top-4 left-4">
-                    <span className="bg-white bg-opacity-90 text-gray-900 px-2 py-1 rounded-full text-xs font-medium">
-                      {relatedBlog.category}
-                    </span>
+      {relatedBlogs.length > 0 && (
+        <section className="py-16 bg-gray-50 mt-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
+              Related Articles
+            </h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {relatedBlogs.map((relatedBlog) => (
+                <article
+                  key={relatedBlog._id}
+                  className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2"
+                >
+                  <div className="relative h-48 bg-gradient-to-r from-gray-400 to-gray-600">
+                    {relatedBlog.featuredImage && (
+                      <img 
+                        src={relatedBlog.featuredImage} 
+                        alt={relatedBlog.title}
+                        className="w-full h-full object-cover"
+                      />
+                    )}
+                    <div className="absolute top-4 left-4">
+                      <span className="bg-white bg-opacity-90 text-gray-900 px-2 py-1 rounded-full text-xs font-medium">
+                        {relatedBlog.category}
+                      </span>
+                    </div>
                   </div>
-                </div>
 
-                <div className="p-6">
-                  <h3 className="text-xl font-bold text-gray-900 mb-3 hover:text-orange-600 transition-colors">
-                    <Link href={`/blogs/${relatedBlog._id}`}>
-                      {relatedBlog.title}
-                    </Link>
-                  </h3>
+                  <div className="p-6">
+                    <h3 className="text-xl font-bold text-gray-900 mb-3 hover:text-orange-600 transition-colors">
+                      <Link href={`/blogs/${relatedBlog.slug}`}>
+                        {relatedBlog.title}
+                      </Link>
+                    </h3>
 
-                  <p className="text-gray-600 mb-4">
-                    {relatedBlog.excerpt}
-                  </p>
+                    <p className="text-gray-600 mb-4">
+                      {relatedBlog.excerpt}
+                    </p>
 
-                  <div className="flex items-center justify-between">
-                    <span className="flex items-center text-sm text-gray-500">
-                      <Clock className="h-4 w-4 mr-1" />
-                      {relatedBlog.readingTime}
-                    </span>
+                    <div className="flex items-center justify-between">
+                      <span className="flex items-center text-sm text-gray-500">
+                        <Clock className="h-4 w-4 mr-1" />
+                        {relatedBlog.readingTime} min
+                      </span>
 
-                    <Link
-                      href={`/blogs/${relatedBlog._id}`}
-                      className="text-orange-600 hover:text-orange-700 font-medium"
-                    >
-                      Read →
-                    </Link>
+                      <Link
+                        href={`/blogs/${relatedBlog.slug}`}
+                        className="text-orange-600 hover:text-orange-700 font-medium"
+                      >
+                        Read →
+                      </Link>
+                    </div>
                   </div>
-                </div>
-              </article>
-            ))}
+                </article>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Back to Blogs */}
       <div className="py-8 text-center">

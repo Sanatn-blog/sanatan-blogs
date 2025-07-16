@@ -1,17 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken, JWTPayload } from '@/lib/jwt';
+import { verifyToken, SimpleJWTPayload } from '@/lib/jwt';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 
 export interface AuthenticatedRequest extends NextRequest {
-  user?: JWTPayload & {
+  user?: {
+    userId: string;
     _id: string;
+    email: string;
+    role: string;
+    status: string;
   };
 }
 
 export async function authenticateUser(request: AuthenticatedRequest): Promise<{
   success: boolean;
-  user?: JWTPayload & { _id: string };
+  user?: {
+    userId: string;
+    _id: string;
+    email: string;
+    role: string;
+    status: string;
+  };
   error?: string;
 }> {
   try {
@@ -50,13 +60,16 @@ export async function authenticateUser(request: AuthenticatedRequest): Promise<{
       return { success: false, error: 'User not approved' };
     }
 
-    const userWithId = {
-      ...decoded,
-      _id: user._id.toString()
+    const userWithDetails = {
+      userId: user._id.toString(),
+      _id: user._id.toString(),
+      email: user.email,
+      role: user.role,
+      status: user.status
     };
 
     console.log('Authentication successful');
-    return { success: true, user: userWithId };
+    return { success: true, user: userWithDetails };
   } catch (error) {
     console.error('Authentication error:', error);
     return { success: false, error: 'Authentication failed' };
