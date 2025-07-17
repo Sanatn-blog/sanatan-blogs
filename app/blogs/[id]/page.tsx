@@ -20,6 +20,7 @@ import {
   Copy,
   Loader2
 } from 'lucide-react';
+import Image from 'next/image';
 
 // TypeScript interfaces
 interface Author {
@@ -81,6 +82,46 @@ interface BlogResponse {
     previous?: { title: string; slug: string };
   };
 }
+
+// Function to convert plain text to formatted HTML
+const formatContent = (content: string): string => {
+  if (!content) return '';
+  // Split content into lines
+  const lines = content.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+  
+  let formattedContent = '';
+  
+  lines.forEach((line) => {
+    // Check for headings (lines that start with specific patterns)
+    if (line.startsWith('🙏॥') || line.startsWith('🌷') || line.startsWith('**') || line.startsWith('👉')) { // This is likely a heading or special section
+      if (line.includes('**')) {
+        // Extract text between ** for headings
+        const headingText = line.replace(/\*\*/g, '').replace(/🙏॥|🌷|👉/g, '').trim();
+        formattedContent += `<h2 class="text-2xl font-bold text-gray-900 mb-4">${headingText}</h2>`;
+      } else {
+        // Regular heading
+        const headingText = line.replace(/🙏॥|🌷|👉/g, '').trim();
+        formattedContent += `<h3 class="text-xl font-semibold text-gray-800 mb-4">${headingText}</h3>`;
+      }
+    } else if (line.startsWith('-') || line.startsWith('•')) {      // This is a list item
+      const listText = line.replace(/^[-•]\s*/, '').trim();
+      formattedContent += `<li class="mb-2 text-gray-700">${listText}</li>`;
+    } else if (line.includes('॥') || line.includes('॥')) { // This is likely a Sanskrit verse or quote
+      formattedContent += `<blockquote class="bg-orange-50 border-l-4 border-orange-500 italic text-gray-700">${line}</blockquote>`;
+    } else if (line.length > 0) {
+      // Regular paragraph
+      formattedContent += `<p class="mb-4 text-gray-700 leading-relaxed">${line}</p>`;
+    }
+  });
+  
+  // Wrap list items in ul tags if they exist
+  formattedContent = formattedContent.replace(
+    /(<li[^>]*>.*?<\/li>)+/g,
+    (match) => `<ul class="list-disc list-inside mb-4 space-y-2">${match}</ul>`
+  );
+  
+  return formattedContent;
+};
 
 export default function BlogDetailPage() {
   const params = useParams();
@@ -206,11 +247,115 @@ export default function BlogDetailPage() {
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-orange-600 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Loading article...</h2>
-          <p className="text-gray-600">Please wait while we fetch the content</p>
+      <div className="min-h-screen bg-white">
+        {/* Navigation Breadcrumb Skeleton */}
+        <nav className="bg-gray-50 py-4">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center space-x-2">
+              <div className="h-4 w-16 bg-gray-200 rounded animate-pulse"></div>
+              <ChevronRight className="h-4 w-4 text-gray-400" />
+              <div className="h-4 w-20 bg-gray-200 rounded animate-pulse"></div>
+              <ChevronRight className="h-4 w-4 text-gray-400" />
+              <div className="h-4 w-32 bg-gray-300 rounded animate-pulse"></div>
+            </div>
+          </div>
+        </nav>
+
+        {/* Article Header Skeleton */}
+        <header className="py-12 bg-gradient-to-r from-orange-50 to-yellow-50">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center">
+              {/* Category Badge Skeleton */}
+              <div className="inline-block h-8 w-24 bg-orange-200 rounded-full animate-pulse mb-6"></div>
+
+              {/* Title Skeleton */}
+              <div className="space-y-3 mb-6">
+                <div className="h-12 bg-gray-200 rounded-lg animate-pulse mx-auto max-w-2xl"></div>
+                <div className="h-12 bg-gray-200 rounded-lg animate-pulse mx-auto max-w-xl"></div>
+              </div>
+
+              {/* Excerpt Skeleton */}
+              <div className="space-y-2 mb-8 max-w-3xl mx-auto">
+                <div className="h-6 bg-gray-200 rounded animate-pulse"></div>
+                <div className="h-6 bg-gray-200 rounded animate-pulse"></div>
+                <div className="h-6 bg-gray-200 rounded w-3/4 animate-pulse"></div>
+              </div>
+
+              {/* Meta Information Skeleton */}
+              <div className="flex flex-wrap items-center justify-center gap-6 mb-8">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="flex items-center">
+                    <div className="h-5 w-5 bg-gray-300 rounded mr-2 animate-pulse"></div>
+                    <div className="h-4 w-20 bg-gray-200 rounded animate-pulse"></div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Tags Skeleton */}
+              <div className="flex flex-wrap justify-center gap-2">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-6 w-16 bg-gray-200 rounded-full animate-pulse"></div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Featured Image Skeleton */}
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 mb-12">
+          <div className="relative h-96 bg-gradient-to-r from-gray-300 to-gray-400 rounded-2xl overflow-hidden shadow-2xl animate-pulse">
+            <div className="absolute bottom-6 left-6 right-6">
+              <div className="bg-white bg-opacity-90 backdrop-blur-sm rounded-lg p-4">
+                <div className="h-5 w-48 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Article Content Skeleton */}
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            {/* Sidebar Skeleton */}
+            <div className="lg:col-span-1 order-2 lg:order-1">
+              <div className="sticky top-24 space-y-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="h-12 bg-gray-200 rounded-xl animate-pulse"></div>
+                ))}
+              </div>
+            </div>
+
+            {/* Main Content Skeleton */}
+            <div className="lg:col-span-3 order-1 lg:order-2">
+              <div className="space-y-6">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div key={i} className="space-y-3">
+                    <div className="h-6 bg-gray-200 rounded animate-pulse"></div>
+                    <div className="h-6 bg-gray-200 rounded animate-pulse"></div>
+                    <div className="h-6 bg-gray-200 rounded w-5/6 animate-pulse"></div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Author Bio Skeleton */}
+              <div className="mt-12 p-6 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-2xl border border-orange-100">
+                <div className="h-6 w-32 bg-gray-200 rounded mb-4 animate-pulse"></div>
+                <div className="flex items-start space-x-4">
+                  <div className="w-16 h-16 bg-gray-300 rounded-full animate-pulse"></div>
+                  <div className="flex-1 space-y-3">
+                    <div className="h-5 w-24 bg-gray-200 rounded animate-pulse"></div>
+                    <div className="h-4 w-full bg-gray-200 rounded animate-pulse"></div>
+                    <div className="h-4 w-3/4 bg-gray-200 rounded animate-pulse"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+
+        {/* Loading Indicator */}
+        <div className="fixed bottom-8 right-8 bg-orange-600 text-white px-6 py-3 rounded-full shadow-lg flex items-center space-x-2">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          <span className="font-medium">Loading article...</span>
         </div>
       </div>
     );
@@ -294,7 +439,9 @@ export default function BlogDetailPage() {
             <div className="flex flex-wrap items-center justify-center gap-6 text-gray-600 mb-8">
               <div className="flex items-center">
                 <User className="h-5 w-5 mr-2" />
-                <span>{blog.author.name}</span>
+                <Link href={`/authors/${blog.author._id}`} className="hover:text-orange-600 transition-colors font-semibold">
+                  {blog.author.name}
+                </Link>
               </div>
               <div className="flex items-center">
                 <Calendar className="h-5 w-5 mr-2" />
@@ -331,10 +478,12 @@ export default function BlogDetailPage() {
       {blog.featuredImage && (
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 mb-12">
           <div className="relative h-96 bg-gradient-to-r from-orange-400 to-orange-600 rounded-2xl overflow-hidden shadow-2xl">
-            <img 
+            <Image 
               src={blog.featuredImage} 
               alt={blog.title}
+              fill
               className="w-full h-full object-cover"
+              style={{objectFit: 'cover'}}
             />
             <div className="absolute inset-0 bg-black opacity-20"></div>
             <div className="absolute bottom-6 left-6 right-6">
@@ -353,7 +502,7 @@ export default function BlogDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Sidebar - Social Actions */}
           <div className="lg:col-span-1 order-2 lg:order-1">
-            <div className="sticky top-8 space-y-4">
+            <div className="sticky top-24 space-y-4">
               {/* Like Button */}
               <button
                 onClick={handleLike}
@@ -431,7 +580,7 @@ export default function BlogDetailPage() {
           <div className="lg:col-span-3 order-1 lg:order-2">
             <article className="prose prose-lg max-w-none">
               <div 
-                dangerouslySetInnerHTML={{ __html: blog.content }}
+                dangerouslySetInnerHTML={{ __html: formatContent(blog.content) }}
                 className="text-gray-800 leading-relaxed"
               />
             </article>
@@ -444,7 +593,11 @@ export default function BlogDetailPage() {
                   {blog.author.name.charAt(0)}
                 </div>
                 <div className="flex-1">
-                  <h4 className="text-lg font-bold text-gray-900">{blog.author.name}</h4>
+                  <h4 className="text-lg font-bold text-gray-900">
+                    <Link href={`/authors/${blog.author._id}`} className="hover:text-orange-600 transition-colors">
+                      {blog.author.name}
+                    </Link>
+                  </h4>
                   {blog.author.bio && (
                     <p className="text-gray-600 mb-3">{blog.author.bio}</p>
                   )}
@@ -495,9 +648,11 @@ export default function BlogDetailPage() {
                 >
                   <div className="relative h-48 bg-gradient-to-r from-gray-400 to-gray-600">
                     {relatedBlog.featuredImage && (
-                      <img 
+                      <Image 
                         src={relatedBlog.featuredImage} 
                         alt={relatedBlog.title}
+                        width={400}
+                        height={192}
                         className="w-full h-full object-cover"
                       />
                     )}

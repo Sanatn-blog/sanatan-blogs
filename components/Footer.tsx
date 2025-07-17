@@ -10,7 +10,14 @@ import {
   BookOpen,
   Users,
   Globe,
-  Send
+  Send,
+  Bell,
+  Sparkles,
+  PenTool,
+  Star,
+  ArrowRight,
+  BookMarked,
+  TrendingUp
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -32,32 +39,172 @@ export default function Footer() {
   return (
     <footer className="bg-gray-900 text-white">
       {/* Newsletter Section */}
-      <div className="bg-gradient-to-r from-orange-600 to-pink-600 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h3 className="text-2xl md:text-3xl font-bold text-white mb-4">
-            Stay Connected with Sanatan Blogs
+      <div className="relative overflow-hidden bg-gradient-to-br from-orange-500 via-orange-600 to-pink-600 py-16">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 left-0 w-32 h-32 bg-white rounded-full -translate-x-16 -translate-y-16"></div>
+          <div className="absolute top-1/4 right-0 w-24 h-24 bg-white rounded-full translate-x-12"></div>
+          <div className="absolute bottom-0 left-1/3 w-20 h-20 bg-white rounded-full translate-y-10"></div>
+        </div>
+        
+        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          {/* Icon and Title */}
+          <div className="flex justify-center mb-6">
+            <div className="relative">
+              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/30">
+                <Bell className="h-8 w-8 text-white" />
+              </div>
+              <div className="absolute -top-2 -right-2 w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center">
+                <Sparkles className="h-3 w-3 text-gray-900" />
+              </div>
+            </div>
+          </div>
+          
+          <h3 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight">
+            Stay Connected with{' '}
+            <span className="bg-gradient-to-r from-yellow-300 to-yellow-100 bg-clip-text text-transparent">
+              Sanatan Blogs
+            </span>
           </h3>
-          <p className="text-orange-100 mb-8 max-w-2xl mx-auto">
-            Subscribe to our newsletter and get the latest spiritual articles, insights, and updates delivered to your inbox.
+          
+          <p className="text-lg md:text-xl text-orange-50 mb-10 max-w-3xl mx-auto leading-relaxed">
+            Subscribe to our newsletter and get the latest spiritual articles, insights, and updates delivered to your inbox. 
+            <span className="block text-orange-100 text-base mt-2">
+              Join 10,000+ spiritual seekers on their journey of wisdom.
+            </span>
           </p>
           
-          <form onSubmit={handleNewsletterSubmit} className="max-w-md mx-auto flex gap-4">
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email address"
-              required
-              className="flex-1 px-4 py-3 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-            />
-            <button
-              type="submit"
-              className="bg-yellow-400 text-gray-900 px-6 py-3 rounded-xl font-bold hover:bg-yellow-300 transition-colors flex items-center space-x-2"
-            >
-              <Send className="h-4 w-4" />
-              <span>Subscribe</span>
-            </button>
+          {/* Enhanced Form */}
+          <form onSubmit={handleNewsletterSubmit} className="max-w-lg mx-auto">
+            <div className="flex flex-col sm:flex-row gap-4 p-2 bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20">
+              <div className="flex-1 relative">
+                <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-orange-200" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email address"
+                  required
+                  className="w-full pl-12 pr-4 py-4 bg-white/90 backdrop-blur-sm rounded-xl text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:bg-white transition-all duration-300"
+                />
+              </div>
+              <button
+                type="submit"
+                className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 px-8 py-4 rounded-xl font-bold hover:from-yellow-300 hover:to-yellow-400 transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              >
+                <Send className="h-5 w-5" />
+                <span>Subscribe</span>
+              </button>
+            </div>
+            
+            {/* Trust Indicators */}
+            <div className="mt-6 flex items-center justify-center space-x-6 text-orange-100 text-sm">
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                <span>No spam, ever</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                <span>Unsubscribe anytime</span>
+              </div>
+            </div>
           </form>
+        </div>
+      </div>
+
+      {/* Ready to Share Your Story Section */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-gray-800 via-gray-900 to-black py-16">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute top-1/4 left-1/4 w-40 h-40 bg-orange-400 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-1/4 right-1/4 w-32 h-32 bg-yellow-400 rounded-full blur-3xl"></div>
+        </div>
+        
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            
+            {/* Left Content */}
+            <div className="text-center lg:text-left">
+              <div className="flex justify-center lg:justify-start mb-6">
+                <div className="relative">
+                  <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-2xl flex items-center justify-center shadow-2xl">
+                    <PenTool className="h-10 w-10 text-white" />
+                  </div>
+                  <div className="absolute -top-3 -right-3 w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
+                    <Star className="h-4 w-4 text-gray-900" />
+                  </div>
+                </div>
+              </div>
+              
+              <h3 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight">
+                Ready to Share Your{' '}
+                <span className="bg-gradient-to-r from-orange-400 to-yellow-400 bg-clip-text text-transparent">
+                  Story?
+                </span>
+              </h3>
+              
+              <p className="text-lg md:text-xl text-gray-300 mb-8 leading-relaxed">
+                Join our community of spiritual writers and share your wisdom with thousands of seekers. 
+                Your voice matters in spreading the timeless knowledge of Sanatan Dharma.
+              </p>
+              
+              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                <Link
+                  href="/write-blog"
+                  className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-orange-500 to-yellow-500 text-white rounded-xl font-bold hover:from-orange-600 hover:to-yellow-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                >
+                  <PenTool className="mr-2 h-5 w-5" />
+                  Start Writing
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+                <Link
+                  href="/register"
+                  className="inline-flex items-center px-8 py-4 border-2 border-orange-400 text-orange-400 rounded-xl font-bold hover:bg-orange-400 hover:text-white transition-all duration-300"
+                >
+                  Join Community
+                </Link>
+              </div>
+            </div>
+            
+            {/* Right Content - Benefits */}
+            <div className="space-y-6">
+              <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
+                <div className="flex items-start space-x-4">
+                  <div className="w-12 h-12 bg-orange-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <BookMarked className="h-6 w-6 text-orange-400" />
+                  </div>
+                  <div>
+                    <h4 className="text-xl font-semibold text-white mb-2">Quality Content Platform</h4>
+                    <p className="text-gray-300">Create beautiful, SEO-optimized articles with image uploads and rich formatting.</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
+                <div className="flex items-start space-x-4">
+                  <div className="w-12 h-12 bg-yellow-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Users className="h-6 w-6 text-yellow-400" />
+                  </div>
+                  <div>
+                    <h4 className="text-xl font-semibold text-white mb-2">Engaged Community</h4>
+                    <p className="text-gray-300">Connect with 10,000+ spiritual seekers and build meaningful relationships.</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
+                <div className="flex items-start space-x-4">
+                  <div className="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <TrendingUp className="h-6 w-6 text-green-400" />
+                  </div>
+                  <div>
+                    <h4 className="text-xl font-semibold text-white mb-2">Grow Your Audience</h4>
+                    <p className="text-gray-300">Reach readers worldwide and establish yourself as a thought leader.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

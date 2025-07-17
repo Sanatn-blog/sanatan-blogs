@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Search, Filter, Calendar, Eye, Heart, Clock, ChevronRight, TrendingUp, Star } from 'lucide-react';
 
 interface Blog {
@@ -200,7 +201,7 @@ export default function BlogsPage() {
                 placeholder="Search for wisdom, spirituality, yoga, philosophy, meditation..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="block w-full pl-16 pr-16 py-5 bg-white border-0 rounded-3xl focus:outline-none focus:ring-4 focus:ring-orange-300 shadow-2xl text-xl placeholder-gray-400 font-medium"
+                className="block w-full pl-16 pr-16 py-5 bg-white border-0 rounded-3xl focus:outline-none focus:ring-4 focus:ring-orange-300 shadow-2xl text-xl placeholder-gray-400 font-medium text-gray-900"
               />
               {searchTerm && (
                 <button
@@ -265,16 +266,12 @@ export default function BlogsPage() {
                 >
                   <div className="relative h-48">
                     {blog.featuredImage ? (
-                      <img
+                      <Image
                         src={blog.featuredImage}
                         alt={blog.title}
+                        width={400}
+                        height={192}
                         className="w-full h-full object-cover"
-                        onError={(e) => {
-                          // Fallback to gradient if image fails to load
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                          target.nextElementSibling?.classList.remove('hidden');
-                        }}
                       />
                     ) : null}
                     <div className={`absolute inset-0 bg-gradient-to-r from-orange-400 to-orange-600 ${blog.featuredImage ? 'hidden' : ''}`}>
@@ -353,17 +350,95 @@ export default function BlogsPage() {
           </div>
 
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="bg-white rounded-2xl shadow-lg overflow-hidden animate-pulse">
-                  <div className="h-48 bg-gray-200"></div>
-                  <div className="p-6">
-                    <div className="h-4 bg-gray-200 rounded mb-4"></div>
-                    <div className="h-4 bg-gray-200 rounded mb-4"></div>
-                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                  </div>
+            <div className="space-y-8">
+              {/* Loading Header */}
+              <div className="text-center">
+                <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-orange-100 to-yellow-100 px-6 py-3 rounded-full mb-4">
+                  <div className="w-4 h-4 bg-orange-400 rounded-full animate-pulse"></div>
+                  <span className="text-orange-700 font-medium">Loading Articles...</span>
                 </div>
-              ))}
+              </div>
+              
+              {/* Loading Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
+                    {/* Image Skeleton */}
+                    <div className="relative h-48 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
+                      <div className="absolute top-4 left-4">
+                        <div className="w-16 h-6 bg-gray-300 rounded-full animate-pulse"></div>
+                      </div>
+                      <div className="absolute bottom-4 left-4 right-4">
+                        <div className="flex gap-2">
+                          <div className="w-12 h-5 bg-gray-300 rounded-full animate-pulse"></div>
+                          <div className="w-16 h-5 bg-gray-300 rounded-full animate-pulse"></div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Content Skeleton */}
+                    <div className="p-6 space-y-4">
+                      {/* Title */}
+                      <div className="space-y-2">
+                        <div className="h-5 bg-gray-200 rounded animate-pulse"></div>
+                        <div className="h-5 bg-gray-200 rounded w-4/5 animate-pulse"></div>
+                      </div>
+                      
+                      {/* Excerpt */}
+                      <div className="space-y-2">
+                        <div className="h-4 bg-gray-100 rounded animate-pulse"></div>
+                        <div className="h-4 bg-gray-100 rounded animate-pulse"></div>
+                        <div className="h-4 bg-gray-100 rounded w-3/4 animate-pulse"></div>
+                      </div>
+                      
+                      {/* Meta Info */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-4 h-4 bg-gray-200 rounded animate-pulse"></div>
+                          <div className="w-20 h-4 bg-gray-200 rounded animate-pulse"></div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <div className="w-4 h-4 bg-gray-200 rounded animate-pulse"></div>
+                          <div className="w-12 h-4 bg-gray-200 rounded animate-pulse"></div>
+                        </div>
+                      </div>
+                      
+                      {/* Author and Stats */}
+                      <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-orange-200 rounded-full animate-pulse"></div>
+                          <div className="w-20 h-4 bg-gray-200 rounded animate-pulse"></div>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                          <div className="flex items-center space-x-1">
+                            <div className="w-3 h-3 bg-gray-200 rounded animate-pulse"></div>
+                            <div className="w-8 h-3 bg-gray-200 rounded animate-pulse"></div>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <div className="w-3 h-3 bg-gray-200 rounded animate-pulse"></div>
+                            <div className="w-6 h-3 bg-gray-200 rounded animate-pulse"></div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Read Button */}
+                      <div className="pt-4">
+                        <div className="w-full h-10 bg-orange-200 rounded-xl animate-pulse"></div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Loading Footer */}
+              <div className="text-center pt-8">
+                <div className="flex items-center justify-center space-x-2 text-gray-500">
+                  <div className="w-2 h-2 bg-orange-400 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-orange-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                  <div className="w-2 h-2 bg-orange-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                </div>
+              </div>
             </div>
           ) : error ? (
             <div className="text-center py-16">
@@ -397,16 +472,12 @@ export default function BlogsPage() {
                 >
                   <div className="relative h-48">
                     {blog.featuredImage ? (
-                      <img
+                      <Image
                         src={blog.featuredImage}
                         alt={blog.title}
+                        width={400}
+                        height={192}
                         className="w-full h-full object-cover"
-                        onError={(e) => {
-                          // Fallback to gradient if image fails to load
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                          target.nextElementSibling?.classList.remove('hidden');
-                        }}
                       />
                     ) : null}
                     <div className={`absolute inset-0 bg-gradient-to-r from-gray-400 to-gray-600 ${blog.featuredImage ? 'hidden' : ''}`}>
@@ -598,6 +669,17 @@ export default function BlogsPage() {
         }
         .animation-delay-4000 {
           animation-delay: 4s;
+        }
+        @keyframes shimmer {
+          0% {
+            transform: translateX(-100%);
+          }
+          100% {
+            transform: translateX(100%);
+          }
+        }
+        .animate-shimmer {
+          animation: shimmer 2s infinite;
         }
         .line-clamp-2 {
           display: -webkit-box;

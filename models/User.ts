@@ -16,6 +16,11 @@ export interface IUser extends Document {
     linkedin?: string;
     website?: string;
   };
+  location?: string;
+  expertise?: string[];
+  achievements?: string[];
+  followers?: string[];
+  following?: string[];
   createdAt: Date;
   updatedAt: Date;
   lastLogin?: Date;
@@ -87,6 +92,26 @@ const UserSchema = new Schema<IUser>({
     linkedin: String,
     website: String
   },
+  location: {
+    type: String,
+    maxLength: [100, 'Location cannot exceed 100 characters']
+  },
+  expertise: [{
+    type: String,
+    maxLength: [50, 'Expertise item cannot exceed 50 characters']
+  }],
+  achievements: [{
+    type: String,
+    maxLength: [200, 'Achievement cannot exceed 200 characters']
+  }],
+  followers: [{
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  following: [{
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  }],
   lastLogin: Date,
   emailVerified: {
     type: Boolean,
@@ -128,12 +153,13 @@ UserSchema.index({ status: 1 });
 UserSchema.index({ role: 1 });
 
 // Hash password before saving
-UserSchema.pre('save', async function(next) {
-  if (!this.isModified('password') || !this.password) return next();
-  
+UserSchema.pre('save', async function (next) {
+  const user = this as IUser;
+  if (!user.isModified('password') || !user.password) return next();
+
   try {
     const salt = await bcryptjs.genSalt(12);
-    this.password = await bcryptjs.hash(this.password, salt);
+    user.password = await bcryptjs.hash(user.password, salt);
     next();
   } catch (error) {
     next(error as Error);

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import Link from 'next/link';
 import { PenTool, Eye, Edit, Trash2, Plus, Loader2, Calendar, Tag, Search, Filter } from 'lucide-react';
+import Image from 'next/image';
 
 interface Blog {
   _id: string;
@@ -258,7 +259,7 @@ export default function MyBlogs() {
                 placeholder="Search your blogs..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm sm:text-base"
+                className="w-full pl-10 pr-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm sm:text-base text-gray-900 placeholder-gray-500"
               />
             </div>
             <div className="flex items-center space-x-2">
@@ -266,7 +267,7 @@ export default function MyBlogs() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm sm:text-base"
+                className="px-3 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm sm:text-base text-gray-900 bg-white"
               >
                 <option value="all">All Status</option>
                 <option value="published">Published</option>
@@ -387,14 +388,12 @@ export default function MyBlogs() {
                     {/* Featured Image */}
                     {blog.featuredImage && (
                       <div className="flex-shrink0 w-24 h-24 sm:w-32 sm:h-32">
-                        <img
+                        <Image
                           src={blog.featuredImage}
                           alt={blog.title}
+                          width={128}
+                          height={128}
                           className="w-full h-full object-cover rounded-lg"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = 'none';
-                          }}
                         />
                       </div>
                     )}
