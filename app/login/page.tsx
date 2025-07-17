@@ -80,7 +80,8 @@ export default function LoginPage() {
       const result = await login(formData.email, formData.password);
       
       if (result.success) {
-        toast.success('🎉 Welcome back!');
+        const firstName = result.user?.name?.split(' ')[0] || 'User';
+        toast.success(`🎉 Welcome back, ${firstName}!`);
         router.push('/');
       } else {
         toast.error(result.error || 'Login failed');

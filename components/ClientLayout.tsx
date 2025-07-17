@@ -23,15 +23,18 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
             style: {
               background: '#363636',
               color: '#fff',
+              marginTop: '80px', // Add margin to position below navbar
             },
             success: {
               style: {
                 background: '#22c55e',
+                marginTop: '80px', // Add margin to position below navbar
               },
             },
             error: {
               style: {
                 background: '#ef4444',
+                marginTop: '80px', // Add margin to position below navbar
               },
             },
           }}

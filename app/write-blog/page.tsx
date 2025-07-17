@@ -297,8 +297,8 @@ export default function WriteBlog() {
     try {
       let finalImageUrl = formData.featuredImage || '';
 
-      // Upload image to Cloudinary only when publishing
-      if (status === 'published' && selectedImageFile && (formData.featuredImage || '').startsWith('blob:')) {
+      // Upload image to Cloudinary for both drafts and published posts if it's a new image
+      if (selectedImageFile && (formData.featuredImage || '').startsWith('blob:')) {
         console.log('Uploading image to Cloudinary...');
         setUploadingImage(true);
         

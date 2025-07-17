@@ -16,7 +16,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   mounted: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string; user?: User }>;
   register: (userData: { name: string; email: string; password: string; bio?: string; socialLinks?: object }) => Promise<{ success: boolean; error?: string; message?: string }>;
   logout: () => void;
   checkAuth: () => Promise<void>;
@@ -85,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(data.user);
         // Force a re-render by updating loading state
         setLoading(false);
-        return { success: true };
+        return { success: true, user: data.user };
       } else {
         return { success: false, error: data.error };
       }

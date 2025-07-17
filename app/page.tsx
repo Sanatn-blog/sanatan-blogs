@@ -1,7 +1,21 @@
+'use client';
+
 import Link from 'next/link';
-import { ArrowRight, Users, BookOpen, Shield, Star } from 'lucide-react';
+import { ArrowRight, Users, BookOpen, Shield, Star, PenTool } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function HomePage() {
+  const { user, loading, mounted } = useAuth();
+
+  // Show loading state until mounted to prevent hydration mismatch
+  if (!mounted || loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-yellow-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 border-b-2 border-orange-500"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-yellow-50">
       {/* Hero Section */}
@@ -17,19 +31,41 @@ export default function HomePage() {
               Join our community of writers and readers who believe in authentic storytelling.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                href="/register"
-                className="inline-flex items-center px-8 py-4 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-colors"
-              >
-                Start Writing
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
-              <Link
-                href="/login"
-                className="inline-flex items-center px-8 py-4 border-2 border-orange-600 text-orange-600 rounded-lg font-semibold hover:bg-orange-600 hover:text-white transition-colors"
-              >
-                Sign In
-              </Link>
+              {user ? (
+                // User is logged in - show write blog and explore blogs buttons
+                <>
+                  <Link
+                    href="/write-blog"
+                    className="inline-flex items-center px-8 py-4 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-colors"
+                  >
+                    <PenTool className="mr-2 h-5 w-5" />
+                    Write Blog
+                  </Link>
+                  <Link
+                    href="/blogs"
+                    className="inline-flex items-center px-8 py-4 border-2 border-orange-600 text-orange-600 rounded-lg font-semibold hover:bg-orange-600 hover:text-white transition-colors"
+                  >
+                    Explore Blogs
+                  </Link>
+                </>
+              ) : (
+                // User is not logged in - show register and sign in buttons
+                <>
+                  <Link
+                    href="/register"
+                    className="inline-flex items-center px-8 py-4 bg-orange-600 text-white rounded-lg font-semibold hover:bg-orange-700 transition-colors"
+                  >
+                    Start Writing
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Link>
+                  <Link
+                    href="/login"
+                    className="inline-flex items-center px-8 py-4 border-2 border-orange-600 text-orange-600 rounded-lg font-semibold hover:bg-orange-600 hover:text-white transition-colors"
+                  >
+                    Sign In
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
