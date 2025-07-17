@@ -3,7 +3,7 @@ import connectDB from '@/lib/mongodb';
 import Blog from '@/models/Blog';
 import { requireAuth, AuthenticatedRequest } from '@/middleware/auth';
 
-async function unpublishBlogHandler(request: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) {
+async function banBlogHandler(request: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     // Check if user is admin
     if (request.user?.role !== 'admin') {
@@ -18,7 +18,7 @@ async function unpublishBlogHandler(request: AuthenticatedRequest, { params }: {
     const resolvedParams = await params;
     const blogId = resolvedParams.id;
     
-    console.log('Unpublishing blog with ID:', blogId);
+    console.log('Banning blog with ID:', blogId);
     
     const blog = await Blog.findById(blogId);
     if (!blog) {
@@ -31,25 +31,25 @@ async function unpublishBlogHandler(request: AuthenticatedRequest, { params }: {
 
     console.log('Blog found, current status:', blog.status);
 
-    blog.status = 'draft';
+    blog.status = 'banned';
     blog.isPublished = false;
     blog.publishedAt = null;
     await blog.save();
 
-    console.log('Blog unpublished successfully');
+    console.log('Blog banned successfully');
 
     return NextResponse.json({
-      message: 'Blog unpublished successfully',
+      message: 'Blog banned successfully',
       blog
     });
 
   } catch (error) {
-    console.error('Unpublish blog error:', error);
+    console.error('Ban blog error:', error);
     return NextResponse.json(
-      { error: 'Failed to unpublish blog' },
+      { error: 'Failed to ban blog' },
       { status: 500 }
     );
   }
 }
 
-export const POST = requireAuth(unpublishBlogHandler); 
+export const POST = requireAuth(banBlogHandler); 

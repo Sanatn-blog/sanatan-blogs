@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken, SimpleJWTPayload } from '@/lib/jwt';
+import { verifyToken } from '@/lib/jwt';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 
@@ -36,6 +36,7 @@ export async function authenticateUser(request: AuthenticatedRequest): Promise<{
 
     const token = authHeader.substring(7);
     console.log('Token length:', token.length);
+    
     const decoded = verifyToken(token);
 
     if (!decoded) {
@@ -76,7 +77,7 @@ export async function authenticateUser(request: AuthenticatedRequest): Promise<{
   }
 }
 
-export function requireAuth<T extends { params: Promise<any> }>(
+export function requireAuth<T extends { params: Promise<Record<string, string>> }>(
   handler: (req: AuthenticatedRequest, context: T) => Promise<NextResponse>
 ) {
   return async (request: AuthenticatedRequest, context: T) => {
@@ -98,7 +99,7 @@ export function requireAuth<T extends { params: Promise<any> }>(
 }
 
 export function requireRole(roles: string[]) {
-  return function <T extends { params: Promise<any> }>(
+  return function <T extends { params: Promise<Record<string, string>> }>(
     handler: (req: AuthenticatedRequest, context: T) => Promise<NextResponse>
   ) {
     return async (request: AuthenticatedRequest, context: T) => {
@@ -124,13 +125,13 @@ export function requireRole(roles: string[]) {
   };
 }
 
-export function requireAdmin<T extends { params: Promise<any> }>(
+export function requireAdmin<T extends { params: Promise<Record<string, string>> }>(
   handler: (req: AuthenticatedRequest, context: T) => Promise<NextResponse>
 ) {
   return requireRole(['admin', 'super_admin'])(handler);
 }
 
-export function requireSuperAdmin<T extends { params: Promise<any> }>(
+export function requireSuperAdmin<T extends { params: Promise<Record<string, string>> }>(
   handler: (req: AuthenticatedRequest, context: T) => Promise<NextResponse>
 ) {
   return requireRole(['super_admin'])(handler);

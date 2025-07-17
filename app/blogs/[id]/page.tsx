@@ -401,8 +401,8 @@ export default function BlogDetailPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="text-6xl mb-4">📖</div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Article Not Found</h2>
-          <p className="text-gray-600 mb-8">The requested article could not be found.</p>
+          <h2 className="text-2xl font-bold text-gray-100 mb-4">Article Not Found</h2>
+          <p className="text-gray-100 mb-8">The requested article could not be found.</p>
           <Link
             href="/blogs"
             className="inline-flex items-center space-x-2 text-orange-600 hover:text-orange-700 font-medium"

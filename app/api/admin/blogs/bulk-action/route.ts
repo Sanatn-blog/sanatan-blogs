@@ -5,7 +5,7 @@ import { requireAuth, AuthenticatedRequest } from '@/middleware/auth';
 
 // Define the type for update data
 interface BlogUpdateData {
-  status?: 'published' | 'draft' | 'archived';
+  status?: 'published' | 'draft' | 'archived' | 'banned';
   isPublished?: boolean;
   publishedAt?: Date | null;
 }
@@ -60,6 +60,24 @@ async function bulkActionHandler(request: AuthenticatedRequest) {
           isPublished: false
         };
         message = 'Blogs archived successfully';
+        break;
+
+      case 'ban':
+        updateData = {
+          status: 'banned',
+          isPublished: false,
+          publishedAt: null
+        };
+        message = 'Blogs banned successfully';
+        break;
+
+      case 'unban':
+        updateData = {
+          status: 'draft',
+          isPublished: false,
+          publishedAt: null
+        };
+        message = 'Blogs unbanned successfully';
         break;
 
       case 'delete':

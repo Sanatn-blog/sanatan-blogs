@@ -40,7 +40,7 @@ interface Blog {
   author: Author;
   category: string;
   tags: string[];
-  status: 'draft' | 'published' | 'archived';
+  status: 'draft' | 'published' | 'archived' | 'banned';
   views: number;
   likes: string[];
   comments: string[];
@@ -138,10 +138,26 @@ export default function ContentManagement() {
     try {
       setActionLoading(true);
       
+      // Get the access token
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        setError('Please log in to perform this action');
+        setActionLoading(false);
+        return;
+      }
+      
+      // Check if token is valid format
+      if (!token.includes('.') || token.split('.').length !== 3) {
+        setError('Authentication token is corrupted. Please log out and log in again.');
+        setActionLoading(false);
+        return;
+      }
+      
       const response = await fetch('/api/admin/blogs/bulk-action', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           action: bulkAction,
@@ -150,7 +166,15 @@ export default function ContentManagement() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to perform bulk action');
+        let errorMessage = 'Failed to perform bulk action';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (parseError) {
+          console.error('Failed to parse error response:', parseError);
+          errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
       }
 
       // Refresh blogs and clear selection
@@ -171,15 +195,39 @@ export default function ContentManagement() {
     try {
       setActionLoading(true);
       
+      // Get the access token
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        setError('Please log in to perform this action');
+        setActionLoading(false);
+        return;
+      }
+      
+      // Check if token is valid format
+      if (!token.includes('.') || token.split('.').length !== 3) {
+        setError('Authentication token is corrupted. Please log out and log in again.');
+        setActionLoading(false);
+        return;
+      }
+      
       const response = await fetch(`/api/admin/blogs/${blogId}/${action}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         }
       });
 
       if (!response.ok) {
-        throw new Error('Failed to perform action');
+        let errorMessage = 'Failed to perform action';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (parseError) {
+          console.error('Failed to parse error response:', parseError);
+          errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
       }
 
       // Refresh blogs
@@ -241,6 +289,8 @@ export default function ContentManagement() {
         return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'archived':
         return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'banned':
+        return 'bg-red-100 text-red-800 border-red-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
@@ -258,6 +308,7 @@ export default function ContentManagement() {
     published: blogs.filter(blog => blog.status === 'published').length,
     draft: blogs.filter(blog => blog.status === 'draft').length,
     archived: blogs.filter(blog => blog.status === 'archived').length,
+    banned: blogs.filter(blog => blog.status === 'banned').length,
     totalViews: blogs.reduce((sum, blog) => sum + blog.views, 0)
   };
 
@@ -302,7 +353,7 @@ export default function ContentManagement() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 md:gap-6 mb-8">
           <div className="bg-gray-800 rounded-lg shadow-sm border border-gray-700 p-6">
             <div className="flex items-center">
               <div className="p-3 bg-blue-900 rounded-lg">
@@ -362,6 +413,18 @@ export default function ContentManagement() {
               </div>
             </div>
           </div>
+
+          <div className="bg-gray-800 rounded-lg shadow-sm border border-gray-700 p-6">
+            <div className="flex items-center">
+              <div className="p-3 bg-red-900 rounded-lg">
+                <XCircle className="h-6 w-6 text-red-400" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-300">Banned</p>
+                <p className="text-2xl font-bold text-white">{stats.banned}</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Search and Filters */}
@@ -387,6 +450,7 @@ export default function ContentManagement() {
               <option value="published">Published</option>
               <option value="draft">Draft</option>
               <option value="archived">Archived</option>
+              <option value="banned">Banned</option>
             </select>
 
             <select 
@@ -428,6 +492,8 @@ export default function ContentManagement() {
                     <option value="">Select Action</option>
                     <option value="publish">Publish</option>
                     <option value="unpublish">Unpublish</option>
+                    <option value="ban">Ban</option>
+                    <option value="unban">Unban</option>
                     <option value="archive">Archive</option>
                     <option value="delete">Delete</option>
                   </select>
@@ -937,20 +1003,29 @@ export default function ContentManagement() {
                           <Edit className="h-4 w-4" />
                           <span>Edit</span>
                         </Link>
-                        <button
-                          onClick={() => {
-                            handleBlogAction(selectedBlog._id, selectedBlog.status === 'published' ? 'unpublish' : 'publish');
-                            closeBlogDetail();
-                          }}
-                          className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
-                            selectedBlog.status === 'published' 
-                              ? 'bg-yellow-600 text-white hover:bg-yellow-700' 
-                              : 'bg-green-600 text-white hover:bg-green-700'
-                          }`}
-                        >
-                          {selectedBlog.status === 'published' ? <XCircle className="h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
-                          <span>{selectedBlog.status === 'published' ? 'Unpublish' : 'Publish'}</span>
-                        </button>
+                        {selectedBlog.status === 'banned' ? (
+                          <button
+                            onClick={() => {
+                              handleBlogAction(selectedBlog._id, 'unban');
+                              closeBlogDetail();
+                            }}
+                            className="flex items-center space-x-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                          >
+                            <CheckCircle className="h-4 w-4" />
+                            <span>Unban</span>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              handleBlogAction(selectedBlog._id, 'ban');
+                              closeBlogDetail();
+                            }}
+                            className="flex items-center space-x-2 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                          >
+                            <XCircle className="h-4 w-4" />
+                            <span>Ban</span>
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>

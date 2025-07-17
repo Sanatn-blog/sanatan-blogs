@@ -10,7 +10,7 @@ export interface IBlog extends Document {
   author: mongoose.Types.ObjectId;
   category: string;
   tags: string[];
-  status: 'draft' | 'published' | 'archived';
+  status: 'draft' | 'published' | 'archived' | 'banned';
   isPublished: boolean;
   publishedAt?: Date;
   views: number;
@@ -90,7 +90,7 @@ const BlogSchema = new Schema<IBlog>({
   },
   status: {
     type: String,
-    enum: ['draft', 'published', 'archived'],
+    enum: ['draft', 'published', 'archived', 'banned'],
     default: 'draft'
   },
   isPublished: {
