@@ -290,13 +290,13 @@ export default function BlogsPage() {
                   </div>
 
                   <div className="p-6">
-                    <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2 hover:text-orange-600 transition-colors">
+                    <h3 className=" text-xl font-bold text-gray-900 mb-3 line-clamp-2 hover:text-orange-600 transition-colors pt-8">
                       <Link href={`/blogs/${blog._id}`}>
                         {blog.title}
                       </Link>
                     </h3>
 
-                    <p className="text-gray-600 mb-4 line-clamp-3">
+                    <p className="text-gray-600 mb-4 line-clamp-3 ">
                       {blog.excerpt}
                     </p>
 

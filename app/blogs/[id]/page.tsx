@@ -86,8 +86,22 @@ interface BlogResponse {
 // Function to convert plain text to formatted HTML
 const formatContent = (content: string): string => {
   if (!content) return '';
-  // Split content into lines
-  const lines = content.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+  
+  // Preprocess content to handle very long strings
+  const preprocessLongStrings = (text: string): string => {
+    // If a line is longer than 100 characters without spaces, add word breaks
+    if (text.length > 100 && !text.includes(' ')) {
+      // Add spaces every 50 characters to force word breaks
+      return text.match(/.{1,50}/g)?.join(' ') || text;
+    }
+    return text;
+  };
+  
+  // Split content into lines and preprocess
+  const lines = content.split('\n')
+    .map(line => line.trim())
+    .filter(line => line.length > 0)
+    .map(line => preprocessLongStrings(line));
   
   let formattedContent = '';
   
@@ -97,20 +111,20 @@ const formatContent = (content: string): string => {
       if (line.includes('**')) {
         // Extract text between ** for headings
         const headingText = line.replace(/\*\*/g, '').replace(/🙏॥|🌷|👉/g, '').trim();
-        formattedContent += `<h2 class="text-2xl font-bold text-gray-900 mb-4">${headingText}</h2>`;
+        formattedContent += `<h2 class="text-2xl font-bold text-gray-900 mb-4 break-words overflow-hidden">${headingText}</h2>`;
       } else {
         // Regular heading
         const headingText = line.replace(/🙏॥|🌷|👉/g, '').trim();
-        formattedContent += `<h3 class="text-xl font-semibold text-gray-800 mb-4">${headingText}</h3>`;
+        formattedContent += `<h3 class="text-xl font-semibold text-gray-800 mb-4 break-words overflow-hidden">${headingText}</h3>`;
       }
     } else if (line.startsWith('-') || line.startsWith('•')) {      // This is a list item
       const listText = line.replace(/^[-•]\s*/, '').trim();
-      formattedContent += `<li class="mb-2 text-gray-700">${listText}</li>`;
+      formattedContent += `<li class="mb-2 text-gray-700 break-words overflow-hidden">${listText}</li>`;
     } else if (line.includes('॥') || line.includes('॥')) { // This is likely a Sanskrit verse or quote
-      formattedContent += `<blockquote class="bg-orange-50 border-l-4 border-orange-500 italic text-gray-700">${line}</blockquote>`;
+      formattedContent += `<blockquote class="bg-orange-50 border-l-4 border-orange-500 italic text-gray-700 break-words overflow-hidden">${line}</blockquote>`;
     } else if (line.length > 0) {
       // Regular paragraph
-      formattedContent += `<p class="mb-4 text-gray-700 leading-relaxed">${line}</p>`;
+      formattedContent += `<p class="mb-4 text-gray-700 leading-relaxed break-words overflow-hidden">${line}</p>`;
     }
   });
   
@@ -426,12 +440,12 @@ export default function BlogDetailPage() {
             </span>
 
             {/* Title */}
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight break-words overflow-hidden">
               {blog.title}
             </h1>
 
             {/* Excerpt */}
-            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto break-words overflow-hidden">
               {blog.excerpt}
             </p>
 
@@ -498,15 +512,25 @@ export default function BlogDetailPage() {
       )}
 
       {/* Article Content */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 overflow-hidden">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Sidebar - Social Actions */}
-          <div className="lg:col-span-1 order-2 lg:order-1">
-            <div className="sticky top-24 space-y-4">
+          {/* Main Content */}
+          <div className="lg:col-span-4 order-1 overflow-hidden">
+            <article className="prose prose-lg max-w-none blog-content">
+              <div className="overflow-hidden">
+                <div 
+                  dangerouslySetInnerHTML={{ __html: formatContent(blog.content) }}
+                  className="text-gray-800 leading-relaxed break-words overflow-hidden"
+                />
+              </div>
+            </article>
+
+            {/* Social Actions */}
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
               {/* Like Button */}
               <button
                 onClick={handleLike}
-                className={`w-full flex items-center justify-center space-x-2 py-3 px-4 rounded-xl transition-all duration-300 ${
+                className={`flex items-center space-x-2 py-3 px-6 rounded-xl transition-all duration-300 ${
                   isLiked
                     ? 'bg-red-500 text-white shadow-lg transform scale-105'
                     : 'bg-gray-100 text-gray-700 hover:bg-red-50 hover:text-red-600'
@@ -519,7 +543,7 @@ export default function BlogDetailPage() {
               {/* Bookmark Button */}
               <button
                 onClick={handleBookmark}
-                className={`w-full flex items-center justify-center space-x-2 py-3 px-4 rounded-xl transition-all duration-300 ${
+                className={`flex items-center space-x-2 py-3 px-6 rounded-xl transition-all duration-300 ${
                   isBookmarked
                     ? 'bg-orange-500 text-white shadow-lg transform scale-105'
                     : 'bg-gray-100 text-gray-700 hover:bg-orange-50 hover:text-orange-600'
@@ -533,7 +557,7 @@ export default function BlogDetailPage() {
               <div className="relative">
                 <button
                   onClick={() => setShowShareMenu(!showShareMenu)}
-                  className="w-full flex items-center justify-center space-x-2 py-3 px-4 rounded-xl bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                  className="flex items-center space-x-2 py-3 px-6 rounded-xl bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
                 >
                   <Share2 className="h-5 w-5" />
                   <span className="font-medium">Share</span>
@@ -541,7 +565,7 @@ export default function BlogDetailPage() {
 
                 {/* Share Menu */}
                 {showShareMenu && (
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-10">
+                  <div className="absolute top-full left-0 mt-2 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-10 min-w-[200px]">
                     {shareOptions.map((option) => (
                       <a
                         key={option.name}
@@ -568,22 +592,12 @@ export default function BlogDetailPage() {
               {/* Comments Link */}
               <Link
                 href="#comments"
-                className="w-full flex items-center justify-center space-x-2 py-3 px-4 rounded-xl bg-gray-100 text-gray-700 hover:bg-green-50 hover:text-green-600 transition-colors"
+                className="flex items-center space-x-2 py-3 px-6 rounded-xl bg-gray-100 text-gray-700 hover:bg-green-50 hover:text-green-600 transition-colors"
               >
                 <MessageCircle className="h-5 w-5" />
                 <span className="font-medium">{blog.comments?.length || 0}</span>
               </Link>
             </div>
-          </div>
-
-          {/* Main Content */}
-          <div className="lg:col-span-3 order-1 lg:order-2">
-            <article className="prose prose-lg max-w-none">
-              <div 
-                dangerouslySetInnerHTML={{ __html: formatContent(blog.content) }}
-                className="text-gray-800 leading-relaxed"
-              />
-            </article>
 
             {/* Author Bio */}
             <div className="mt-12 p-6 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-2xl border border-orange-100">

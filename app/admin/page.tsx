@@ -69,16 +69,29 @@ export default function AdminDashboard() {
     try {
       setLoading(true);
 
-      // Fetch blogs data
-      const blogsResponse = await fetch('/api/blogs?limit=100');
+      // Fetch blogs data - get all blogs for accurate stats
+      const blogsResponse = await fetch('/api/blogs?limit=1000&status=all');
       if (!blogsResponse.ok) {
         throw new Error('Failed to fetch blogs data');
       }
       const blogsData = await blogsResponse.json();
 
+      // Fetch users data
+      const token = localStorage.getItem('accessToken');
+      const usersResponse = await fetch('/api/admin/users?limit=1', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      let totalUsers = 0;
+      let activeUsers = 0;
+      if (usersResponse.ok) {
+        const usersData = await usersResponse.json();
+        totalUsers = usersData.pagination.totalUsers;
+        activeUsers = usersData.counts.approved || 0; // Active users are approved users
+      }
+
       // Calculate stats from blogs data
       const totalBlogs = blogsData.pagination.totalBlogs;
-      const totalViews = blogsData.blogs.reduce((sum: number, blog: Blog) => sum + blog.views, 0);
+      const totalViews = blogsData.blogs.reduce((sum: number, blog: Blog) => sum + (blog.views || 0), 0);
       // const publishedBlogs = blogsData.blogs.filter((blog: Blog) => blog.status === 'published');
       const blogsToday = blogsData.blogs.filter((blog: Blog) => {
         if (!blog.publishedAt) return false;
@@ -103,10 +116,10 @@ export default function AdminDashboard() {
 
       // Set stats (some are still mock for now as we need additional APIs)
       setStats({
-        totalUsers: 1247, // Mock - need users API
+        totalUsers, // Real data from users API
         totalBlogs,
         totalViews,
-        activeUsers: 342, // Mock - need analytics API
+        activeUsers, // Real data from users API (approved users)
         newUsersToday: 23, // Mock - need users API
         blogsToday,
         commentsToday: 47, // Mock - need comments API
