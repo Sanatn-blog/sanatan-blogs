@@ -36,7 +36,30 @@ export default function RegisterPage() {
   const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
   const [authLoading, setAuthLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [checkingEmail, setCheckingEmail] = useState(false);
+  const [checkingPhone, setCheckingPhone] = useState(false);
   const router = useRouter();
+
+  // Debounce function
+  const useDebounce = (value: string, delay: number) => {
+    const [debouncedValue, setDebouncedValue] = useState(value);
+
+    useEffect(() => {
+      const handler = setTimeout(() => {
+        setDebouncedValue(value);
+      }, delay);
+
+      return () => {
+        clearTimeout(handler);
+      };
+    }, [value, delay]);
+
+    return debouncedValue;
+  };
+
+  // Debounced values for validation
+  const debouncedEmail = useDebounce(formData.email, 500);
+  const debouncedPhone = useDebounce(formData.phoneNumber, 500);
 
   const checkExistingAuth = useCallback(async () => {
     try {
@@ -83,6 +106,72 @@ export default function RegisterPage() {
     const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
     return phoneRegex.test(phone.replace(/\s/g, ''));
   };
+
+  // Check if email exists
+  const checkEmailExists = useCallback(async (email: string) => {
+    if (!email || !validateEmail(email)) return;
+    
+    setCheckingEmail(true);
+    try {
+      const response = await fetch(`/api/auth/check-exists?email=${encodeURIComponent(email)}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.email) {
+          setFieldErrors(prev => ({ ...prev, email: 'Email address already exists' }));
+        } else {
+          setFieldErrors(prev => {
+            const newErrors = { ...prev };
+            delete newErrors.email;
+            return newErrors;
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error checking email:', error);
+    } finally {
+      setCheckingEmail(false);
+    }
+  }, []);
+
+  // Check if phone number exists
+  const checkPhoneExists = useCallback(async (phone: string) => {
+    if (!phone || !validatePhoneNumber(phone)) return;
+    
+    setCheckingPhone(true);
+    try {
+      const response = await fetch(`/api/auth/check-exists?phoneNumber=${encodeURIComponent(phone)}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.phoneNumber) {
+          setFieldErrors(prev => ({ ...prev, phoneNumber: 'Phone number already exists' }));
+        } else {
+          setFieldErrors(prev => {
+            const newErrors = { ...prev };
+            delete newErrors.phoneNumber;
+            return newErrors;
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error checking phone:', error);
+    } finally {
+      setCheckingPhone(false);
+    }
+  }, []);
+
+  // Check email existence when debounced email changes
+  useEffect(() => {
+    if (debouncedEmail && validateEmail(debouncedEmail)) {
+      checkEmailExists(debouncedEmail);
+    }
+  }, [debouncedEmail, checkEmailExists]);
+
+  // Check phone existence when debounced phone changes
+  useEffect(() => {
+    if (debouncedPhone && validatePhoneNumber(debouncedPhone)) {
+      checkPhoneExists(debouncedPhone);
+    }
+  }, [debouncedPhone, checkPhoneExists]);
 
   const handleEmailRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -248,6 +337,11 @@ export default function RegisterPage() {
                   className={`w-full pl-10 pr-4 py-3 border ${fieldErrors.email ? 'border-red-400' : 'border-gray-300'} rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors text-gray-900`}
                   placeholder="Enter your email"
                 />
+                {checkingEmail && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-500"></div>
+                  </div>
+                )}
               </div>
               {fieldErrors.email && <p className="mt-1 text-xs text-red-600">{fieldErrors.email}</p>}
             </div>
@@ -268,6 +362,11 @@ export default function RegisterPage() {
                   className={`w-full pl-10 pr-4 py-3 border ${fieldErrors.phoneNumber ? 'border-red-400' : 'border-gray-300'} rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors text-gray-900`}
                   placeholder="+91 98765 43210"
                 />
+                {checkingPhone && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-500"></div>
+                  </div>
+                )}
               </div>
               <p className="mt-1 text-xs text-gray-500">
                 Include country code (e.g., +91 for India)
