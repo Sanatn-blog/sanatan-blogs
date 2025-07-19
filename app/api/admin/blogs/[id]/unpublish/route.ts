@@ -5,10 +5,10 @@ import { requireAuth, AuthenticatedRequest } from '@/middleware/auth';
 
 async function unpublishBlogHandler(request: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    // Check if user is admin
-    if (request.user?.role !== 'admin') {
+    // Check if user is admin or super_admin
+    if (!['admin', 'super_admin'].includes(request.user?.role || '')) {
       return NextResponse.json(
-        { error: 'Admin access required' },
+        { error: 'Admin or Super Admin access required' },
         { status: 403 }
       );
     }
@@ -18,7 +18,7 @@ async function unpublishBlogHandler(request: AuthenticatedRequest, { params }: {
     const resolvedParams = await params;
     const blogId = resolvedParams.id;
     
-    console.log('Unpublishing blog with ID:', blogId);
+    console.log(`[${request.user?.role}] Unpublishing blog with ID:`, blogId);
     
     const blog = await Blog.findById(blogId);
     if (!blog) {
@@ -36,7 +36,7 @@ async function unpublishBlogHandler(request: AuthenticatedRequest, { params }: {
     blog.publishedAt = null;
     await blog.save();
 
-    console.log('Blog unpublished successfully');
+    console.log(`Blog unpublished successfully by ${request.user?.role}`);
 
     return NextResponse.json({
       message: 'Blog unpublished successfully',

@@ -5,10 +5,10 @@ import { requireAuth, AuthenticatedRequest } from '@/middleware/auth';
 
 async function unbanBlogHandler(request: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    // Check if user is admin
-    if (request.user?.role !== 'admin') {
+    // Check if user is admin or super_admin
+    if (!['admin', 'super_admin'].includes(request.user?.role || '')) {
       return NextResponse.json(
-        { error: 'Admin access required' },
+        { error: 'Admin or Super Admin access required' },
         { status: 403 }
       );
     }
@@ -18,7 +18,7 @@ async function unbanBlogHandler(request: AuthenticatedRequest, { params }: { par
     const resolvedParams = await params;
     const blogId = resolvedParams.id;
     
-    console.log('Unbanning blog with ID:', blogId);
+    console.log(`[${request.user?.role}] Unbanning blog with ID:`, blogId);
     
     const blog = await Blog.findById(blogId);
     if (!blog) {
@@ -37,7 +37,7 @@ async function unbanBlogHandler(request: AuthenticatedRequest, { params }: { par
     blog.publishedAt = null;
     await blog.save();
 
-    console.log('Blog unbanned successfully');
+    console.log(`Blog unbanned successfully by ${request.user?.role}`);
 
     return NextResponse.json({
       message: 'Blog unbanned successfully',

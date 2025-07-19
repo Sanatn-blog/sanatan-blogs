@@ -12,10 +12,10 @@ interface BlogUpdateData {
 
 async function bulkActionHandler(request: AuthenticatedRequest) {
   try {
-    // Check if user is admin
-    if (request.user?.role !== 'admin') {
+    // Check if user is admin or super_admin
+    if (!['admin', 'super_admin'].includes(request.user?.role || '')) {
       return NextResponse.json(
-        { error: 'Admin access required' },
+        { error: 'Admin or Super Admin access required' },
         { status: 403 }
       );
     }
@@ -32,8 +32,23 @@ async function bulkActionHandler(request: AuthenticatedRequest) {
       );
     }
 
+    console.log(`[${request.user?.role}] Performing bulk action:`, action, 'on', blogIds.length, 'blogs');
+
     let updateData: BlogUpdateData = {};
     let message = '';
+
+    // For admin users, check if they're trying to modify super admin blogs
+    if (request.user?.role === 'admin' && ['ban', 'delete'].includes(action)) {
+      const blogs = await Blog.find({ _id: { $in: blogIds } }).populate('author', 'role');
+      const superAdminBlogs = blogs.filter(blog => blog.author && (blog.author as Record<string, unknown>).role === 'super_admin');
+      
+      if (superAdminBlogs.length > 0) {
+        return NextResponse.json(
+          { error: 'Only Super Admin can perform this action on Super Admin blogs' },
+          { status: 403 }
+        );
+      }
+    }
 
     switch (action) {
       case 'publish':
@@ -86,6 +101,8 @@ async function bulkActionHandler(request: AuthenticatedRequest) {
           _id: { $in: blogIds }
         });
         
+        console.log(`Bulk delete completed by ${request.user?.role}:`, deleteResult.deletedCount, 'blogs');
+        
         return NextResponse.json({
           message: `${deleteResult.deletedCount} blogs deleted successfully`,
           deletedCount: deleteResult.deletedCount
@@ -103,6 +120,8 @@ async function bulkActionHandler(request: AuthenticatedRequest) {
       { _id: { $in: blogIds } },
       updateData
     );
+
+    console.log(`Bulk action completed by ${request.user?.role}:`, action, updateResult.modifiedCount, 'blogs');
 
     return NextResponse.json({
       message,

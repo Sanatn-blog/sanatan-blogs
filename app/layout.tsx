@@ -20,6 +20,14 @@ export const metadata: Metadata = {
   description: "A secure platform for authentic storytelling and meaningful conversations. Share your knowledge, connect with readers, and build a community around your ideas.",
   keywords: ["blog", "writing", "sanatan", "storytelling", "community"],
   authors: [{ name: "Sanatan Blogs Team" }],
+  icons: {
+    icon: [
+      { url: '/favicon-simple.svg', type: 'image/svg+xml', sizes: '32x32' },
+      { url: '/favicon-om.svg', type: 'image/svg+xml', sizes: '64x64' },
+      { url: '/favicon.ico', sizes: 'any' }
+    ],
+    apple: '/favicon-om.svg',
+  },
   openGraph: {
     title: "Sanatan Blogs",
     description: "A secure platform for authentic storytelling and meaningful conversations.",

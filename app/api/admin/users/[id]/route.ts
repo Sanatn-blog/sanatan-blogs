@@ -2,28 +2,26 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 import Blog from '@/models/Blog';
-import Comment from '@/models/Comment';
-import { requireAdmin, AuthenticatedRequest } from '@/middleware/auth';
+import { requireAuth, AuthenticatedRequest } from '@/middleware/auth';
 
-// GET - Get detailed user information
-async function getUserDetailsHandler(request: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) {
+// GET - Get user details
+async function getUserHandler(request: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    await connectDB();
-
-    const { id: userId } = await params;
-
-    if (!userId) {
+    // Check if user is admin or super_admin
+    if (!['admin', 'super_admin'].includes(request.user?.role || '')) {
       return NextResponse.json(
-        { error: 'User ID is required' },
-        { status: 400 }
+        { error: 'Admin or Super Admin access required' },
+        { status: 403 }
       );
     }
 
-    // Get user details
-    const user = await User.findById(userId)
-      .select('-password -emailVerificationToken -resetPasswordToken')
-      .lean();
-
+    await connectDB();
+    
+    const resolvedParams = await params;
+    const userId = resolvedParams.id;
+    
+    const user = await User.findById(userId).select('-password -emailVerificationToken -resetPasswordToken -resetPasswordExpires -otp -otpExpiry');
+    
     if (!user) {
       return NextResponse.json(
         { error: 'User not found' },
@@ -31,67 +29,40 @@ async function getUserDetailsHandler(request: AuthenticatedRequest, { params }: 
       );
     }
 
-    // Get user's blogs count
-    const blogsCount = await Blog.countDocuments({ author: userId });
-
-    // Get user's comments count
-    const commentsCount = await Comment.countDocuments({ author: userId });
-
-    // Get recent blogs (last 5)
-    const recentBlogs = await Blog.find({ author: userId })
-      .select('title slug createdAt status')
-      .sort({ createdAt: -1 })
-      .limit(5)
-      .lean();
-
-    // Get recent comments (last 5)
-    const recentComments = await Comment.find({ author: userId })
-      .select('content createdAt')
-      .sort({ createdAt: -1 })
-      .limit(5)
-      .lean();
-
-    return NextResponse.json({
-      user: {
-        ...user,
-        blogsCount,
-        commentsCount,
-        recentBlogs,
-        recentComments
-      }
-    });
+    return NextResponse.json({ user });
 
   } catch (error) {
-    console.error('Get user details error:', error);
+    console.error('Get user error:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch user details' },
+      { error: 'Failed to get user' },
       { status: 500 }
     );
   }
 }
 
-// PATCH - Update user details
+// PUT - Update user (including role management for Super Admin)
 async function updateUserHandler(request: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    await connectDB();
-
-    const { id: userId } = await params;
-    const body = await request.json();
-    const { 
-      name, 
-      email, 
-      role, 
-      status, 
-      bio, 
-      socialLinks, 
-      isVerified, 
-      isActive,
-      emailVerified 
-    } = body;
-
-    if (!userId) {
+    // Only Super Admin can update user roles
+    if (request.user?.role !== 'super_admin') {
       return NextResponse.json(
-        { error: 'User ID is required' },
+        { error: 'Super Admin access required for user management' },
+        { status: 403 }
+      );
+    }
+
+    await connectDB();
+    
+    const resolvedParams = await params;
+    const userId = resolvedParams.id;
+    const body = await request.json();
+    
+    const { role, status, ...otherFields } = body;
+    
+    // Prevent Super Admin from modifying their own role
+    if (userId === request.user?.userId && role && role !== 'super_admin') {
+      return NextResponse.json(
+        { error: 'Cannot modify your own role' },
         { status: 400 }
       );
     }
@@ -104,47 +75,35 @@ async function updateUserHandler(request: AuthenticatedRequest, { params }: { pa
       );
     }
 
-    // Prevent modifying super admin users (unless you're super admin)
-    if (user.role === 'super_admin' && request.user?.role !== 'super_admin') {
-      return NextResponse.json(
-        { error: 'Cannot modify super admin users' },
-        { status: 403 }
-      );
-    }
-
     // Update fields
-    if (name !== undefined) user.name = name;
-    if (email !== undefined) user.email = email;
-    if (role !== undefined) user.role = role;
-    if (status !== undefined) user.status = status;
-    if (bio !== undefined) user.bio = bio;
-    if (socialLinks !== undefined) user.socialLinks = socialLinks;
-    if (isVerified !== undefined) {
-      user.isVerified = isVerified;
-      if (isVerified && !user.verifiedAt) {
-        user.verifiedAt = new Date();
-      }
+    const updateData: Record<string, unknown> = {};
+    
+    if (role && ['user', 'admin', 'super_admin'].includes(role)) {
+      updateData.role = role;
     }
-    if (isActive !== undefined) user.isActive = isActive;
-    if (emailVerified !== undefined) user.emailVerified = emailVerified;
+    
+    if (status && ['pending', 'approved', 'rejected', 'suspended'].includes(status)) {
+      updateData.status = status;
+    }
+    
+    // Add other allowed fields
+    Object.keys(otherFields).forEach(key => {
+      if (['name', 'bio', 'location', 'expertise', 'achievements', 'socialLinks'].includes(key)) {
+        updateData[key] = otherFields[key];
+      }
+    });
 
-    await user.save();
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      updateData,
+      { new: true, runValidators: true }
+    ).select('-password -emailVerificationToken -resetPasswordToken -resetPasswordExpires -otp -otpExpiry');
 
-    // Log the admin action
-    console.log(`Admin ${request.user?.email} updated user ${user.email}`);
+    console.log(`User updated by Super Admin:`, updatedUser?.email, 'Role:', updatedUser?.role, 'Status:', updatedUser?.status);
 
     return NextResponse.json({
       message: 'User updated successfully',
-      user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        status: user.status,
-        isVerified: user.isVerified,
-        isActive: user.isActive,
-        emailVerified: user.emailVerified
-      }
+      user: updatedUser
     });
 
   } catch (error) {
@@ -156,21 +115,30 @@ async function updateUserHandler(request: AuthenticatedRequest, { params }: { pa
   }
 }
 
-// DELETE - Delete user
+// DELETE - Delete user (Super Admin only)
 async function deleteUserHandler(request: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    await connectDB();
-
-    const { id: userId } = await params;
-
-    if (!userId) {
+    // Only Super Admin can delete users
+    if (request.user?.role !== 'super_admin') {
       return NextResponse.json(
-        { error: 'User ID is required' },
+        { error: 'Super Admin access required for user deletion' },
+        { status: 403 }
+      );
+    }
+
+    await connectDB();
+    
+    const resolvedParams = await params;
+    const userId = resolvedParams.id;
+    
+    // Prevent Super Admin from deleting themselves
+    if (userId === request.user?.userId) {
+      return NextResponse.json(
+        { error: 'Cannot delete your own account' },
         { status: 400 }
       );
     }
 
-    // Check if user exists
     const user = await User.findById(userId);
     if (!user) {
       return NextResponse.json(
@@ -179,33 +147,19 @@ async function deleteUserHandler(request: AuthenticatedRequest, { params }: { pa
       );
     }
 
-    // Prevent deleting super admin users (unless you're super admin)
-    if (user.role === 'super_admin' && request.user?.role !== 'super_admin') {
+    // Check if user has blogs
+    const userBlogs = await Blog.find({ author: userId });
+    
+    if (userBlogs.length > 0) {
       return NextResponse.json(
-        { error: 'Cannot delete super admin users' },
-        { status: 403 }
-      );
-    }
-
-    // Prevent deleting yourself
-    if (user._id.toString() === request.user?._id?.toString()) {
-      return NextResponse.json(
-        { error: 'Cannot delete your own account' },
+        { error: 'Cannot delete user with existing blogs. Please delete or transfer their blogs first.' },
         { status: 400 }
       );
     }
 
-    // Delete user's blogs
-    await Blog.deleteMany({ author: userId });
-
-    // Delete user's comments
-    await Comment.deleteMany({ author: userId });
-
-    // Delete the user
     await User.findByIdAndDelete(userId);
 
-    // Log the admin action
-    console.log(`Admin ${request.user?.email} deleted user ${user.email}`);
+    console.log(`User deleted by Super Admin:`, user.email);
 
     return NextResponse.json({
       message: 'User deleted successfully'
@@ -220,7 +174,6 @@ async function deleteUserHandler(request: AuthenticatedRequest, { params }: { pa
   }
 }
 
-// Apply authentication middleware
-export const GET = requireAdmin(getUserDetailsHandler);
-export const PATCH = requireAdmin(updateUserHandler);
-export const DELETE = requireAdmin(deleteUserHandler); 
+export const GET = requireAuth(getUserHandler);
+export const PUT = requireAuth(updateUserHandler);
+export const DELETE = requireAuth(deleteUserHandler); 

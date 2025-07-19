@@ -84,6 +84,13 @@ export default function AdminLayout({
       description: 'Overview & Analytics'
     },
     {
+      href: '/admin/super-admin',
+      icon: Crown,
+      label: 'Super Admin',
+      description: 'Complete platform control',
+      superAdminOnly: true
+    },
+    {
       href: '/admin/users',
       icon: Users,
       label: 'User Management',
