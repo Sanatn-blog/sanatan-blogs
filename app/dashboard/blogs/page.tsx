@@ -219,8 +219,8 @@ export default function MyBlogs() {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
         <div className="text-center max-w-md mx-auto">
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
-          <p className="text-gray-600 text-sm sm:text-base mb-6">Please log in to access your blogs.</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-100 mb-4">Access Denied</h1>
+          <p className="text-gray-100 text-sm sm:text-base mb-6">Please log in to access your blogs.</p>
           <Link href="/login" className="inline-block bg-orange-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg hover:bg-orange-700 transition-colors text-sm sm:text-base">
             Login
           </Link>
@@ -408,15 +408,15 @@ export default function MyBlogs() {
                       
                       <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-500 mb-3">
                         <span className="flex items-center">
-                          <Calendar className="h-3 w-3 sm:h-4 w-4" />
+                          <Calendar className="h-3  sm:h-4 w-4" />
                           {formatDate(blog.publishedAt)}
                         </span>
                         <span className="flex items-center">
-                          <Eye className="h-3 w-3 sm:h-4 w-4" />
+                          <Eye className="h-3 w-3 sm:h-4" />
                           {blog.views} views
                         </span>
                         <span className="flex items-center">
-                          <Tag className="h-3 w-3 sm:h-4 w-4" />
+                          <Tag className="h-3  sm:h-4 w-4" />
                           {blog.category}
                         </span>
                       </div>
