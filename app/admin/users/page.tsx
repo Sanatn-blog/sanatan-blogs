@@ -14,7 +14,11 @@ import {
   Plus,
   Download,
   Eye,
-  RefreshCw
+  RefreshCw,
+  X,
+  Mail,
+  Phone,
+  UserCheck
 } from 'lucide-react';
 
 interface User {
@@ -41,6 +45,14 @@ interface UserStats {
   admins: number;
 }
 
+interface NewUser {
+  name: string;
+  email: string;
+  phoneNumber: string;
+  role: 'user' | 'admin' | 'super_admin';
+  status: 'pending' | 'approved' | 'rejected' | 'suspended';
+}
+
 export default function UserManagement() {
   const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
@@ -59,6 +71,20 @@ export default function UserManagement() {
   });
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  
+  // Debug logging for modal state
+  useEffect(() => {
+    console.log('Modal state changed:', showAddUserModal);
+  }, [showAddUserModal]);
+  const [addingUser, setAddingUser] = useState(false);
+  const [newUser, setNewUser] = useState<NewUser>({
+    name: '',
+    email: '',
+    phoneNumber: '',
+    role: 'user',
+    status: 'approved'
+  });
 
   const fetchUsers = useCallback(async (showRefreshing = false) => {
     if (showRefreshing) {
@@ -385,6 +411,98 @@ export default function UserManagement() {
     }
   ];
 
+  const exportUsers = () => {
+    try {
+      // Prepare data for export
+      const exportData = filteredUsers.map(user => ({
+        Name: user.name,
+        Email: user.email || '',
+        Phone: user.phoneNumber || '',
+        Role: user.role.replace('_', ' '),
+        Status: user.status,
+        'Joined Date': formatDate(user.createdAt),
+        'Last Login': user.lastLogin ? formatDate(user.lastLogin) : 'Never',
+        'Blogs Count': user.blogsCount,
+        'Email Verified': user.emailVerified ? 'Yes' : 'No',
+        'Is Active': user.isActive ? 'Yes' : 'No'
+      }));
+
+      // Convert to CSV
+      const headers = Object.keys(exportData[0]);
+      const csvContent = [
+        headers.join(','),
+        ...exportData.map(row => 
+          headers.map(header => {
+            const value = row[header as keyof typeof row];
+            // Escape commas and quotes in CSV
+            if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
+              return `"${value.replace(/"/g, '""')}"`;
+            }
+            return value;
+          }).join(',')
+        )
+      ].join('\n');
+
+      // Create and download file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `users_export_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Failed to export users. Please try again.');
+    }
+  };
+
+  const handleAddUser = async () => {
+    console.log('handleAddUser called with:', newUser);
+    if (!newUser.name || !newUser.email || !newUser.phoneNumber) {
+      alert('Please fill in all required fields.');
+      return;
+    }
+
+    setAddingUser(true);
+    try {
+      const token = localStorage.getItem('accessToken');
+      console.log('Making API call to create user with token:', token ? 'Present' : 'Missing');
+      const response = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}` 
+        },
+        body: JSON.stringify(newUser)
+      });
+
+      if (response.ok) {
+        alert('User created successfully!');
+        setShowAddUserModal(false);
+        setNewUser({
+          name: '',
+          email: '',
+          phoneNumber: '',
+          role: 'user',
+          status: 'approved'
+        });
+        // Refresh the users list
+        fetchUsers(true);
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to create user: ${errorData.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Failed to create user:', error);
+      alert('Failed to create user. Please try again.');
+    } finally {
+      setAddingUser(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -423,11 +541,20 @@ export default function UserManagement() {
             <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
             <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
           </button>
-          <button className="flex items-center space-x-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition-colors">
+          <button 
+            onClick={exportUsers}
+            className="flex items-center space-x-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-xl transition-colors"
+          >
             <Download className="h-4 w-4" />
             <span>Export</span>
           </button>
-          <button className="flex items-center space-x-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl transition-colors">
+          <button 
+            onClick={() => {
+              console.log('Add User button clicked');
+              setShowAddUserModal(true);
+            }}
+            className="flex items-center space-x-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl transition-colors"
+          >
             <Plus className="h-4 w-4" />
             <span>Add User</span>
           </button>
@@ -533,14 +660,22 @@ export default function UserManagement() {
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm ${
+                      <div className={`w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center text-white font-bold text-sm ${
                         user.role === 'super_admin' 
                           ? 'bg-gradient-to-r from-purple-600 to-orange-600' 
                           : user.role === 'admin' 
                           ? 'bg-gradient-to-r from-blue-600 to-orange-600'
                           : 'bg-gradient-to-r from-gray-600 to-gray-700'
                       }`}>
-                        {user.name.charAt(0).toUpperCase()}
+                        {user.avatar ? (
+                          <img
+                            src={user.avatar}
+                            alt={user.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span>{user.name.charAt(0).toUpperCase()}</span>
+                        )}
                       </div>
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900 dark:text-white">
@@ -640,6 +775,131 @@ export default function UserManagement() {
           </div>
         )}
       </div>
+
+      {/* Add User Modal */}
+      {showAddUserModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Add New User</h2>
+              <button
+                onClick={() => setShowAddUserModal(false)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <X className="h-5 w-5 text-gray-500" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Full Name *
+                </label>
+                <input
+                  type="text"
+                  value={newUser.name}
+                  onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  placeholder="Enter full name"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Email Address *
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    type="email"
+                    value={newUser.email}
+                    onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    placeholder="Enter email address"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Phone Number *
+                </label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    type="tel"
+                    value={newUser.phoneNumber}
+                    onChange={(e) => setNewUser({ ...newUser, phoneNumber: e.target.value })}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    placeholder="Enter phone number"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Role
+                  </label>
+                  <select
+                    value={newUser.role}
+                    onChange={(e) => setNewUser({ ...newUser, role: e.target.value as 'user' | 'admin' | 'super_admin' })}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  >
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                    {currentUser?.role === 'super_admin' && (
+                      <option value="super_admin">Super Admin</option>
+                    )}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Status
+                  </label>
+                  <select
+                    value={newUser.status}
+                    onChange={(e) => setNewUser({ ...newUser, status: e.target.value as 'pending' | 'approved' | 'rejected' | 'suspended' })}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  >
+                    <option value="approved">Approved</option>
+                    <option value="pending">Pending</option>
+                    <option value="rejected">Rejected</option>
+                    <option value="suspended">Suspended</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end space-x-3 mt-6">
+              <button
+                onClick={() => setShowAddUserModal(false)}
+                className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddUser}
+                disabled={addingUser || !newUser.name || !newUser.email || !newUser.phoneNumber}
+                className="flex items-center space-x-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {addingUser ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    <span>Creating...</span>
+                  </>
+                ) : (
+                  <>
+                    <UserCheck className="h-4 w-4" />
+                    <span>Create User</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

@@ -16,7 +16,8 @@ import {
   Home,
   Bell,
   Search,
-  User
+  User,
+  Mail
 } from 'lucide-react';
 
 interface User {
@@ -101,6 +102,12 @@ export default function AdminLayout({
       icon: FileText,
       label: 'Content Management',
       description: 'Manage blog posts'
+    },
+    {
+      href: '/admin/contacts',
+      icon: Mail,
+      label: 'Contact Submissions',
+      description: 'Manage contact forms'
     },
     {
       href: '/admin/settings',

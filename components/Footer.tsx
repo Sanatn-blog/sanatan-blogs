@@ -20,16 +20,23 @@ import {
   TrendingUp
 } from 'lucide-react';
 import { useState } from 'react';
+import { useSubscription } from '@/hooks/useSubscription';
 
 export default function Footer() {
   const [email, setEmail] = useState('');
+  const { subscribe, isSubmitting, message } = useSubscription();
 
-  const handleNewsletterSubmit = (e: React.FormEvent) => {
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle newsletter subscription
-    console.log('Newsletter subscription:', email);
-    setEmail('');
-    alert('Thank you for subscribing!');
+    
+    if (!email.trim()) {
+      return;
+    }
+
+    const result = await subscribe(email, 'footer');
+    if (result.success || result.alreadySubscribed || result.resubscribed) {
+      setEmail('');
+    }
   };
 
   const scrollToTop = () => {
@@ -85,17 +92,39 @@ export default function Footer() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email address"
                   required
-                  className="w-full pl-12 pr-4 py-4 bg-white/90 backdrop-blur-sm rounded-xl text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:bg-white transition-all duration-300"
+                  disabled={isSubmitting}
+                  className="w-full pl-12 pr-4 py-4 bg-white/90 backdrop-blur-sm rounded-xl text-gray-900 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:bg-white transition-all duration-300 disabled:opacity-50"
                 />
               </div>
               <button
                 type="submit"
-                className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 px-8 py-4 rounded-xl font-bold hover:from-yellow-300 hover:to-yellow-400 transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                disabled={isSubmitting}
+                className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 px-8 py-4 rounded-xl font-bold hover:from-yellow-300 hover:to-yellow-400 transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Send className="h-5 w-5" />
-                <span>Subscribe</span>
+                {isSubmitting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900"></div>
+                    <span>Subscribing...</span>
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-5 w-5" />
+                    <span>Subscribe</span>
+                  </>
+                )}
               </button>
             </div>
+            
+            {/* Message Display */}
+            {message && (
+              <div className={`mt-4 p-3 rounded-lg text-center ${
+                message.includes('already subscribed') || message.includes('Thank you') || message.includes('Welcome back')
+                  ? 'bg-green-500/20 text-green-100 border border-green-400/30'
+                  : 'bg-red-500/20 text-red-100 border border-red-400/30'
+              }`}>
+                {message}
+              </div>
+            )}
             
             {/* Trust Indicators */}
             <div className="mt-6 flex items-center justify-center space-x-6 text-orange-100 text-sm">
@@ -378,17 +407,17 @@ export default function Footer() {
       {/* Bottom Bar */}
       <div className="bg-gray-950 py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center justify-between">
-            <div className="text-gray-400 text-center md:text-left mb-4 md:mb-0">
-              <p className="flex items-center justify-center md:justify-start space-x-1">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="text-gray-400 text-center md:text-left">
+              <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-2 sm:gap-1">
                 <span>&copy; 2025 Sanatan Blogs. All rights reserved.</span>
-                <span>•</span>
-                <span className="flex items-center space-x-1">
+                <span className="hidden sm:inline">•</span>
+                <div className="flex items-center space-x-1">
                   <span>Made with</span>
                   <Heart className="h-4 w-4 text-red-500 fill-current" />
                   <span>for the community</span>
-                </span>
-              </p>
+                </div>
+              </div>
             </div>
             
             <button

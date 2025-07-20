@@ -14,6 +14,9 @@ import {
   MapPin, 
   Twitter,
   Linkedin,
+  Instagram,
+  Youtube,
+  Facebook,
   ExternalLink,
   ArrowLeft,
   Loader2
@@ -32,6 +35,9 @@ interface Author {
     twitter?: string;
     linkedin?: string;
     website?: string;
+    instagram?: string;
+    youtube?: string;
+    facebook?: string;
   };
   location?: string;
   joinedAt: string;
@@ -168,17 +174,15 @@ export default function AuthorProfilePage() {
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
             <div className="flex flex-col lg:flex-row items-start lg:items-center space-y-6 lg:space-y-0 lg:space-x-8">
               {/* Avatar */}
-              <div className="w-24 h-24 bg-orange-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+              <div className="w-24 h-24 bg-orange-600 rounded-full overflow-hidden flex items-center justify-center text-white text-2xl font-bold">
                 {author.avatar ? (
-                  <Image 
+                  <img 
                     src={author.avatar} 
                     alt={author.name}
-                    width={96}
-                    height={96}
                     className="w-24 h-24 rounded-full object-cover"
                   />
                 ) : (
-                  author.name.charAt(0)
+                  <span>{author.name.charAt(0)}</span>
                 )}
               </div>
 
@@ -203,7 +207,7 @@ export default function AuthorProfilePage() {
                 </div>
 
                 {/* Social Links */}
-                {(author.socialLinks?.twitter || author.socialLinks?.linkedin || author.socialLinks?.website) && (
+                {(author.socialLinks?.twitter || author.socialLinks?.linkedin || author.socialLinks?.website || author.socialLinks?.instagram || author.socialLinks?.youtube || author.socialLinks?.facebook) && (
                   <div className="flex space-x-3">
                     {author.socialLinks?.twitter && (
                       <a
@@ -233,6 +237,36 @@ export default function AuthorProfilePage() {
                         className="text-gray-600 hover:text-orange-600 transition-colors"
                       >
                         <ExternalLink className="h-5 w-5" />
+                      </a>
+                    )}
+                    {author.socialLinks?.instagram && (
+                      <a
+                        href={author.socialLinks.instagram}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-pink-600 hover:text-pink-700 transition-colors"
+                      >
+                        <Instagram className="h-5 w-5" />
+                      </a>
+                    )}
+                    {author.socialLinks?.youtube && (
+                      <a
+                        href={author.socialLinks.youtube}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-red-600 hover:text-red-700 transition-colors"
+                      >
+                        <Youtube className="h-5 w-5" />
+                      </a>
+                    )}
+                    {author.socialLinks?.facebook && (
+                      <a
+                        href={author.socialLinks.facebook}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-700 transition-colors"
+                      >
+                        <Facebook className="h-5 w-5" />
                       </a>
                     )}
                   </div>

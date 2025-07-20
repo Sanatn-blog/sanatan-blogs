@@ -35,6 +35,12 @@ interface SiteSettings {
   allowedFileTypes: string[];
 }
 
+interface PasswordChange {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
 export default function AdminSettings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -58,6 +64,14 @@ export default function AdminSettings() {
     allowedFileTypes: ['jpg', 'jpeg', 'png', 'gif', 'webp']
   });
   const [showSuccess, setShowSuccess] = useState(false);
+  const [passwordData, setPasswordData] = useState<PasswordChange>({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -115,13 +129,67 @@ export default function AdminSettings() {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
 
+  const handlePasswordChange = (key: keyof PasswordChange, value: string) => {
+    setPasswordData(prev => ({ ...prev, [key]: value }));
+    setPasswordError('');
+  };
+
+  const changePassword = async () => {
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setPasswordError('New passwords do not match');
+      return;
+    }
+
+    if (passwordData.newPassword.length < 6) {
+      setPasswordError('New password must be at least 6 characters long');
+      return;
+    }
+
+    setChangingPassword(true);
+    setPasswordError('');
+
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch('/api/admin/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword
+        })
+      });
+
+      if (response.ok) {
+        setPasswordSuccess(true);
+        setPasswordData({
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: ''
+        });
+        setTimeout(() => setPasswordSuccess(false), 3000);
+      } else {
+        const data = await response.json();
+        setPasswordError(data.message || 'Failed to change password');
+      }
+    } catch (error) {
+      console.error('Password change failed:', error);
+      setPasswordError('An error occurred while changing password');
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
   const tabs = [
     { id: 'general', label: 'General', icon: SettingsIcon },
     { id: 'appearance', label: 'Appearance', icon: Palette },
     { id: 'content', label: 'Content', icon: Globe },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'security', label: 'Security', icon: Shield },
-    { id: 'system', label: 'System', icon: Database }
+    { id: 'system', label: 'System', icon: Database },
+    { id: 'password', label: 'Password', icon: Shield }
   ];
 
   if (loading) {
@@ -492,6 +560,102 @@ export default function AdminSettings() {
                       settings.emailNotifications ? 'translate-x-5' : 'translate-x-0'
                     }`}
                   />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Password Change Settings */}
+          {activeTab === 'password' && (
+            <div className="space-y-6">
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
+                <div className="flex items-center space-x-2">
+                  <Shield className="h-5 w-5 text-blue-600" />
+                  <span className="text-blue-800 dark:text-blue-200 font-medium">
+                    Change Admin Password
+                  </span>
+                </div>
+                <p className="text-blue-700 dark:text-blue-300 text-sm mt-1">
+                  Update your admin account password. Make sure to use a strong password.
+                </p>
+              </div>
+
+              {passwordError && (
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
+                  <div className="flex items-center space-x-2">
+                    <AlertTriangle className="h-5 w-5 text-red-600" />
+                    <span className="text-red-800 dark:text-red-200 font-medium">
+                      {passwordError}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {passwordSuccess && (
+                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4">
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                    <span className="text-green-800 dark:text-green-200 font-medium">
+                      Password changed successfully!
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Current Password
+                  </label>
+                  <input
+                    type="password"
+                    value={passwordData.currentPassword}
+                    onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    placeholder="Enter your current password"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    New Password
+                  </label>
+                  <input
+                    type="password"
+                    value={passwordData.newPassword}
+                    onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    placeholder="Enter your new password"
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Password must be at least 6 characters long
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Confirm New Password
+                  </label>
+                  <input
+                    type="password"
+                    value={passwordData.confirmPassword}
+                    onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    placeholder="Confirm your new password"
+                  />
+                </div>
+
+                <button
+                  onClick={changePassword}
+                  disabled={changingPassword || !passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword}
+                  className="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-orange-600 hover:bg-orange-700 disabled:bg-orange-400 text-white rounded-xl transition-colors"
+                >
+                  {changingPassword ? (
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Shield className="h-4 w-4" />
+                  )}
+                  <span>{changingPassword ? 'Changing Password...' : 'Change Password'}</span>
                 </button>
               </div>
             </div>

@@ -19,9 +19,11 @@ import {
   Globe,
   Twitter,
   Linkedin,
+  Instagram,
+  Youtube,
+  Facebook,
   FileText,
   MessageSquare,
-
   AlertCircle,
   Verified
 } from 'lucide-react';
@@ -39,6 +41,9 @@ interface UserDetails {
     twitter?: string;
     linkedin?: string;
     website?: string;
+    instagram?: string;
+    youtube?: string;
+    facebook?: string;
   };
   createdAt: string;
   updatedAt: string;
@@ -274,14 +279,22 @@ export default function UserDetailPage() {
           {/* User Profile */}
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-start space-x-6">
-              <div className={`w-20 h-20 rounded-2xl flex items-center justify-center text-white font-bold text-2xl ${
+              <div className={`w-20 h-20 rounded-2xl overflow-hidden flex items-center justify-center text-white font-bold text-2xl ${
                 user.role === 'super_admin' 
                   ? 'bg-gradient-to-r from-purple-600 to-orange-600' 
                   : user.role === 'admin' 
                   ? 'bg-gradient-to-r from-blue-600 to-orange-600'
                   : 'bg-gradient-to-r from-gray-600 to-gray-700'
               }`}>
-                {user.name.charAt(0).toUpperCase()}
+                {user.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt={user.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span>{user.name.charAt(0).toUpperCase()}</span>
+                )}
               </div>
               
               <div className="flex-1">
@@ -632,6 +645,45 @@ export default function UserDetailPage() {
                       className="text-sm text-orange-600 hover:text-orange-700"
                     >
                       LinkedIn
+                    </a>
+                  </div>
+                )}
+                {user.socialLinks.instagram && (
+                  <div className="flex items-center space-x-2">
+                    <Instagram className="h-4 w-4 text-pink-600" />
+                    <a 
+                      href={user.socialLinks.instagram} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-sm text-orange-600 hover:text-orange-700"
+                    >
+                      Instagram
+                    </a>
+                  </div>
+                )}
+                {user.socialLinks.youtube && (
+                  <div className="flex items-center space-x-2">
+                    <Youtube className="h-4 w-4 text-red-600" />
+                    <a 
+                      href={user.socialLinks.youtube} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-sm text-orange-600 hover:text-orange-700"
+                    >
+                      YouTube
+                    </a>
+                  </div>
+                )}
+                {user.socialLinks.facebook && (
+                  <div className="flex items-center space-x-2">
+                    <Facebook className="h-4 w-4 text-blue-600" />
+                    <a 
+                      href={user.socialLinks.facebook} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-sm text-orange-600 hover:text-orange-700"
+                    >
+                      Facebook
                     </a>
                   </div>
                 )}

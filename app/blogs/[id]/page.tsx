@@ -17,8 +17,13 @@ import {
   Facebook,
   Twitter,
   Linkedin,
+  Instagram,
+  Youtube,
   Copy,
-  Loader2
+  Loader2,
+  Github,
+  MessageCircle as Telegram,
+  ExternalLink
 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -32,6 +37,14 @@ interface Author {
     twitter?: string;
     linkedin?: string;
     website?: string;
+    instagram?: string;
+    youtube?: string;
+    facebook?: string;
+    github?: string;
+    telegram?: string;
+    reddit?: string;
+    pinterest?: string;
+    tiktok?: string;
   };
 }
 
@@ -603,9 +616,21 @@ export default function BlogDetailPage() {
             <div className="mt-12 p-6 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-2xl border border-orange-100">
               <h3 className="text-xl font-bold text-gray-900 mb-4">About the Author</h3>
               <div className="flex items-start space-x-4">
-                <div className="w-16 h-16 bg-orange-600 rounded-full flex items-center justify-center text-white text-xl font-bold">
-                  {blog.author.name.charAt(0)}
-                </div>
+                {blog.author.avatar ? (
+                  <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0">
+                    <Image 
+                      src={blog.author.avatar} 
+                      alt={blog.author.name}
+                      width={64}
+                      height={64}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-16 h-16 bg-orange-600 rounded-full flex items-center justify-center text-white text-xl font-bold flex-shrink-0">
+                    {blog.author.name.charAt(0)}
+                  </div>
+                )}
                 <div className="flex-1">
                   <h4 className="text-lg font-bold text-gray-900">
                     <Link href={`/authors/${blog.author._id}`} className="hover:text-orange-600 transition-colors">
@@ -616,13 +641,14 @@ export default function BlogDetailPage() {
                     <p className="text-gray-600 mb-3">{blog.author.bio}</p>
                   )}
                   {blog.author.socialLinks && (
-                    <div className="flex space-x-2">
+                    <div className="flex space-x-3">
                       {blog.author.socialLinks.twitter && (
                         <a
                           href={blog.author.socialLinks.twitter}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-blue-400 hover:text-blue-500"
+                          className="text-blue-400 hover:text-blue-500 transition-colors p-1 rounded-full hover:bg-blue-50"
+                          title="Twitter"
                         >
                           <Twitter className="h-5 w-5" />
                         </a>
@@ -632,9 +658,115 @@ export default function BlogDetailPage() {
                           href={blog.author.socialLinks.linkedin}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-700"
+                          className="text-blue-600 hover:text-blue-700 transition-colors p-1 rounded-full hover:bg-blue-50"
+                          title="LinkedIn"
                         >
                           <Linkedin className="h-5 w-5" />
+                        </a>
+                      )}
+                      {blog.author.socialLinks.website && (
+                        <a
+                          href={blog.author.socialLinks.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-gray-600 hover:text-orange-600 transition-colors p-1 rounded-full hover:bg-orange-50"
+                          title="Website"
+                        >
+                          <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clipRule="evenodd" />
+                          </svg>
+                        </a>
+                      )}
+                      {blog.author.socialLinks.instagram && (
+                        <a
+                          href={blog.author.socialLinks.instagram}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-pink-600 hover:text-pink-700 transition-colors p-1 rounded-full hover:bg-pink-50"
+                          title="Instagram"
+                        >
+                          <Instagram className="h-5 w-5" />
+                        </a>
+                      )}
+                      {blog.author.socialLinks.youtube && (
+                        <a
+                          href={blog.author.socialLinks.youtube}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-red-600 hover:text-red-700 transition-colors p-1 rounded-full hover:bg-red-50"
+                          title="YouTube"
+                        >
+                          <Youtube className="h-5 w-5" />
+                        </a>
+                      )}
+                      {blog.author.socialLinks.facebook && (
+                        <a
+                          href={blog.author.socialLinks.facebook}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-700 transition-colors p-1 rounded-full hover:bg-blue-50"
+                          title="Facebook"
+                        >
+                          <Facebook className="h-5 w-5" />
+                        </a>
+                      )}
+                      {blog.author.socialLinks.github && (
+                        <a
+                          href={blog.author.socialLinks.github}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-gray-600 hover:text-gray-700 transition-colors p-1 rounded-full hover:bg-gray-100"
+                          title="GitHub"
+                        >
+                          <Github className="h-5 w-5" />
+                        </a>
+                      )}
+                      {blog.author.socialLinks.telegram && (
+                        <a
+                          href={blog.author.socialLinks.telegram}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-400 hover:text-blue-500 transition-colors p-1 rounded-full hover:bg-blue-50"
+                          title="Telegram"
+                        >
+                          <Telegram className="h-5 w-5" />
+                        </a>
+                      )}
+                      {blog.author.socialLinks.reddit && (
+                        <a
+                          href={blog.author.socialLinks.reddit}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-red-500 hover:text-red-600 transition-colors p-1 rounded-full hover:bg-red-50"
+                          title="Reddit"
+                        >
+                          <ExternalLink className="h-5 w-5" />
+                        </a>
+                      )}
+                      {blog.author.socialLinks.pinterest && (
+                        <a
+                          href={blog.author.socialLinks.pinterest}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-red-600 hover:text-red-700 transition-colors p-1 rounded-full hover:bg-red-50"
+                          title="Pinterest"
+                        >
+                          <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 3.2a1.5 1.5 0 00-3 0c0 1.3.8 2.2 2 3.2.8.6 1.5 1.3 1.5 2.5 0 1.2-.7 2-1.5 2.5-.8.5-1.5 1.2-1.5 2.5a1.5 1.5 0 003 0c0-1.3.8-2.2 2-3.2.8-.6 1.5-1.3 1.5-2.5 0-1.2-.7-2-1.5-2.5-.8-.5-1.5-1.2-1.5-2.5z" />
+                          </svg>
+                        </a>
+                      )}
+                      {blog.author.socialLinks.tiktok && (
+                        <a
+                          href={blog.author.socialLinks.tiktok}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-black hover:text-black-600 transition-colors p-1 rounded-full hover:bg-gray-100"
+                          title="TikTok"
+                        >
+                          <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 3.2a1.5 1.5 0 00-3 0c0 1.3.8 2.2 2 3.2.8.6 1.5 1.3 1.5 2.5 0 1.2-.7 2-1.5 2.5-.8.5-1.5 1.2-1.5 2.5a1.5 1.5 0 003 0c0-1.3.8-2.2 2-3.2.8-.6 1.5-1.3 1.5-2.5 0-1.2-.7-2-1.5-2.5-.8-.5-1.5-1.2-1.5-2.5z" />
+                          </svg>
                         </a>
                       )}
                     </div>
@@ -678,6 +810,25 @@ export default function BlogDetailPage() {
                   </div>
 
                   <div className="p-6">
+                    <div className="flex items-center mb-3">
+                      {relatedBlog.author.avatar ? (
+                        <div className="w-8 h-8 rounded-full overflow-hidden mr-3">
+                          <Image 
+                            src={relatedBlog.author.avatar} 
+                            alt={relatedBlog.author.name}
+                            width={32}
+                            height={32}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">
+                          {relatedBlog.author.name.charAt(0)}
+                        </div>
+                      )}
+                      <span className="text-sm text-gray-600 font-medium">{relatedBlog.author.name}</span>
+                    </div>
+
                     <h3 className="text-xl font-bold text-gray-900 mb-3 hover:text-orange-600 transition-colors">
                       <Link href={`/blogs/${relatedBlog.slug}`}>
                         {relatedBlog.title}

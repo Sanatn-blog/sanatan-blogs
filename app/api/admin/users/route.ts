@@ -209,7 +209,140 @@ async function deleteUserHandler(request: AuthenticatedRequest) {
   }
 }
 
+// POST - Create new user (admin only)
+async function createUserHandler(request: AuthenticatedRequest) {
+  try {
+    await connectDB();
+
+    const body = await request.json();
+    const { name, email, phoneNumber, role, status } = body;
+
+    // Basic validation
+    if (!name || !email || !phoneNumber) {
+      return NextResponse.json(
+        { error: 'Name, email, and phone number are required' },
+        { status: 400 }
+      );
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { error: 'Please enter a valid email address' },
+        { status: 400 }
+      );
+    }
+
+    // Phone number validation
+    const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+    if (!phoneRegex.test(phoneNumber.replace(/\s/g, ''))) {
+      return NextResponse.json(
+        { error: 'Please enter a valid phone number' },
+        { status: 400 }
+      );
+    }
+
+    // Check if user already exists with email
+    const existingUserByEmail = await User.findOne({ email: email.toLowerCase() });
+    if (existingUserByEmail) {
+      return NextResponse.json(
+        { error: 'User with this email already exists' },
+        { status: 409 }
+      );
+    }
+
+    // Check if user already exists with phone number
+    const existingUserByPhone = await User.findOne({ phoneNumber: phoneNumber.trim() });
+    if (existingUserByPhone) {
+      return NextResponse.json(
+        { error: 'User with this phone number already exists' },
+        { status: 409 }
+      );
+    }
+
+    // Generate a random password for the user
+    const randomPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+
+    // Create new user
+    const newUser = new User({
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      password: randomPassword, // User will need to reset this password
+      phoneNumber: phoneNumber.trim(),
+      role: role || 'user',
+      status: status || 'approved',
+      emailVerified: true, // Admin created users are pre-verified
+      isVerified: true,
+      isActive: true,
+      authProvider: 'email'
+    });
+
+    await newUser.save();
+
+    // Log the admin action
+    console.log(`Admin ${request.user?.email} created user ${newUser.email} with role ${newUser.role}`);
+
+    // Remove sensitive information before sending response
+    const userResponse = {
+      _id: newUser._id,
+      name: newUser.name,
+      email: newUser.email,
+      phoneNumber: newUser.phoneNumber,
+      role: newUser.role,
+      status: newUser.status,
+      createdAt: newUser.createdAt
+    };
+
+    return NextResponse.json({
+      message: 'User created successfully',
+      user: userResponse,
+      note: 'User will need to reset their password on first login'
+    }, { status: 201 });
+
+  } catch (error: unknown) {
+    console.error('Create user error:', error);
+
+    // Handle mongoose validation errors
+    if (error && typeof error === 'object' && 'name' in error && error.name === 'ValidationError' && 'errors' in error) {
+      const mongooseError = error as { errors: Record<string, { message: string }> };
+      const errors = Object.values(mongooseError.errors).map((err: { message: string }) => err.message);
+      return NextResponse.json(
+        { error: 'Validation failed', details: errors },
+        { status: 400 }
+      );
+    }
+
+    // Handle duplicate key error
+    if (error && typeof error === 'object' && 'code' in error && error.code === 11000) {
+      const duplicateError = error as { keyPattern?: Record<string, number> };
+      if (duplicateError.keyPattern?.email) {
+        return NextResponse.json(
+          { error: 'User with this email already exists' },
+          { status: 409 }
+        );
+      }
+      if (duplicateError.keyPattern?.phoneNumber) {
+        return NextResponse.json(
+          { error: 'User with this phone number already exists' },
+          { status: 409 }
+        );
+      }
+      return NextResponse.json(
+        { error: 'User already exists' },
+        { status: 409 }
+      );
+    }
+
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
 // Apply authentication middleware
 export const GET = requireAdmin(getUsersHandler);
+export const POST = requireAdmin(createUserHandler);
 export const PATCH = requireAdmin(updateUserStatusHandler);
 export const DELETE = requireAdmin(deleteUserHandler); 

@@ -174,6 +174,91 @@ async function deleteUserHandler(request: AuthenticatedRequest, { params }: { pa
   }
 }
 
+// PATCH - Update user status and role (Admin/Super Admin)
+async function patchUserHandler(request: AuthenticatedRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    // Check if user is admin or super_admin
+    if (!['admin', 'super_admin'].includes(request.user?.role || '')) {
+      return NextResponse.json(
+        { error: 'Admin or Super Admin access required' },
+        { status: 403 }
+      );
+    }
+
+    await connectDB();
+    
+    const resolvedParams = await params;
+    const userId = resolvedParams.id;
+    const body = await request.json();
+    
+    const { role, status } = body;
+    
+    // Prevent users from modifying their own role/status
+    if (userId === request.user?.userId) {
+      return NextResponse.json(
+        { error: 'Cannot modify your own account' },
+        { status: 400 }
+      );
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      );
+    }
+
+    // Only Super Admin can modify roles
+    if (role && request.user?.role !== 'super_admin') {
+      return NextResponse.json(
+        { error: 'Super Admin access required for role management' },
+        { status: 403 }
+      );
+    }
+
+    // Prevent modifying super admin users (unless you're super admin)
+    if (user.role === 'super_admin' && request.user?.role !== 'super_admin') {
+      return NextResponse.json(
+        { error: 'Cannot modify super admin users' },
+        { status: 403 }
+      );
+    }
+
+    // Update fields
+    const updateData: Record<string, unknown> = {};
+    
+    if (role && ['user', 'admin', 'super_admin'].includes(role)) {
+      updateData.role = role;
+    }
+    
+    if (status && ['pending', 'approved', 'rejected', 'suspended'].includes(status)) {
+      updateData.status = status;
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      updateData,
+      { new: true, runValidators: true }
+    ).select('-password -emailVerificationToken -resetPasswordToken -resetPasswordExpires -otp -otpExpiry');
+
+    console.log(`User updated by ${request.user?.role}:`, updatedUser?.email, 'Role:', updatedUser?.role, 'Status:', updatedUser?.status);
+
+    return NextResponse.json({
+      message: 'User updated successfully',
+      user: updatedUser
+    });
+
+  } catch (error) {
+    console.error('Patch user error:', error);
+    return NextResponse.json(
+      { error: 'Failed to update user' },
+      { status: 500 }
+    );
+  }
+}
+
 export const GET = requireAuth(getUserHandler);
+export const PATCH = requireAuth(patchUserHandler);
 export const PUT = requireAuth(updateUserHandler);
 export const DELETE = requireAuth(deleteUserHandler); 

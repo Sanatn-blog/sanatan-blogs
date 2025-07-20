@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { 
   Menu, 
@@ -19,7 +18,8 @@ import {
   Info,
   Crown,
   Shield,
-  BarChart3
+  BarChart3,
+  Mail
 } from 'lucide-react';
 
 interface User {
@@ -73,6 +73,7 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
     { href: '/', label: 'Home', icon: Home },
     { href: '/blogs', label: 'Blogs', icon: BookOpen },
     { href: '/about', label: 'About', icon: Info },
+    { href: '/contact', label: 'Contact', icon: Mail },
   ];
 
   return (
@@ -157,12 +158,10 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                   >
                     <div className="relative">
                       {user.avatar ? (
-                        <Image
+                        <img
                           src={user.avatar}
                           alt={user.name}
-                          width={36}
-                          height={36}
-                          className="rounded-xl"
+                          className="w-9 h-9 rounded-xl object-cover"
                         />
                       ) : (
                         <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-white text-sm font-bold shadow-lg ${
@@ -225,14 +224,22 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                       {/* User Info Header */}
                       <div className="px-4 py-3 border-b border-gray-100">
                         <div className="flex items-center space-x-3">
-                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold shadow-lg ${
+                          <div className={`w-12 h-12 rounded-xl overflow-hidden flex items-center justify-center text-white font-bold shadow-lg ${
                             user.role === 'super_admin' 
                               ? 'bg-gradient-to-r from-purple-600 to-orange-600' 
                               : user.role === 'admin' 
                               ? 'bg-gradient-to-r from-blue-600 to-orange-600'
                               : 'bg-gradient-to-r from-orange-600 to-orange-700'
                           }`}>
-                            {user.name.charAt(0).toUpperCase()}
+                            {user.avatar ? (
+                              <img
+                                src={user.avatar}
+                                alt={user.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <span>{user.name.charAt(0).toUpperCase()}</span>
+                            )}
                           </div>
                           <div className="flex-1 min-w-0">
                             <h3 className="font-semibold text-gray-900 truncate">{user.name.split(' ')[0]}</h3>
@@ -457,25 +464,7 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                 </div>
               )}
 
-              {/* Mobile Auth Section */}
-              {!user && (
-                <div className="pt-4 border-t border-gray-200 space-y-3">
-                  <Link
-                    href="/login"
-                    className="block text-center px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-xl transition-colors font-medium"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Login
-                  </Link>
-                  <Link
-                    href="/register"
-                    className="block text-center bg-orange-600 text-white px-4 py-3 rounded-xl font-semibold hover:bg-orange-700 transition-colors"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Sign Up
-                  </Link>
-                </div>
-              )}
+
             </div>
           </div>
         </div>

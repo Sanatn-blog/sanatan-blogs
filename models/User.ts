@@ -15,6 +15,14 @@ export interface IUser extends Document {
     twitter?: string;
     linkedin?: string;
     website?: string;
+    instagram?: string;
+    youtube?: string;
+    facebook?: string;
+    github?: string;
+    telegram?: string;
+    reddit?: string;
+    pinterest?: string;
+    tiktok?: string;
   };
   location?: string;
   expertise?: string[];
@@ -90,7 +98,15 @@ const UserSchema = new Schema<IUser>({
   socialLinks: {
     twitter: String,
     linkedin: String,
-    website: String
+    website: String,
+    instagram: String,
+    youtube: String,
+    facebook: String,
+    github: String,
+    telegram: String,
+    reddit: String,
+    pinterest: String,
+    tiktok: String
   },
   location: {
     type: String,

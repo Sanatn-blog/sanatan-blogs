@@ -67,6 +67,8 @@ export default function BlogsPage() {
 
 
 
+
+
   // Fetch blogs from API
   const fetchBlogs = async (page: number = 1, category?: string, search?: string) => {
     try {
@@ -157,6 +159,8 @@ export default function BlogsPage() {
       day: 'numeric'
     });
   };
+
+
 
 
 
@@ -315,10 +319,18 @@ export default function BlogsPage() {
 
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                          <span className="text-sm font-medium text-orange-600">
-                            {blog.author.name.charAt(0)}
-                          </span>
+                        <div className="w-8 h-8 bg-orange-100 rounded-full overflow-hidden flex items-center justify-center">
+                          {blog.author.avatar ? (
+                            <img
+                              src={blog.author.avatar}
+                              alt={blog.author.name}
+                              className="w-8 h-8 rounded-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-sm font-medium text-orange-600">
+                              {blog.author.name.charAt(0)}
+                            </span>
+                          )}
                         </div>
                         <span className="text-sm font-medium text-gray-700">{blog.author.name}</span>
                       </div>
@@ -526,10 +538,18 @@ export default function BlogsPage() {
 
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                          <span className="text-sm font-medium text-orange-600">
-                            {blog.author.name.charAt(0)}
-                          </span>
+                        <div className="w-8 h-8 bg-orange-100 rounded-full overflow-hidden flex items-center justify-center">
+                          {blog.author.avatar ? (
+                            <img
+                              src={blog.author.avatar}
+                              alt={blog.author.name}
+                              className="w-8 h-8 rounded-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-sm font-medium text-orange-600">
+                              {blog.author.name.charAt(0)}
+                            </span>
+                          )}
                         </div>
                         <span className="text-sm font-medium text-gray-700">{blog.author.name}</span>
                       </div>
@@ -623,27 +643,7 @@ export default function BlogsPage() {
         </div>
       </section>
 
-      {/* Newsletter Section */}
-      <section className="py-16 bg-gradient-to-r from-orange-600 to-orange-800 text-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Get Latest Articles Directly in Your Email
-          </h2>
-          <p className="text-xl text-orange-100 mb-8">
-            Subscribe to our newsletter and receive articles full of spiritual knowledge regularly
-          </p>
-          <div className="max-w-md mx-auto flex gap-4">
-            <input
-              type="email"
-              placeholder="Your email address"
-              className="flex-1 px-4 py-3 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-            />
-            <button className="bg-yellow-400 text-gray-900 px-6 py-3 rounded-xl font-bold hover:bg-yellow-300 transition-colors">
-              Subscribe
-            </button>
-          </div>
-        </div>
-      </section>
+
 
       {/* Custom CSS for animations */}
       <style jsx>{`

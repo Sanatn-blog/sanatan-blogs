@@ -149,13 +149,13 @@ export default function MyBlogs() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'published':
-        return <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">Published</span>;
+        return <span className="px-2 py-1 bg-green-900/30 text-green-300 rounded-full text-xs font-medium">Published</span>;
       case 'draft':
-        return <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">Draft</span>;
+        return <span className="px-2 py-1 bg-yellow-900/30 text-yellow-300 rounded-full text-xs font-medium">Draft</span>;
       case 'archived':
-        return <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-medium">Archived</span>;
+        return <span className="px-2 py-1 bg-gray-900/30 text-gray-300 rounded-full text-xs font-medium">Archived</span>;
       default:
-        return <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-medium">{status}</span>;
+        return <span className="px-2 py-1 bg-gray-900/30 text-gray-300 rounded-full text-xs font-medium">{status}</span>;
     }
   };
 
@@ -206,10 +206,10 @@ export default function MyBlogs() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4">
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center px-4">
         <div className="text-center">
-          <Loader2 className="animate-spin h-8 w-8 text-orange-600 mx-auto"></Loader2>
-          <p className="mt-4 text-gray-600 text-sm sm:text-base">Loading...</p>
+          <Loader2 className="animate-spin h-8 w-8 text-orange-500 mx-auto"></Loader2>
+          <p className="mt-4 text-gray-300 text-sm sm:text-base">Loading...</p>
         </div>
       </div>
     );
@@ -217,10 +217,10 @@ export default function MyBlogs() {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4">
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center px-4">
         <div className="text-center max-w-md mx-auto">
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-100 mb-4">Access Denied</h1>
-          <p className="text-gray-100 text-sm sm:text-base mb-6">Please log in to access your blogs.</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-white mb-4">Access Denied</h1>
+          <p className="text-gray-300 text-sm sm:text-base mb-6">Please log in to access your blogs.</p>
           <Link href="/login" className="inline-block bg-orange-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg hover:bg-orange-700 transition-colors text-sm sm:text-base">
             Login
           </Link>
@@ -230,18 +230,18 @@ export default function MyBlogs() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-4 sm:py-6 lg:py-8">
+    <div className="min-h-screen bg-gray-900 py-4 sm:py-6 lg:py-8">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-4 sm:p-6">
+        <div className="bg-gray-800 rounded-2xl shadow-xl border border-gray-700 mb-6 p-4 sm:p-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">📚 My Blogs</h1>
-              <p className="text-gray-600 mt-1 sm:mt-2 text-sm sm:text-base">Manage your blog posts</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-white">📚 My Blogs</h1>
+              <p className="text-gray-400 mt-1 sm:mt-2 text-sm sm:text-base">Manage your blog posts</p>
             </div>
             <Link
               href="/write-blog"
-              className="flex items-center justify-center sm:justify-start space-x-2 bg-orange-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg hover:bg-orange-700 transition-colors shadow-lg hover:shadow-xl text-sm sm:text-base w-full sm:w-auto"
+              className="flex items-center justify-center sm:justify-start space-x-2 bg-gradient-to-r from-orange-600 to-pink-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl hover:from-orange-700 hover:to-pink-700 transition-all shadow-lg hover:shadow-xl text-sm sm:text-base w-full sm:w-auto"
             >
               <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
               <span>Write New Blog</span>
@@ -250,7 +250,7 @@ export default function MyBlogs() {
         </div>
 
         {/* Search and Filter */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-4 sm:p-6">
+        <div className="bg-gray-800 rounded-2xl shadow-xl border border-gray-700 mb-6 p-4 sm:p-6">
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -259,15 +259,15 @@ export default function MyBlogs() {
                 placeholder="Search your blogs..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm sm:text-base text-gray-900 placeholder-gray-500"
+                className="w-full pl-10 pr-4 py-2 sm:py-3 bg-gray-700 border border-gray-600 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm sm:text-base text-white placeholder-gray-400"
               />
             </div>
             <div className="flex items-center space-x-2">
-              <Filter className="h-4 w-4 text-gray-600" />
+              <Filter className="h-4 w-4 text-gray-400" />
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm sm:text-base text-gray-900 bg-white"
+                className="px-3 py-2 sm:py-3 bg-gray-700 border border-gray-600 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm sm:text-base text-white"
               >
                 <option value="all">All Status</option>
                 <option value="published">Published</option>
@@ -280,74 +280,74 @@ export default function MyBlogs() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-6">
+          <div className="bg-gray-800 rounded-2xl shadow-xl border border-gray-700 p-3 sm:p-6">
             <div className="flex items-center">
-              <div className="p-2 sm:p-3 bg-blue-100 rounded-lg">
-                <PenTool className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-blue-600" />
+              <div className="p-2 sm:p-3 bg-blue-900/30 rounded-xl">
+                <PenTool className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-blue-400" />
               </div>
               <div className="ml-2 sm:ml-3 lg:ml-4">
-                <p className="text-xs sm:text-sm font-medium text-gray-600">Total Blogs</p>
-                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">{stats.totalBlogs}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-400">Total Blogs</p>
+                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-white">{stats.totalBlogs}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-6">
+          <div className="bg-gray-800 rounded-2xl shadow-xl border border-gray-700 p-3 sm:p-6">
             <div className="flex items-center">
-              <div className="p-2 sm:p-3 bg-green-100 rounded-lg">
-                <Eye className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-green-600" />
+              <div className="p-2 sm:p-3 bg-green-900/30 rounded-xl">
+                <Eye className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-green-400" />
               </div>
               <div className="ml-2 sm:ml-3 lg:ml-4">
-                <p className="text-xs sm:text-sm font-medium text-gray-600">Total Views</p>
-                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">{stats.totalViews.toLocaleString()}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-400">Total Views</p>
+                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-white">{stats.totalViews.toLocaleString()}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-6">
+          <div className="bg-gray-800 rounded-2xl shadow-xl border border-gray-700 p-3 sm:p-6">
             <div className="flex items-center">
-              <div className="p-2 sm:p-3 bg-purple-100 rounded-lg">
-                <Edit className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-purple-600" />
+              <div className="p-2 sm:p-3 bg-purple-900/30 rounded-xl">
+                <Edit className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-purple-400" />
               </div>
               <div className="ml-2 sm:ml-3 lg:ml-4">
-                <p className="text-xs sm:text-sm font-medium text-gray-600">Published</p>
-                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">{stats.publishedBlogs}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-400">Published</p>
+                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-white">{stats.publishedBlogs}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-6">
+          <div className="bg-gray-800 rounded-2xl shadow-xl border border-gray-700 p-3 sm:p-6">
             <div className="flex items-center">
-              <div className="p-2 sm:p-3 bg-yellow-100 rounded-lg">
-                <PenTool className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-yellow-600" />
+              <div className="p-2 sm:p-3 bg-yellow-900/30 rounded-xl">
+                <PenTool className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-yellow-400" />
               </div>
               <div className="ml-2 sm:ml-3 lg:ml-4">
-                <p className="text-xs sm:text-sm font-medium text-gray-600">Drafts</p>
-                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">{stats.draftBlogs}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-400">Drafts</p>
+                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-white">{stats.draftBlogs}</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Blogs List */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+        <div className="bg-gray-800 rounded-2xl shadow-xl border border-gray-700 p-4 sm:p-6">
           {loadingBlogs ? (
             <div className="text-center py-8 sm:py-12">
-              <Loader2 className="animate-spin h-6 w-6 sm:h-8 sm:w-8 text-orange-600 mx-auto"></Loader2>
-              <p className="mt-4 text-gray-600 text-sm sm:text-base">Loading your blogs...</p>
+              <Loader2 className="animate-spin h-6 w-6 sm:h-8 sm:w-8 text-orange-500 mx-auto"></Loader2>
+              <p className="mt-4 text-gray-400 text-sm sm:text-base">Loading your blogs...</p>
             </div>
           ) : error ? (
             <div className="text-center py-8 sm:py-12">
               <div className="text-4xl sm:text-6xl mb-4">⚠️</div>
-              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">Error Loading Blogs</h3>
-              <p className="text-gray-600 text-sm sm:text-base max-w-md mx-auto">{error}</p>
+              <h3 className="text-lg sm:text-xl font-semibold text-white mb-2">Error Loading Blogs</h3>
+              <p className="text-gray-400 text-sm sm:text-base max-w-md mx-auto">{error}</p>
               <div className="text-xs sm:text-sm text-gray-500 mb-6">
                 If this problem persists, please check your login status or try again later.
               </div>
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
                 <button
                   onClick={fetchUserBlogs}
-                  className="inline-flex items-center justify-center space-x-2 bg-orange-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg hover:bg-orange-700 transition-colors text-sm sm:text-base"
+                  className="inline-flex items-center justify-center space-x-2 bg-gradient-to-r from-orange-600 to-pink-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl hover:from-orange-700 hover:to-pink-700 transition-all text-sm sm:text-base"
                 >
                   <Loader2 className="h-4 w-4 sm:h-5 sm:w-5" />
                   <span>Try Again</span>
@@ -355,7 +355,7 @@ export default function MyBlogs() {
                 {error.includes('log in') && (
                   <Link
                     href="/login"
-                    className="inline-flex items-center justify-center space-x-2 bg-blue-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base"
+                    className="inline-flex items-center justify-center space-x-2 bg-blue-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl hover:bg-blue-700 transition-all text-sm sm:text-base"
                   >
                     <span>Go to Login</span>
                   </Link>
@@ -364,9 +364,9 @@ export default function MyBlogs() {
             </div>
           ) : filteredBlogs.length === 0 ? (
             <div className="text-center py-8 sm:py-12">
-              <PenTool className="h-12 w-12 sm:h-16 sm:w-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">No blogs found</h3>
-              <p className="text-gray-600 text-sm sm:text-base">
+              <PenTool className="h-12 w-12 sm:h-16 sm:w-16 text-gray-500 mx-auto mb-4" />
+              <h3 className="text-lg sm:text-xl font-semibold text-white mb-2">No blogs found</h3>
+              <p className="text-gray-400 text-sm sm:text-base">
                 {blogs.length === 0 
                   ? "Start sharing your thoughts with the world by writing your first blog post!"
                   : "No blogs match your current search or filter criteria."
@@ -374,7 +374,7 @@ export default function MyBlogs() {
               </p>
               <Link
                 href="/write-blog"
-                className="inline-flex items-center justify-center space-x-2 bg-orange-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg hover:bg-orange-700 transition-colors text-sm sm:text-base"
+                className="inline-flex items-center justify-center space-x-2 bg-gradient-to-r from-orange-600 to-pink-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl hover:from-orange-700 hover:to-pink-700 transition-all text-sm sm:text-base"
               >
                 <PenTool className="h-4 w-4 sm:h-5 sm:w-5" />
                 <span>Write Your First Blog</span>
@@ -383,7 +383,7 @@ export default function MyBlogs() {
           ) : (
             <div className="space-y-3 sm:space-y-4">
               {filteredBlogs.map((blog) => (
-                <div key={blog._id} className="border border-gray-200 rounded-lg p-4 sm:p-6 hover:shadow-md transition-shadow">
+                <div key={blog._id} className="border border-gray-700 rounded-xl p-4 sm:p-6 hover:shadow-xl transition-all bg-gray-700/50">
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
                     {/* Featured Image */}
                     {blog.featuredImage && (
@@ -393,22 +393,22 @@ export default function MyBlogs() {
                           alt={blog.title}
                           width={128}
                           height={128}
-                          className="w-full h-full object-cover rounded-lg"
+                          className="w-full h-full object-cover rounded-xl"
                         />
                       </div>
                     )}
                     
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 break-words">{blog.title}</h3>
+                        <h3 className="text-base sm:text-lg font-semibold text-white break-words">{blog.title}</h3>
                         {getStatusBadge(blog.status)}
                       </div>
                       
-                      <p className="text-gray-600 mb-3 line-clamp-2 text-sm sm:text-base">{blog.excerpt}</p>
+                      <p className="text-gray-300 mb-3 line-clamp-2 text-sm sm:text-base">{blog.excerpt}</p>
                       
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-500 mb-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-400 mb-3">
                         <span className="flex items-center">
-                          <Calendar className="h-3  sm:h-4 w-4" />
+                          <Calendar className="h-3 sm:h-4 w-4" />
                           {formatDate(blog.publishedAt)}
                         </span>
                         <span className="flex items-center">
@@ -416,17 +416,16 @@ export default function MyBlogs() {
                           {blog.views} views
                         </span>
                         <span className="flex items-center">
-                          <Tag className="h-3  sm:h-4 w-4" />
+                          <Tag className="h-3 sm:h-4 w-4" />
                           {blog.category}
                         </span>
                       </div>
                       
                       <div className="flex flex-wrap gap-1">
                         {(blog.tags || []).slice(0, 3).map((tag) => (
-                          
                           <span
                             key={tag}
-                            className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs"
+                            className="bg-gray-600 text-gray-300 px-2 py-1 rounded text-xs"
                           >
                             #{tag}
                           </span>
@@ -440,21 +439,21 @@ export default function MyBlogs() {
                     <div className="flex items-center justify-center sm:justify-end space-x-1 sm:space-x-2 sm:ml-4">
                       <Link
                         href={`/blogs/${blog._id}`}
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        className="p-2 text-blue-400 hover:bg-blue-900/30 rounded-lg transition-colors"
                         title="View"
                       >
                         <Eye className="h-4 w-4 sm:h-5 sm:w-5" />
                       </Link>
                       <Link
                         href={`/write-blog?edit=${blog._id}`}
-                        className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                        className="p-2 text-green-400 hover:bg-green-900/30 rounded-lg transition-colors"
                         title="Edit"
                       >
                         <Edit className="h-4 w-4 sm:h-5 sm:w-5" />
                       </Link>
                       <button
                         onClick={() => handleDeleteBlog(blog._id)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-2 text-red-400 hover:bg-red-900/30 rounded-lg transition-colors"
                         title="Delete"
                       >
                         <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />

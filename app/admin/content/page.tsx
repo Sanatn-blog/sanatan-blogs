@@ -618,11 +618,9 @@ export default function ContentManagement() {
                           <div className="flex items-center space-x-2">
                             <div className="flex-shrink-0 h-8 w-8">
                               {blog.author.avatar ? (
-                                <Image
+                                <img
                                   src={blog.author.avatar}
                                   alt={blog.author.name}
-                                  width={32}
-                                  height={32}
                                   className="h-8 w-8 rounded-full object-cover"
                                 />
                               ) : (
@@ -760,11 +758,9 @@ export default function ContentManagement() {
                         <div className="flex items-center space-x-2">
                           <div className="flex-shrink-0 h-6 w-6">
                             {blog.author.avatar ? (
-                              <Image
+                              <img
                                 src={blog.author.avatar}
                                 alt={blog.author.name}
-                                width={24}
-                                height={24}
                                 className="h-6 w-6 rounded-full object-cover"
                               />
                             ) : (
@@ -917,11 +913,9 @@ export default function ContentManagement() {
                       <div className="flex items-center space-x-3">
                         <div className="flex-shrink-0 h-12 w-12">
                           {selectedBlog.author.avatar ? (
-                            <Image
+                            <img
                               src={selectedBlog.author.avatar}
                               alt={selectedBlog.author.name}
-                              width={48}
-                              height={48}
                               className="h-12 w-12 rounded-full object-cover"
                             />
                           ) : (
