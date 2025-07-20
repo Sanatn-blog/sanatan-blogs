@@ -321,9 +321,11 @@ export default function BlogsPage() {
                       <div className="flex items-center space-x-3">
                         <div className="w-8 h-8 bg-orange-100 rounded-full overflow-hidden flex items-center justify-center">
                           {blog.author.avatar ? (
-                            <img
+                            <Image
                               src={blog.author.avatar}
                               alt={blog.author.name}
+                              width={32}
+                              height={32}
                               className="w-8 h-8 rounded-full object-cover"
                             />
                           ) : (
@@ -540,9 +542,11 @@ export default function BlogsPage() {
                       <div className="flex items-center space-x-3">
                         <div className="w-8 h-8 bg-orange-100 rounded-full overflow-hidden flex items-center justify-center">
                           {blog.author.avatar ? (
-                            <img
+                            <Image
                               src={blog.author.avatar}
                               alt={blog.author.name}
+                              width={32}
+                              height={32}
                               className="w-8 h-8 rounded-full object-cover"
                             />
                           ) : (

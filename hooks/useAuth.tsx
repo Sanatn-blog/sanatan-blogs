@@ -21,6 +21,8 @@ interface AuthContextType {
   logout: () => void;
   checkAuth: () => Promise<void>;
   refreshToken: () => Promise<string | null>;
+  updateUser: (userData: Partial<User>) => void;
+  refreshUserData: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -131,6 +133,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push('/');
   };
 
+  const updateUser = (userData: Partial<User>) => {
+    if (user) {
+      setUser({ ...user, ...userData });
+    }
+  };
+
+  const refreshUserData = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) return;
+
+      const response = await fetch('/api/auth/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const userData = await response.json();
+        setUser(userData.user);
+      }
+    } catch (error) {
+      console.error('Failed to refresh user data:', error);
+    }
+  };
+
   const refreshToken = async () => {
     try {
       const response = await fetch('/api/auth/refresh', {
@@ -157,7 +185,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     register,
     logout,
     checkAuth,
-    refreshToken
+    refreshToken,
+    updateUser,
+    refreshUserData
   };
 
   return (

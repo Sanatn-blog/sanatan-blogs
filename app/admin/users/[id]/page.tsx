@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import Image from 'next/image';
 import { 
   ArrowLeft, 
   User, 
@@ -287,9 +288,11 @@ export default function UserDetailPage() {
                   : 'bg-gradient-to-r from-gray-600 to-gray-700'
               }`}>
                 {user.avatar ? (
-                  <img
+                  <Image
                     src={user.avatar}
                     alt={user.name}
+                    width={80}
+                    height={80}
                     className="w-full h-full object-cover"
                   />
                 ) : (

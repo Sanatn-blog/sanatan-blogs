@@ -47,7 +47,6 @@ const SubscriptionSchema = new Schema<ISubscription>({
 });
 
 // Index for better query performance
-SubscriptionSchema.index({ email: 1 }, { unique: true });
 SubscriptionSchema.index({ status: 1 });
 SubscriptionSchema.index({ subscribedAt: -1 });
 

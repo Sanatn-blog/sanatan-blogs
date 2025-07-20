@@ -176,9 +176,11 @@ export default function AuthorProfilePage() {
               {/* Avatar */}
               <div className="w-24 h-24 bg-orange-600 rounded-full overflow-hidden flex items-center justify-center text-white text-2xl font-bold">
                 {author.avatar ? (
-                  <img 
+                  <Image 
                     src={author.avatar} 
                     alt={author.name}
+                    width={96}
+                    height={96}
                     className="w-24 h-24 rounded-full object-cover"
                   />
                 ) : (

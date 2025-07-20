@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { 
   Menu, 
@@ -158,9 +159,11 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                   >
                     <div className="relative">
                       {user.avatar ? (
-                        <img
+                        <Image
                           src={user.avatar}
                           alt={user.name}
+                          width={36}
+                          height={36}
                           className="w-9 h-9 rounded-xl object-cover"
                         />
                       ) : (
@@ -232,9 +235,11 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                               : 'bg-gradient-to-r from-orange-600 to-orange-700'
                           }`}>
                             {user.avatar ? (
-                              <img
+                              <Image
                                 src={user.avatar}
                                 alt={user.name}
+                                width={48}
+                                height={48}
                                 className="w-full h-full object-cover"
                               />
                             ) : (

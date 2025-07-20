@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { 
   Search, 
   Users, 
@@ -161,9 +162,11 @@ export default function AuthorsPage() {
                       {/* Avatar */}
                       <div className="w-16 h-16 bg-orange-600 rounded-full overflow-hidden flex items-center justify-center text-white text-xl font-bold flex-shrink-0">
                         {author.avatar ? (
-                          <img 
+                          <Image 
                             src={author.avatar} 
                             alt={author.name}
+                            width={64}
+                            height={64}
                             className="w-16 h-16 rounded-full object-cover"
                           />
                         ) : (
