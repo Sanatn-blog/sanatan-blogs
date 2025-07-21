@@ -4,21 +4,23 @@ import { verifyToken } from '@/lib/jwt';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { currentPassword, newPassword } = await request.json();
+    const { newPassword } = await request.json();
+    const resolvedParams = await params;
+    const userId = resolvedParams.id;
 
     // Validate input
-    if (!currentPassword || !newPassword) {
+    if (!newPassword) {
       return NextResponse.json(
-        { message: 'Current password and new password are required' },
+        { error: 'New password is required' },
         { status: 400 }
       );
     }
 
     if (newPassword.length < 6) {
       return NextResponse.json(
-        { message: 'New password must be at least 6 characters long' },
+        { error: 'New password must be at least 6 characters long' },
         { status: 400 }
       );
     }
@@ -27,7 +29,7 @@ export async function POST(request: NextRequest) {
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
     if (!passwordRegex.test(newPassword)) {
       return NextResponse.json(
-        { message: 'Password must contain at least one uppercase letter, one lowercase letter, and one number' },
+        { error: 'Password must contain at least one uppercase letter, one lowercase letter, and one number' },
         { status: 400 }
       );
     }
@@ -36,7 +38,7 @@ export async function POST(request: NextRequest) {
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
-        { message: 'Authorization token required' },
+        { error: 'Authorization token required' },
         { status: 401 }
       );
     }
@@ -47,7 +49,7 @@ export async function POST(request: NextRequest) {
     const decoded = verifyToken(token);
     if (!decoded || !decoded.userId) {
       return NextResponse.json(
-        { message: 'Invalid token' },
+        { error: 'Invalid token' },
         { status: 401 }
       );
     }
@@ -55,28 +57,36 @@ export async function POST(request: NextRequest) {
     // Connect to database
     await connectDB();
 
-    // Find user with password included
-    const user = await User.findById(decoded.userId).select('+password');
-    if (!user) {
+    // Find admin user
+    const adminUser = await User.findById(decoded.userId);
+    if (!adminUser) {
       return NextResponse.json(
-        { message: 'User not found' },
+        { error: 'Admin user not found' },
         { status: 404 }
       );
     }
 
     // Check if user is admin or super_admin
-    if (user.role !== 'admin' && user.role !== 'super_admin') {
+    if (adminUser.role !== 'admin' && adminUser.role !== 'super_admin') {
       return NextResponse.json(
-        { message: 'Insufficient permissions' },
+        { error: 'Insufficient permissions' },
         { status: 403 }
       );
     }
 
-    // Verify current password
-    const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
-    if (!isCurrentPasswordValid) {
+    // Find target user
+    const targetUser = await User.findById(userId);
+    if (!targetUser) {
       return NextResponse.json(
-        { message: 'Current password is incorrect' },
+        { error: 'Target user not found' },
+        { status: 404 }
+      );
+    }
+
+    // Prevent admin from resetting their own password through this endpoint
+    if (userId === decoded.userId) {
+      return NextResponse.json(
+        { error: 'Use the change password endpoint to change your own password' },
         { status: 400 }
       );
     }
@@ -86,19 +96,21 @@ export async function POST(request: NextRequest) {
     const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
 
     // Update password
-    user.password = hashedNewPassword;
-    await user.save();
+    targetUser.password = hashedNewPassword;
+    await targetUser.save();
+
+    console.log(`Password reset by admin ${adminUser.email} for user ${targetUser.email}`);
 
     return NextResponse.json(
-      { message: 'Password changed successfully' },
+      { message: 'Password reset successfully' },
       { status: 200 }
     );
 
   } catch (error) {
-    console.error('Password change error:', error);
+    console.error('Password reset error:', error);
     
     return NextResponse.json(
-      { message: 'Internal server error' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

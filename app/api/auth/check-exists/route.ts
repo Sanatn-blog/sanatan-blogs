@@ -9,8 +9,9 @@ async function checkExistsHandler(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const email = searchParams.get('email');
     const phoneNumber = searchParams.get('phoneNumber');
+    const username = searchParams.get('username');
 
-    const results: { email?: boolean; phoneNumber?: boolean } = {};
+    const results: { email?: boolean; phoneNumber?: boolean; username?: boolean } = {};
 
     // Check email if provided
     if (email) {
@@ -22,6 +23,12 @@ async function checkExistsHandler(request: NextRequest) {
     if (phoneNumber) {
       const existingUserByPhone = await User.findOne({ phoneNumber: phoneNumber.trim() });
       results.phoneNumber = !!existingUserByPhone;
+    }
+
+    // Check username if provided
+    if (username) {
+      const existingUserByUsername = await User.findOne({ username: username.toLowerCase() });
+      results.username = !!existingUserByUsername;
     }
 
     return NextResponse.json(results, { status: 200 });

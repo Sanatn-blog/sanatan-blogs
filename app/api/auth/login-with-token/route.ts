@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
-import { generateSecureAccessToken, generateRefreshToken } from '@/lib/jwt';
+import { generateSecureAccessToken, generateRefreshToken, verifyPasswordWithToken } from '@/lib/jwt';
 import { rateLimit } from '@/middleware/auth';
 
-async function loginHandler(request: NextRequest) {
+async function loginWithTokenHandler(request: NextRequest) {
   try {
-    console.log('🔐 Login attempt started');
+    console.log('🔐 Login with token attempt started');
     await connectDB();
 
     const body = await request.json();
-    const { emailOrUsername, password } = body;
+    const { emailOrUsername, password, token } = body;
 
     console.log('📧 Login attempt for:', emailOrUsername);
 
@@ -24,7 +24,6 @@ async function loginHandler(request: NextRequest) {
     }
 
     // Find user with password field included
-    // Try to find by email, username, or user ID
     let user = null;
     
     // Check if it's a valid ObjectId (user ID)
@@ -51,7 +50,7 @@ async function loginHandler(request: NextRequest) {
 
     console.log('✅ User found:', user.email, 'Status:', user.status);
 
-    // Check if user is approved (temporarily allow pending users for testing)
+    // Check if user is approved
     if (user.status === 'rejected') {
       console.log('❌ User rejected');
       return NextResponse.json(
@@ -66,30 +65,37 @@ async function loginHandler(request: NextRequest) {
       );
     } else if (user.status === 'pending') {
       console.log('⚠️ User is pending - allowing login for testing');
-      // For testing purposes, we'll allow pending users to log in
-      // In production, you should remove this and require approval
     }
 
-    // Verify password
-    console.log('🔐 Verifying password...');
+    // Verify password using database
+    console.log('🔐 Verifying password with database...');
     const isPasswordValid = await user.comparePassword(password);
-    console.log('🔐 Password valid:', isPasswordValid);
+    console.log('🔐 Password valid (database):', isPasswordValid);
     
     if (!isPasswordValid) {
-      console.log('❌ Invalid password');
+      console.log('❌ Invalid password (database)');
       return NextResponse.json(
         { error: 'Invalid password. Please check your password and try again.' },
         { status: 401 }
       );
     }
 
-    // Update last login without triggering validation
-    try {
-      await User.findByIdAndUpdate(user._id, { lastLogin: new Date() }, { new: true });
-    } catch (updateError) {
-      console.log('⚠️ Failed to update lastLogin, but continuing with login:', updateError);
-      // Continue with login even if lastLogin update fails
+    // Additional verification with JWT token if provided
+    let tokenVerificationPassed = true;
+    if (token) {
+      console.log('🔐 Verifying password with JWT token...');
+      const isTokenPasswordValid = await verifyPasswordWithToken(token, password);
+      console.log('🔐 Password valid (JWT token):', isTokenPasswordValid);
+      
+      if (!isTokenPasswordValid) {
+        console.log('⚠️ Password verification with token failed, but database verification passed');
+        tokenVerificationPassed = false;
+      }
     }
+
+    // Update last login
+    user.lastLogin = new Date();
+    await user.save();
 
     // Generate tokens with password hash for additional security
     const accessToken = generateSecureAccessToken(user._id.toString(), user.password);
@@ -116,7 +122,9 @@ async function loginHandler(request: NextRequest) {
     const response = NextResponse.json({
       message: 'Login successful',
       user: userResponse,
-      accessToken
+      accessToken,
+      tokenVerificationPassed,
+      securityLevel: token ? 'enhanced' : 'standard'
     }, { status: 200 });
 
     // Set refresh token as HTTP-only cookie
@@ -131,30 +139,13 @@ async function loginHandler(request: NextRequest) {
     return response;
 
   } catch (error) {
-    console.error('❌ Login error:', error);
-    
-    // Handle specific validation errors
-    if (error instanceof Error && error.message.includes('User validation failed')) {
-      return NextResponse.json(
-        { error: 'Account validation error. Please contact support.' },
-        { status: 400 }
-      );
-    }
-    
-    // Handle other specific errors
-    if (error instanceof Error) {
-      return NextResponse.json(
-        { error: error.message || 'Login failed. Please try again.' },
-        { status: 500 }
-      );
-    }
-    
+    console.error('❌ Login with token error:', error);
     return NextResponse.json(
-      { error: 'Internal server error. Please try again later.' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }
 }
 
 // Apply rate limiting (10 login attempts per 15 minutes per IP)
-export const POST = rateLimit(10, 15 * 60 * 1000)(loginHandler); 
+export const POST = rateLimit(10, 15 * 60 * 1000)(loginWithTokenHandler); 

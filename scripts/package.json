@@ -1,0 +1,19 @@
+{
+  "name": "sanatan-blogs-scripts",
+  "version": "1.0.0",
+  "description": "Migration scripts for Sanatan Blogs",
+  "main": "update-usernames.js",
+  "scripts": {
+    "check": "node check-usernames.js",
+    "dry-run": "node update-usernames-dry-run.js",
+    "update-usernames": "node update-usernames.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "mongoose": "^8.0.0",
+    "bcryptjs": "^2.4.3"
+  },
+  "keywords": ["migration", "mongodb", "username"],
+  "author": "Sanatan Blogs",
+  "license": "MIT"
+} 

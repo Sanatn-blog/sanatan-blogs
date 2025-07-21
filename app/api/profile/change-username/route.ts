@@ -35,7 +35,7 @@ export const POST = requireAuth(async (request: AuthenticatedRequest) => {
 
     // Check if username is already taken by another user
     const existingUser = await User.findOne({ 
-      name: newUsername,
+      username: newUsername.toLowerCase(),
       _id: { $ne: request.user?._id } // Exclude current user
     });
     
@@ -49,8 +49,8 @@ export const POST = requireAuth(async (request: AuthenticatedRequest) => {
     // Update username
     const updatedUser = await User.findByIdAndUpdate(
       request.user?._id,
-      { name: newUsername },
-      { new: true, runValidators: true }
+      { username: newUsername.toLowerCase() },
+      { new: true, runValidators: false }
     ).select('-password -emailVerificationToken -resetPasswordToken -resetPasswordExpires -otp -otpExpiry');
 
     if (!updatedUser) {
@@ -67,6 +67,14 @@ export const POST = requireAuth(async (request: AuthenticatedRequest) => {
 
   } catch (error) {
     console.error('Username change error:', error);
+    
+    // Check if it's a validation error
+    if (error instanceof Error && error.message.includes('Validation failed')) {
+      return NextResponse.json(
+        { error: 'Username can only contain letters, numbers, hyphens, and underscores' },
+        { status: 400 }
+      );
+    }
     
     return NextResponse.json(
       { error: 'Internal server error' },

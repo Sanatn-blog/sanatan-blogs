@@ -1,57 +1,7 @@
-import mongoose, { Document, Schema } from 'mongoose';
-import bcryptjs from 'bcryptjs';
+const mongoose = require('mongoose');
+const bcryptjs = require('bcryptjs');
 
-export interface IUser extends Document {
-  _id: string;
-  name: string;
-  username: string;
-  email?: string;
-  password?: string;
-  phoneNumber?: string;
-  avatar?: string;
-  role: 'user' | 'admin' | 'super_admin';
-  status: 'pending' | 'approved' | 'rejected' | 'suspended';
-  bio?: string;
-  socialLinks?: {
-    twitter?: string;
-    linkedin?: string;
-    website?: string;
-    instagram?: string;
-    youtube?: string;
-    facebook?: string;
-    github?: string;
-    telegram?: string;
-    reddit?: string;
-    pinterest?: string;
-    tiktok?: string;
-  };
-  location?: string;
-  expertise?: string[];
-  achievements?: string[];
-  followers?: string[];
-  following?: string[];
-  createdAt: Date;
-  updatedAt: Date;
-  lastLogin?: Date;
-  emailVerified: boolean;
-  emailVerificationToken?: string;
-  resetPasswordToken?: string;
-  resetPasswordExpires?: Date;
-  isVerified?: boolean;
-  verifiedAt?: Date;
-  isActive?: boolean;
-  isTemporary?: boolean;
-  otp?: string;
-  otpExpiry?: Date;
-  googleId?: string;
-  facebookId?: string;
-  instagramId?: string;
-  twitterId?: string;
-  authProvider?: 'email' | 'phone' | 'google' | 'facebook' | 'instagram' | 'twitter';
-  comparePassword(candidatePassword: string): Promise<boolean>;
-}
-
-const UserSchema = new Schema<IUser>({
+const UserSchema = new mongoose.Schema({
   name: {
     type: String,
     required: [true, 'Name is required'],
@@ -85,7 +35,7 @@ const UserSchema = new Schema<IUser>({
   password: {
     type: String,
     minLength: [6, 'Password must be at least 6 characters'],
-    select: false // Don't include password in queries by default
+    select: false
   },
   avatar: {
     type: String,
@@ -131,11 +81,11 @@ const UserSchema = new Schema<IUser>({
     maxLength: [200, 'Achievement cannot exceed 200 characters']
   }],
   followers: [{
-    type: Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   }],
   following: [{
-    type: Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   }],
   lastLogin: Date,
@@ -177,11 +127,11 @@ const UserSchema = new Schema<IUser>({
 // Index for better query performance
 UserSchema.index({ status: 1 });
 UserSchema.index({ role: 1 });
-// Username index is already defined in the schema with unique: true
+UserSchema.index({ username: 1 });
 
 // Hash password before saving
 UserSchema.pre('save', async function (next) {
-  const user = this as IUser;
+  const user = this;
   if (!user.isModified('password') || !user.password) return next();
 
   try {
@@ -189,12 +139,12 @@ UserSchema.pre('save', async function (next) {
     user.password = await bcryptjs.hash(user.password, salt);
     next();
   } catch (error) {
-    next(error as Error);
+    next(error);
   }
 });
 
 // Compare password method
-UserSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
+UserSchema.methods.comparePassword = async function(candidatePassword) {
   return bcryptjs.compare(candidatePassword, this.password);
 };
 
@@ -208,6 +158,6 @@ UserSchema.methods.toJSON = function() {
   return userObject;
 };
 
-const User = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
+const User = mongoose.models.User || mongoose.model('User', UserSchema);
 
-export default User; 
+module.exports = User; 

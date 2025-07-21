@@ -1,15 +1,12 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
 import { useAuth } from '@/hooks/useAuth';
-import { useTheme } from '@/hooks/useTheme';
 import { 
   User, 
   Save, 
   ArrowLeft,
-  Moon,
-  Sun,
   Mail,
   MapPin,
   Briefcase,
@@ -51,7 +48,6 @@ interface ProfileForm {
 
 export default function SettingsPage() {
   const { user, loading, updateUser, refreshUserData } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -79,10 +75,14 @@ export default function SettingsPage() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string>('');
   
-  // Username change state
-  const [newUsername, setNewUsername] = useState('');
-  const [changingUsername, setChangingUsername] = useState(false);
-  const [usernameMessage, setUsernameMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  // User ID (Username) change state
+  const [newUserId, setNewUserId] = useState('');
+  const [changingUserId, setChangingUserId] = useState(false);
+  const [userIdMessage, setUserIdMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [checkingUserId, setCheckingUserId] = useState(false);
+  const [userIdAvailable, setUserIdAvailable] = useState<boolean | null>(null);
+  const [suggestedUserIds, setSuggestedUserIds] = useState<string[]>([]);
+  const [debouncedUserId, setDebouncedUserId] = useState('');
   
   // Password change state
   const [passwordData, setPasswordData] = useState({
@@ -99,6 +99,24 @@ export default function SettingsPage() {
       loadProfile();
     }
   }, [user]);
+
+  // Clear User ID availability check when user changes
+  useEffect(() => {
+    setUserIdAvailable(null);
+    setSuggestedUserIds([]);
+    setNewUserId('');
+  }, [user]);
+
+  // Debounce User ID input for availability check
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setDebouncedUserId(newUserId);
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [newUserId]);
+
+
 
   const loadProfile = async () => {
     try {
@@ -272,15 +290,94 @@ export default function SettingsPage() {
     }
   };
 
-  const handleUsernameChange = async () => {
-    if (!newUsername.trim()) {
-      setUsernameMessage({ type: 'error', text: 'Please enter a new username' });
+  // Check if User ID (username) is available
+  const checkUserIdAvailability = useCallback(async (userId: string) => {
+    if (!userId.trim() || userId.trim().length < 3) {
+      setUserIdAvailable(null);
+      setSuggestedUserIds([]);
       return;
     }
 
     try {
-      setChangingUsername(true);
-      setUsernameMessage(null);
+      setCheckingUserId(true);
+      const response = await fetch(`/api/auth/check-exists?username=${encodeURIComponent(userId.trim())}`);
+      if (response.ok) {
+        const data = await response.json();
+        const isAvailable = !data.username;
+        setUserIdAvailable(isAvailable);
+        
+        // If not available, generate suggestions
+        if (!isAvailable) {
+          const suggestions = generateUserIdSuggestions(userId.trim());
+          setSuggestedUserIds(suggestions);
+        } else {
+          setSuggestedUserIds([]);
+        }
+      }
+    } catch (error) {
+      console.error('Error checking User ID availability:', error);
+      setUserIdAvailable(null);
+    } finally {
+      setCheckingUserId(false);
+    }
+  }, []);
+
+  // Check User ID availability when debounced value changes
+  useEffect(() => {
+    if (debouncedUserId) {
+      checkUserIdAvailability(debouncedUserId);
+    } else {
+      setUserIdAvailable(null);
+      setSuggestedUserIds([]);
+    }
+  }, [debouncedUserId, checkUserIdAvailability]);
+
+  // Generate User ID suggestions
+  const generateUserIdSuggestions = (baseUserId: string): string[] => {
+    const suggestions: string[] = [];
+    const cleanBase = baseUserId.replace(/[^a-zA-Z0-9_-]/g, '').toLowerCase();
+    
+    // Add numbers
+    for (let i = 1; i <= 5; i++) {
+      suggestions.push(`${cleanBase}${i}`);
+    }
+    
+    // Add random numbers
+    for (let i = 0; i < 3; i++) {
+      const randomNum = Math.floor(Math.random() * 999) + 1;
+      suggestions.push(`${cleanBase}${randomNum}`);
+    }
+    
+    // Add underscore and hyphen variations
+    suggestions.push(`${cleanBase}_user`);
+    suggestions.push(`user_${cleanBase}`);
+    suggestions.push(`${cleanBase}-user`);
+    suggestions.push(`user-${cleanBase}`);
+    
+    return suggestions.slice(0, 5); // Return max 5 suggestions
+  };
+
+  const handleUserIdChange = async () => {
+    if (!newUserId.trim()) {
+      setUserIdMessage({ type: 'error', text: 'Please enter a new User ID' });
+      return;
+    }
+
+    if (newUserId.trim().length < 3) {
+      setUserIdMessage({ type: 'error', text: 'User ID must be at least 3 characters long' });
+      return;
+    }
+
+    // Validate User ID format
+    const userIdRegex = /^[a-zA-Z0-9_-]+$/;
+    if (!userIdRegex.test(newUserId.trim())) {
+      setUserIdMessage({ type: 'error', text: 'User ID can only contain letters, numbers, hyphens, and underscores' });
+      return;
+    }
+
+    try {
+      setChangingUserId(true);
+      setUserIdMessage(null);
       
       const token = localStorage.getItem('accessToken');
       const response = await fetch('/api/profile/change-username', {
@@ -289,32 +386,34 @@ export default function SettingsPage() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ newUsername: newUsername.trim() })
+        body: JSON.stringify({ newUsername: newUserId.trim() })
       });
       
       if (response.ok) {
         const data = await response.json();
-        setUsernameMessage({ type: 'success', text: 'Username changed successfully!' });
-        setNewUsername('');
+        setUserIdMessage({ type: 'success', text: 'User ID changed successfully!' });
+        setNewUserId('');
+        setUserIdAvailable(null);
+        setSuggestedUserIds([]);
         // Update the user context with new username
-        if (data.user?.name) {
-          updateUser({ name: data.user.name });
+        if (data.user?.username) {
+          updateUser({ username: data.user.username });
         } else if (data.user) {
           updateUser(data.user);
         } else {
           // Fallback: refresh user data from server
           await refreshUserData();
         }
-        setTimeout(() => setUsernameMessage(null), 3000);
+        setTimeout(() => setUserIdMessage(null), 3000);
       } else {
         const data = await response.json();
-        setUsernameMessage({ type: 'error', text: data.error || 'Failed to change username' });
+        setUserIdMessage({ type: 'error', text: data.error || 'Failed to change User ID' });
       }
     } catch (error) {
-      console.error('Error changing username:', error);
-      setUsernameMessage({ type: 'error', text: 'Failed to change username' });
+      console.error('Error changing User ID:', error);
+      setUserIdMessage({ type: 'error', text: 'Failed to change User ID' });
     } finally {
-      setChangingUsername(false);
+      setChangingUserId(false);
     }
   };
 
@@ -418,18 +517,7 @@ export default function SettingsPage() {
             </div>
           </div>
           
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={toggleTheme}
-              className="p-3 bg-white/80 dark:bg-slate-800/50 backdrop-blur-sm rounded-xl hover:bg-gray-100/80 dark:hover:bg-slate-700/50 transition-all duration-300 border border-gray-200/50 dark:border-slate-700/50 hover:border-purple-500/50 shadow-sm"
-            >
-              {theme === 'dark' ? (
-                <Sun className="w-5 h-5 text-yellow-500" />
-              ) : (
-                <Moon className="w-5 h-5 text-gray-700 dark:text-slate-300" />
-              )}
-            </button>
-          </div>
+
         </div>
 
         {/* Profile Image and Save Changes Section */}
@@ -859,23 +947,23 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            {/* Username Change */}
+            {/* User ID (Username) Change */}
             <div className="bg-white/80 dark:bg-slate-800/30 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 dark:border-slate-700/50 shadow-xl">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center space-x-2">
                 <div className="p-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg">
                   <AtSign className="w-5 h-5 text-white" />
                 </div>
-                <span>Change Username</span>
+                <span>User ID</span>
               </h2>
               
-              {usernameMessage && (
+              {userIdMessage && (
                 <div className={`mb-6 p-4 rounded-xl border backdrop-blur-sm ${
-                  usernameMessage.type === 'success' 
+                  userIdMessage.type === 'success' 
                     ? 'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-900/20 dark:border-emerald-500/50 dark:text-emerald-300 shadow-lg shadow-emerald-500/10' 
                     : 'bg-red-50 border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-500/50 dark:text-red-300 shadow-lg shadow-red-500/10'
                 }`}>
                   <div className="flex items-center space-x-3">
-                    {usernameMessage.type === 'success' ? (
+                    {userIdMessage.type === 'success' ? (
                       <div className="p-1 bg-emerald-500/20 rounded-full">
                         <CheckCircle className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                       </div>
@@ -884,49 +972,117 @@ export default function SettingsPage() {
                         <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
                       </div>
                     )}
-                    <span className="font-medium">{usernameMessage.text}</span>
+                    <span className="font-medium">{userIdMessage.text}</span>
                   </div>
                 </div>
               )}
               
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Current Username</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Current User ID</label>
                   <input
                     type="text"
-                    value={user.name}
+                    value={user.username || 'Loading...'}
                     disabled
-                    className="w-full px-4 py-3 bg-gray-100 dark:bg-slate-700/30 border border-gray-300 dark:border-slate-600/50 rounded-xl text-gray-500 dark:text-slate-400 cursor-not-allowed backdrop-blur-sm"
+                    className={`w-full px-4 py-3 border rounded-xl cursor-not-allowed backdrop-blur-sm transition-all duration-300 ${
+                      userIdMessage?.type === 'success' 
+                        ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-300 dark:border-emerald-500/50 text-emerald-700 dark:text-emerald-300' 
+                        : 'bg-gray-100 dark:bg-slate-700/30 border-gray-300 dark:border-slate-600/50 text-gray-500 dark:text-slate-400'
+                    }`}
                   />
+                  {userIdMessage?.type === 'success' && (
+                    <div className="mt-2 p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-500/30">
+                      <p className="text-xs text-emerald-700 dark:text-emerald-300 font-medium">
+                        ✓ User ID updated successfully to: <span className="font-bold">{user.username || 'Loading...'}</span>
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">New Username</label>
-                  <input
-                    type="text"
-                    value={newUsername}
-                    onChange={(e) => setNewUsername(e.target.value)}
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-700/50 border border-gray-300 dark:border-slate-600/50 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500/50 transition-all duration-300 backdrop-blur-sm"
-                    placeholder="Enter new spiritual username"
-                  />
+                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">New User ID</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={newUserId}
+                      onChange={(e) => setNewUserId(e.target.value)}
+                      className={`w-full px-4 py-3 bg-gray-50 dark:bg-slate-700/50 border rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 transition-all duration-300 backdrop-blur-sm ${
+                        userIdAvailable === true 
+                          ? 'border-emerald-300 focus:ring-emerald-500 focus:border-emerald-500/50' 
+                          : userIdAvailable === false 
+                          ? 'border-red-300 focus:ring-red-500 focus:border-red-500/50'
+                          : 'border-gray-300 dark:border-slate-600/50 focus:ring-purple-500 focus:border-purple-500/50'
+                      }`}
+                      placeholder="Enter new unique User ID"
+                    />
+                    {checkingUserId && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <Loader2 className="w-4 h-4 animate-spin text-purple-500" />
+                      </div>
+                    )}
+                    {userIdAvailable === true && !checkingUserId && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <CheckCircle className="w-4 h-4 text-emerald-500" />
+                      </div>
+                    )}
+                    {userIdAvailable === false && !checkingUserId && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <AlertCircle className="w-4 h-4 text-red-500" />
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Availability Status */}
+                  {userIdAvailable === true && (
+                    <div className="mt-2 p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-500/30">
+                      <p className="text-xs text-emerald-700 dark:text-emerald-300 font-medium">
+                        ✓ User ID is available
+                      </p>
+                    </div>
+                  )}
+                  
+                  {userIdAvailable === false && (
+                    <div className="mt-2 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-500/30">
+                      <p className="text-xs text-red-700 dark:text-red-300 font-medium mb-2">
+                        ✗ User ID is already taken
+                      </p>
+                      {suggestedUserIds.length > 0 && (
+                        <div>
+                          <p className="text-xs text-red-600 dark:text-red-400 mb-2">Try these alternatives:</p>
+                          <div className="flex flex-wrap gap-2">
+                            {suggestedUserIds.map((suggestion, index) => (
+                              <button
+                                key={index}
+                                onClick={() => setNewUserId(suggestion)}
+                                className="px-2 py-1 text-xs bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-md text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-600 transition-colors duration-200"
+                              >
+                                {suggestion}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
                   <div className="mt-2 p-3 bg-gray-100 dark:bg-slate-700/20 rounded-lg">
                     <p className="text-xs text-gray-600 dark:text-slate-400">
-                      <strong>Requirements:</strong> Letters, numbers, underscores, and hyphens only
+                      <strong>Requirements:</strong> 3-30 characters, letters, numbers, hyphens, and underscores only
                     </p>
                   </div>
                 </div>
 
                 <button
-                  onClick={handleUsernameChange}
-                  disabled={changingUsername || !newUsername.trim()}
+                  onClick={handleUserIdChange}
+                  disabled={changingUserId || !newUserId.trim() || userIdAvailable !== true}
                   className="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-gray-400 disabled:to-gray-400 dark:disabled:from-slate-600 dark:disabled:to-slate-600 text-white rounded-xl font-medium transition-all duration-300 disabled:cursor-not-allowed shadow-lg"
                 >
-                  {changingUsername ? (
+                  {changingUserId ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
                     <AtSign className="w-5 h-5" />
                   )}
-                  <span>{changingUsername ? 'Changing Username...' : 'Change Username'}</span>
+                  <span>{changingUserId ? 'Changing User ID...' : 'Change User ID'}</span>
                 </button>
               </div>
             </div>

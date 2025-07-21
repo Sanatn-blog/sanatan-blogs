@@ -15,7 +15,7 @@ import { useAuth } from '@/hooks/useAuth';
 import toast from 'react-hot-toast';
 
 interface LoginFormData {
-  email: string;
+  emailOrUsername: string;
   password: string;
 }
 
@@ -23,7 +23,7 @@ interface LoginFormData {
 
 export default function LoginPage() {
   const [formData, setFormData] = useState<LoginFormData>({
-    email: '',
+    emailOrUsername: '',
     password: ''
   });
 
@@ -47,7 +47,7 @@ export default function LoginPage() {
         });
 
         if (response.ok) {
-          router.push('/dashboard');
+          router.push('/');
           return;
         }
       }
@@ -70,21 +70,34 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
 
-    if (!formData.email || !formData.password) {
-      toast.error('Please fill in all fields');
+    if (!formData.emailOrUsername || !formData.password) {
+      toast.error('Please enter your email or user ID and password');
       setLoading(false);
       return;
     }
 
     try {
-      const result = await login(formData.email, formData.password);
+      const result = await login(formData.emailOrUsername, formData.password);
       
       if (result.success) {
         const firstName = result.user?.name?.split(' ')[0] || 'User';
         toast.success(`🎉 Welcome back, ${firstName}!`);
         router.push('/');
       } else {
-        toast.error(result.error || 'Login failed');
+        // Show more specific error messages
+        if (result.error?.includes('not found')) {
+          toast.error('User not found. Please check your email or user ID.');
+        } else if (result.error?.includes('Invalid password')) {
+          toast.error('Incorrect password. Please try again.');
+        } else if (result.error?.includes('not approved')) {
+          toast.error('Your account is pending approval. Please wait for admin approval.');
+        } else if (result.error?.includes('rejected')) {
+          toast.error('Your account has been rejected. Please contact admin.');
+        } else if (result.error?.includes('suspended')) {
+          toast.error('Your account has been suspended. Please contact admin.');
+        } else {
+          toast.error(result.error || 'Login failed');
+        }
       }
     } catch {
       toast.error('An error occurred during login');
@@ -244,7 +257,7 @@ export default function LoginPage() {
           </div>
           <h2 className="text-3xl font-bold text-gray-900">Welcome Back!</h2>
           <p className="mt-2 text-gray-600">
-            Sign in to your account to continue your spiritual journey
+            Sign in with your email or user ID to continue your spiritual journey
           </p>
         </div>
 
@@ -295,20 +308,20 @@ export default function LoginPage() {
           {/* Email Login - Always show this now */}
           <form onSubmit={handleEmailLogin} className="space-y-6">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
+              <label htmlFor="emailOrUsername" className="block text-sm font-medium text-gray-700 mb-2">
+                Email or User ID
               </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <input
-                  id="email"
-                  name="email"
-                  type="email"
+                  id="emailOrUsername"
+                  name="emailOrUsername"
+                  type="text"
                   required
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  value={formData.emailOrUsername}
+                  onChange={(e) => setFormData({ ...formData, emailOrUsername: e.target.value })}
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors text-gray-900"
-                  placeholder="Enter your email"
+                  placeholder="Enter your email or user ID"
                 />
               </div>
             </div>

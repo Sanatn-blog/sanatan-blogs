@@ -2,19 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 import { rateLimit } from '@/middleware/auth';
-import { generateAccessToken, generateRefreshToken } from '@/lib/jwt';
+import { generateSecureAccessToken, generateRefreshToken } from '@/lib/jwt';
 
 async function registerHandler(request: NextRequest) {
   try {
     await connectDB();
 
     const body = await request.json();
-    const { name, email, password, phoneNumber, bio, socialLinks } = body;
+    const { name, username, email, password, phoneNumber, bio, socialLinks } = body;
 
     // Basic validation
-    if (!name || !email || !password || !phoneNumber) {
+    if (!name || !username || !email || !password || !phoneNumber) {
       return NextResponse.json(
-        { error: 'Name, email, phone number, and password are required' },
+        { error: 'Name, username, email, phone number, and password are required' },
         { status: 400 }
       );
     }
@@ -26,11 +26,29 @@ async function registerHandler(request: NextRequest) {
       );
     }
 
+    // Additional password strength validation
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
+    if (!passwordRegex.test(password)) {
+      return NextResponse.json(
+        { error: 'Password must contain at least one uppercase letter, one lowercase letter, and one number' },
+        { status: 400 }
+      );
+    }
+
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return NextResponse.json(
         { error: 'Please enter a valid email address' },
+        { status: 400 }
+      );
+    }
+
+    // Username validation
+    const usernameRegex = /^[a-zA-Z0-9_]+$/;
+    if (username.length < 3 || username.length > 30 || !usernameRegex.test(username)) {
+      return NextResponse.json(
+        { error: 'Username must be 3-30 characters and contain only letters, numbers, and underscores' },
         { status: 400 }
       );
     }
@@ -53,6 +71,15 @@ async function registerHandler(request: NextRequest) {
       );
     }
 
+    // Check if user already exists with username
+    const existingUserByUsername = await User.findOne({ username: username.toLowerCase() });
+    if (existingUserByUsername) {
+      return NextResponse.json(
+        { error: 'Username already exists' },
+        { status: 409 }
+      );
+    }
+
     // Check if user already exists with phone number (if provided)
     if (phoneNumber) {
       const existingUserByPhone = await User.findOne({ phoneNumber: phoneNumber.trim() });
@@ -67,25 +94,27 @@ async function registerHandler(request: NextRequest) {
     // Create new user
     const newUser = new User({
       name: name.trim(),
+      username: username.toLowerCase().trim(),
       email: email.toLowerCase().trim(),
       password,
       phoneNumber: phoneNumber?.trim(),
       bio: bio?.trim(),
       socialLinks: socialLinks || {},
-      status: 'pending', // Users need approval by default
+      status: process.env.NODE_ENV === 'development' ? 'approved' : 'pending', // Auto-approve in development
       authProvider: phoneNumber ? 'phone' : 'email'
     });
 
     await newUser.save();
 
-    // Generate JWT tokens
-    const accessToken = generateAccessToken(newUser._id.toString());
+    // Generate JWT tokens with password hash for additional security
+    const accessToken = generateSecureAccessToken(newUser._id.toString(), newUser.password);
     const refreshToken = generateRefreshToken(newUser._id.toString());
 
     // Remove sensitive information before sending response
     const userResponse = {
       _id: newUser._id,
       name: newUser.name,
+      username: newUser.username,
       email: newUser.email,
       phoneNumber: newUser.phoneNumber,
       role: newUser.role,
@@ -118,6 +147,12 @@ async function registerHandler(request: NextRequest) {
     // Handle duplicate key error
     if (error && typeof error === 'object' && 'code' in error && error.code === 11000) {
       const duplicateError = error as { keyPattern?: Record<string, number> };
+      if (duplicateError.keyPattern?.username) {
+        return NextResponse.json(
+          { error: 'Username already exists' },
+          { status: 409 }
+        );
+      }
       if (duplicateError.keyPattern?.email) {
         return NextResponse.json(
           { error: 'User with this email already exists' },

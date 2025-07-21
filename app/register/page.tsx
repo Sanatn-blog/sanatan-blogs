@@ -15,6 +15,7 @@ import {
 
 interface RegisterFormData {
   name: string;
+  username: string;
   email: string;
   phoneNumber: string;
   password: string;
@@ -24,6 +25,7 @@ interface RegisterFormData {
 export default function RegisterPage() {
   const [formData, setFormData] = useState<RegisterFormData>({
     name: '',
+    username: '',
     email: '',
     phoneNumber: '',
     password: '',
@@ -33,11 +35,13 @@ export default function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  
   const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
   const [authLoading, setAuthLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [checkingEmail, setCheckingEmail] = useState(false);
   const [checkingPhone, setCheckingPhone] = useState(false);
+  const [checkingUsername, setCheckingUsername] = useState(false);
   const router = useRouter();
 
   // Debounce function
@@ -60,6 +64,7 @@ export default function RegisterPage() {
   // Debounced values for validation
   const debouncedEmail = useDebounce(formData.email, 500);
   const debouncedPhone = useDebounce(formData.phoneNumber, 500);
+  const debouncedUsername = useDebounce(formData.username, 500);
 
   const checkExistingAuth = useCallback(async () => {
     try {
@@ -105,6 +110,13 @@ export default function RegisterPage() {
     if (!phone) return true; // Phone is optional
     const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
     return phoneRegex.test(phone.replace(/\s/g, ''));
+  };
+
+  // Username validation function
+  const validateUsername = (username: string) => {
+    if (!username) return false;
+    const usernameRegex = /^[a-zA-Z0-9_]+$/;
+    return username.length >= 3 && username.length <= 30 && usernameRegex.test(username);
   };
 
   // Check if email exists
@@ -159,6 +171,32 @@ export default function RegisterPage() {
     }
   }, []);
 
+  // Check if username exists
+  const checkUsernameExists = useCallback(async (username: string) => {
+    if (!username || !validateUsername(username)) return;
+    
+    setCheckingUsername(true);
+    try {
+      const response = await fetch(`/api/auth/check-exists?username=${encodeURIComponent(username)}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.username) {
+          setFieldErrors(prev => ({ ...prev, username: 'Username already exists' }));
+        } else {
+          setFieldErrors(prev => {
+            const newErrors = { ...prev };
+            delete newErrors.username;
+            return newErrors;
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error checking username:', error);
+    } finally {
+      setCheckingUsername(false);
+    }
+  }, []);
+
   // Check email existence when debounced email changes
   useEffect(() => {
     if (debouncedEmail && validateEmail(debouncedEmail)) {
@@ -173,6 +211,13 @@ export default function RegisterPage() {
     }
   }, [debouncedPhone, checkPhoneExists]);
 
+  // Check username existence when debounced username changes
+  useEffect(() => {
+    if (debouncedUsername && validateUsername(debouncedUsername)) {
+      checkUsernameExists(debouncedUsername);
+    }
+  }, [debouncedUsername, checkUsernameExists]);
+
   const handleEmailRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -182,6 +227,18 @@ export default function RegisterPage() {
     // Validation
     if (!formData.name.trim()) {
       setFieldErrors({ name: 'Name is required' });
+      setLoading(false);
+      return;
+    }
+
+    if (!formData.username.trim()) {
+      setFieldErrors({ username: 'Username is required' });
+      setLoading(false);
+      return;
+    }
+
+    if (!validateUsername(formData.username)) {
+      setFieldErrors({ username: 'Username must be 3-30 characters and contain only letters, numbers, and underscores' });
       setLoading(false);
       return;
     }
@@ -222,6 +279,14 @@ export default function RegisterPage() {
       return;
     }
 
+    // Additional password strength validation
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
+    if (!passwordRegex.test(formData.password)) {
+      setFieldErrors({ password: 'Password must contain at least one uppercase letter, one lowercase letter, and one number' });
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
@@ -230,6 +295,7 @@ export default function RegisterPage() {
         },
         body: JSON.stringify({
           name: formData.name.trim(),
+          username: formData.username.trim(),
           email: formData.email.trim(),
           phoneNumber: formData.phoneNumber.trim(),
           password: formData.password
@@ -247,7 +313,9 @@ export default function RegisterPage() {
       } else {
         // Field-specific error handling
         if (data.error) {
-          if (data.error.toLowerCase().includes('email')) {
+          if (data.error.toLowerCase().includes('username')) {
+            setFieldErrors({ username: data.error });
+          } else if (data.error.toLowerCase().includes('email')) {
             setFieldErrors({ email: data.error });
           } else if (data.error.toLowerCase().includes('phone')) {
             setFieldErrors({ phoneNumber: data.error });
@@ -319,6 +387,34 @@ export default function RegisterPage() {
                 />
               </div>
               {fieldErrors.name && <p className="mt-1 text-xs text-red-600">{fieldErrors.name}</p>}
+            </div>
+
+            <div>
+              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
+                Username *
+              </label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <input
+                  id="username"
+                  name="username"
+                  type="text"
+                  required
+                  value={formData.username}
+                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                  className={`w-full pl-10 pr-4 py-3 border ${fieldErrors.username ? 'border-red-400' : 'border-gray-300'} rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors text-gray-900`}
+                  placeholder="Choose a unique username"
+                />
+                {checkingUsername && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-500"></div>
+                  </div>
+                )}
+              </div>
+              <p className="mt-1 text-xs text-gray-500">
+                3-30 characters, letters, numbers, and underscores only
+              </p>
+              {fieldErrors.username && <p className="mt-1 text-xs text-red-600">{fieldErrors.username}</p>}
             </div>
 
             <div>
@@ -398,6 +494,20 @@ export default function RegisterPage() {
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </div>
+              {/* Password strength indicator */}
+              {formData.password && (
+                <div className="mt-2">
+                  <div className="flex space-x-1">
+                    <div className={`h-1 flex-1 rounded ${formData.password.length >= 6 ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                    <div className={`h-1 flex-1 rounded ${/^(?=.*[a-z])/.test(formData.password) ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                    <div className={`h-1 flex-1 rounded ${/^(?=.*[A-Z])/.test(formData.password) ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                    <div className={`h-1 flex-1 rounded ${/\d/.test(formData.password) ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Must contain: 6+ chars, lowercase, uppercase, number
+                  </p>
+                </div>
+              )}
               {fieldErrors.password && <p className="mt-1 text-xs text-red-600">{fieldErrors.password}</p>}
             </div>
 

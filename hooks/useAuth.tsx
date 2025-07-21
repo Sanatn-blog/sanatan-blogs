@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 interface User {
   _id: string;
   name: string;
+  username: string;
   email: string;
   role: string;
   status: string;
@@ -16,7 +17,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   mounted: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string; user?: User }>;
+  login: (emailOrUsername: string, password: string) => Promise<{ success: boolean; error?: string; user?: User }>;
   register: (userData: { name: string; email: string; password: string; bio?: string; socialLinks?: object }) => Promise<{ success: boolean; error?: string; message?: string }>;
   logout: () => void;
   checkAuth: () => Promise<void>;
@@ -69,14 +70,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const login = async (email: string, password: string) => {
+  const login = async (emailOrUsername: string, password: string) => {
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ emailOrUsername, password })
       });
 
       const data = await response.json();

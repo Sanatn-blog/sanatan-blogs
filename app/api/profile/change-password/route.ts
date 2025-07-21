@@ -23,6 +23,15 @@ export const POST = requireAuth(async (request: AuthenticatedRequest) => {
       );
     }
 
+    // Additional password strength validation
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
+    if (!passwordRegex.test(newPassword)) {
+      return NextResponse.json(
+        { error: 'Password must contain at least one uppercase letter, one lowercase letter, and one number' },
+        { status: 400 }
+      );
+    }
+
     await connectDB();
 
     // Find user with password included

@@ -26,7 +26,8 @@ import {
   FileText,
   MessageSquare,
   AlertCircle,
-  Verified
+  Verified,
+  Lock
 } from 'lucide-react';
 
 interface UserDetails {
@@ -57,14 +58,14 @@ interface UserDetails {
   authProvider: 'email' | 'phone' | 'google' | 'facebook' | 'instagram' | 'twitter';
   blogsCount: number;
   commentsCount: number;
-  recentBlogs: Array<{
+  recentBlogs?: Array<{
     _id: string;
     title: string;
     slug: string;
     createdAt: string;
     status: string;
   }>;
-  recentComments: Array<{
+  recentComments?: Array<{
     _id: string;
     content: string;
     createdAt: string;
@@ -82,6 +83,9 @@ export default function UserDetailPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editForm, setEditForm] = useState<Partial<UserDetails>>({});
+  const [showPasswordReset, setShowPasswordReset] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [resettingPassword, setResettingPassword] = useState(false);
 
   const fetchUserDetails = useCallback(async () => {
     try {
@@ -145,6 +149,40 @@ export default function UserDetailPage() {
   const handleCancel = () => {
     setEditForm(user || {});
     setIsEditing(false);
+  };
+
+  const handlePasswordReset = async () => {
+    if (!newPassword || newPassword.length < 6) {
+      alert('Password must be at least 6 characters long');
+      return;
+    }
+
+    try {
+      setResettingPassword(true);
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(`/api/admin/users/${userId}/reset-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ newPassword })
+      });
+      
+      if (response.ok) {
+        alert('Password reset successfully');
+        setShowPasswordReset(false);
+        setNewPassword('');
+      } else {
+        const errorData = await response.json();
+        alert(errorData.error || 'Failed to reset password');
+      }
+    } catch (error) {
+      console.error('Failed to reset password:', error);
+      alert('Failed to reset password');
+    } finally {
+      setResettingPassword(false);
+    }
   };
 
   const getRoleIcon = (role: string) => {
@@ -263,13 +301,22 @@ export default function UserDetailPage() {
               </button>
             </>
           ) : (
-            <button
-              onClick={() => setIsEditing(true)}
-              className="flex items-center space-x-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl transition-colors"
-            >
-              <Edit3 className="h-4 w-4" />
-              <span>Edit User</span>
-            </button>
+            <>
+              <button
+                onClick={() => setIsEditing(true)}
+                className="flex items-center space-x-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl transition-colors"
+              >
+                <Edit3 className="h-4 w-4" />
+                <span>Edit User</span>
+              </button>
+              <button
+                onClick={() => setShowPasswordReset(true)}
+                className="flex items-center space-x-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-colors"
+              >
+                <Lock className="h-4 w-4" />
+                <span>Reset Password</span>
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -490,7 +537,7 @@ export default function UserDetailPage() {
                   <FileText className="h-4 w-4" />
                   <span>Recent Blogs ({user.blogsCount} total)</span>
                 </h3>
-                {user.recentBlogs.length > 0 ? (
+                {(user.recentBlogs && user.recentBlogs.length > 0) ? (
                   <div className="space-y-2">
                     {user.recentBlogs.map((blog) => (
                       <div key={blog._id} className="p-3 bg-gray-50 dark:bg-gray-700 rounded-xl">
@@ -512,7 +559,7 @@ export default function UserDetailPage() {
                   <MessageSquare className="h-4 w-4" />
                   <span>Recent Comments ({user.commentsCount} total)</span>
                 </h3>
-                {user.recentComments.length > 0 ? (
+                {(user.recentComments && user.recentComments.length > 0) ? (
                   <div className="space-y-2">
                     {user.recentComments.map((comment) => (
                       <div key={comment._id} className="p-3 bg-gray-50 dark:bg-gray-700 rounded-xl">
@@ -695,6 +742,49 @@ export default function UserDetailPage() {
           )}
         </div>
       </div>
+
+      {/* Password Reset Modal */}
+      {showPasswordReset && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Reset Password for {user?.name}
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  New Password
+                </label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  placeholder="Enter new password (min 6 characters)"
+                />
+              </div>
+              <div className="flex items-center space-x-3 pt-4">
+                <button
+                  onClick={() => {
+                    setShowPasswordReset(false);
+                    setNewPassword('');
+                  }}
+                  className="flex-1 px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handlePasswordReset}
+                  disabled={resettingPassword || !newPassword || newPassword.length < 6}
+                  className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-colors disabled:opacity-50"
+                >
+                  {resettingPassword ? 'Resetting...' : 'Reset Password'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 
