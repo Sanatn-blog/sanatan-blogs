@@ -96,58 +96,146 @@ interface BlogResponse {
   };
 }
 
-// Function to convert plain text to formatted HTML
+// Function to convert markdown to formatted HTML
 const formatContent = (content: string): string => {
   if (!content) return '';
   
-  // Preprocess content to handle very long strings
-  const preprocessLongStrings = (text: string): string => {
-    // If a line is longer than 100 characters without spaces, add word breaks
-    if (text.length > 100 && !text.includes(' ')) {
-      // Add spaces every 50 characters to force word breaks
-      return text.match(/.{1,50}/g)?.join(' ') || text;
+  let formattedContent = content;
+  
+  // Handle code blocks first (before other formatting)
+  formattedContent = formattedContent.replace(
+    /```([\s\S]*?)```/g,
+    '<pre class="bg-gray-100 p-4 rounded-lg overflow-x-auto mb-4"><code class="text-sm text-gray-800">$1</code></pre>'
+  );
+  
+  // Handle inline code
+  formattedContent = formattedContent.replace(
+    /`([^`]+)`/g,
+    '<code class="bg-gray-100 px-1 py-0.5 rounded text-sm font-mono text-gray-800">$1</code>'
+  );
+  
+  // Handle horizontal rules
+  formattedContent = formattedContent.replace(
+    /^---$/gm,
+    '<hr class="border-gray-300 my-6">'
+  );
+  
+  // Handle tables
+  formattedContent = formattedContent.replace(
+    /^\|(.+)\|$/gm,
+    (match, content) => {
+      const cells = content.split('|').map((cell: string) => cell.trim());
+      const headerCells = cells.map((cell: string) => 
+        `<th class="border border-gray-300 px-4 py-2 text-left font-semibold">${cell}</th>`
+      ).join('');
+      return `<table class="border-collapse border border-gray-300 mb-4 w-full"><thead><tr>${headerCells}</tr></thead><tbody>`;
     }
-    return text;
-  };
+  );
   
-  // Split content into lines and preprocess
-  const lines = content.split('\n')
-    .map(line => line.trim())
-    .filter(line => line.length > 0)
-    .map(line => preprocessLongStrings(line));
-  
-  let formattedContent = '';
-  
-  lines.forEach((line) => {
-    // Check for headings (lines that start with specific patterns)
-    if (line.startsWith('🙏॥') || line.startsWith('🌷') || line.startsWith('**') || line.startsWith('👉')) { // This is likely a heading or special section
-      if (line.includes('**')) {
-        // Extract text between ** for headings
-        const headingText = line.replace(/\*\*/g, '').replace(/🙏॥|🌷|👉/g, '').trim();
-        formattedContent += `<h2 class="text-2xl font-bold text-gray-900 mb-4 break-words overflow-hidden">${headingText}</h2>`;
-      } else {
-        // Regular heading
-        const headingText = line.replace(/🙏॥|🌷|👉/g, '').trim();
-        formattedContent += `<h3 class="text-xl font-semibold text-gray-800 mb-4 break-words overflow-hidden">${headingText}</h3>`;
-      }
-    } else if (line.startsWith('-') || line.startsWith('•')) {      // This is a list item
-      const listText = line.replace(/^[-•]\s*/, '').trim();
-      formattedContent += `<li class="mb-2 text-gray-700 break-words overflow-hidden">${listText}</li>`;
-    } else if (line.includes('॥') || line.includes('॥')) { // This is likely a Sanskrit verse or quote
-      formattedContent += `<blockquote class="bg-orange-50 border-l-4 border-orange-500 italic text-gray-700 break-words overflow-hidden">${line}</blockquote>`;
-    } else if (line.length > 0) {
-      // Regular paragraph
-      formattedContent += `<p class="mb-4 text-gray-700 leading-relaxed break-words overflow-hidden">${line}</p>`;
+  // Handle table rows (non-header)
+  formattedContent = formattedContent.replace(
+    /^\|(.+)\|$/gm,
+    (match, content) => {
+      if (content.includes('---')) return ''; // Skip separator rows
+      const cells = content.split('|').map((cell: string) => cell.trim());
+      const rowCells = cells.map((cell: string) => 
+        `<td class="border border-gray-300 px-4 py-2">${cell}</td>`
+      ).join('');
+      return `<tr>${rowCells}</tr>`;
     }
-  });
+  );
   
-  // Wrap list items in ul tags if they exist
+  // Close table tags
+  formattedContent = formattedContent.replace(
+    /<\/tr>\n<\/tbody><\/table>/g,
+    '</tr></tbody></table>'
+  );
+  
+  // Handle headings
+  formattedContent = formattedContent.replace(
+    /^### (.+)$/gm,
+    '<h3 class="text-xl font-semibold text-gray-800 mb-4 mt-6">$1</h3>'
+  );
+  
+  formattedContent = formattedContent.replace(
+    /^## (.+)$/gm,
+    '<h2 class="text-2xl font-bold text-gray-900 mb-4 mt-6">$1</h2>'
+  );
+  
+  formattedContent = formattedContent.replace(
+    /^# (.+)$/gm,
+    '<h1 class="text-3xl font-bold text-gray-900 mb-4 mt-6">$1</h1>'
+  );
+  
+  // Handle blockquotes
+  formattedContent = formattedContent.replace(
+    /^> (.+)$/gm,
+    '<blockquote class="bg-orange-50 border-l-4 border-orange-500 italic text-gray-700 p-4 mb-4">$1</blockquote>'
+  );
+  
+  // Handle numbered lists
+  formattedContent = formattedContent.replace(
+    /^(\d+)\. (.+)$/gm,
+    '<li class="mb-2 text-gray-700">$2</li>'
+  );
+  
+  // Handle bullet lists
+  formattedContent = formattedContent.replace(
+    /^[-*] (.+)$/gm,
+    '<li class="mb-2 text-gray-700">$1</li>'
+  );
+  
+  // Wrap consecutive list items in ul/ol tags
   formattedContent = formattedContent.replace(
     /(<li[^>]*>.*?<\/li>)+/g,
     (match) => `<ul class="list-disc list-inside mb-4 space-y-2">${match}</ul>`
   );
   
-  return formattedContent;
+  // Handle bold text
+  formattedContent = formattedContent.replace(
+    /\*\*(.+?)\*\*/g,
+    '<strong class="font-bold">$1</strong>'
+  );
+  
+  // Handle italic text
+  formattedContent = formattedContent.replace(
+    /\*(.+?)\*/g,
+    '<em class="italic">$1</em>'
+  );
+  
+  // Handle strikethrough
+  formattedContent = formattedContent.replace(
+    /~~(.+?)~~/g,
+    '<del class="line-through">$1</del>'
+  );
+  
+  // Handle links
+  formattedContent = formattedContent.replace(
+    /\[([^\]]+)\]\(([^)]+)\)/g,
+    '<a href="$2" class="text-blue-600 hover:text-blue-800 underline" target="_blank" rel="noopener noreferrer">$1</a>'
+  );
+  
+  // Handle images
+  formattedContent = formattedContent.replace(
+    /!\[([^\]]*)\]\(([^)]+)\)/g,
+    '<img src="$2" alt="$1" class="max-w-full h-auto rounded-lg mb-4" />'
+  );
+  
+  // Split into paragraphs and handle remaining text
+  const paragraphs = formattedContent.split('\n\n');
+  const processedParagraphs = paragraphs.map(paragraph => {
+    const trimmed = paragraph.trim();
+    if (!trimmed) return '';
+    
+    // Skip if it's already HTML
+    if (trimmed.startsWith('<')) return trimmed;
+    
+    // Handle single line breaks within paragraphs
+    const withLineBreaks = trimmed.replace(/\n/g, '<br>');
+    return `<p class="mb-4 text-gray-700 leading-relaxed">${withLineBreaks}</p>`;
+  });
+  
+  return processedParagraphs.filter(p => p).join('\n');
 };
 
 export default function BlogDetailPage() {
