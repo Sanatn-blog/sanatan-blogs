@@ -50,7 +50,15 @@ export async function POST(request: NextRequest) {
       user = await User.findById(emailOrUsername).select('+password');
     }
     
-    // If not found by ID, try email only
+    // If not found by ID, try username
+    if (!user) {
+      console.log('🔍 Searching by username:', emailOrUsername);
+      user = await User.findOne({
+        username: emailOrUsername.toLowerCase()
+      }).select('+password');
+    }
+    
+    // If not found by username, try email
     if (!user) {
       console.log('🔍 Searching by email:', emailOrUsername);
       user = await User.findOne({

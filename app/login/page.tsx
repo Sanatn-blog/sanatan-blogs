@@ -70,11 +70,11 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
 
-    if (!formData.emailOrUsername || !formData.password) {
-      toast.error('Please enter your email or user ID and password');
-      setLoading(false);
-      return;
-    }
+          if (!formData.emailOrUsername || !formData.password) {
+        toast.error('Please enter your email, username, or user ID and password');
+        setLoading(false);
+        return;
+      }
 
     try {
       const result = await login(formData.emailOrUsername, formData.password);
@@ -84,9 +84,16 @@ export default function LoginPage() {
         toast.success(`🎉 Welcome back, ${firstName}!`);
         router.push('/');
       } else {
+        // Check if verification is required
+        if (result.requiresVerification) {
+          toast.error('Please verify your email address first.');
+          router.push(`/verify-email?email=${encodeURIComponent(result.email || '')}`);
+          return;
+        }
+        
         // Show more specific error messages
         if (result.error?.includes('not found')) {
-          toast.error('User not found. Please check your email or user ID.');
+          toast.error('User not found. Please check your email, username, or user ID.');
         } else if (result.error?.includes('Invalid password')) {
           toast.error('Incorrect password. Please try again.');
         } else if (result.error?.includes('not approved')) {
@@ -257,7 +264,7 @@ export default function LoginPage() {
           </div>
           <h2 className="text-3xl font-bold text-gray-900">Welcome Back!</h2>
           <p className="mt-2 text-gray-600">
-            Sign in with your email or user ID to continue your spiritual journey
+            Sign in with your email, username, or user ID to continue your spiritual journey
           </p>
         </div>
 
@@ -309,7 +316,7 @@ export default function LoginPage() {
           <form onSubmit={handleEmailLogin} className="space-y-6">
             <div>
               <label htmlFor="emailOrUsername" className="block text-sm font-medium text-gray-700 mb-2">
-                Email or User ID
+                Email, Username, or User ID
               </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -321,7 +328,7 @@ export default function LoginPage() {
                   value={formData.emailOrUsername}
                   onChange={(e) => setFormData({ ...formData, emailOrUsername: e.target.value })}
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors text-gray-900"
-                  placeholder="Enter your email or user ID"
+                  placeholder="Enter your email, username, or user ID"
                 />
               </div>
             </div>

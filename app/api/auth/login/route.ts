@@ -33,7 +33,17 @@ async function loginHandler(request: NextRequest) {
       user = await User.findById(emailOrUsername).select('+password');
     }
     
-    // If not found by ID, try email only
+    // If not found by ID, try username
+    if (!user) {
+      console.log('🔍 Searching by username:', emailOrUsername);
+      const usernameSearch = await User.findOne({
+        username: emailOrUsername.toLowerCase()
+      }).select('+password');
+      console.log('🔍 Username search result:', usernameSearch ? 'Found' : 'Not found');
+      user = usernameSearch;
+    }
+    
+    // If not found by username, try email
     if (!user) {
       console.log('🔍 Searching by email:', emailOrUsername);
       user = await User.findOne({
@@ -44,14 +54,14 @@ async function loginHandler(request: NextRequest) {
     if (!user) {
       console.log('❌ User not found');
       return NextResponse.json(
-        { error: 'User not found. Please check your email or user ID.' },
+        { error: 'User not found. Please check your email, username, or user ID.' },
         { status: 401 }
       );
     }
 
     console.log('✅ User found:', user.email, 'Status:', user.status);
 
-    // Check if user is approved (temporarily allow pending users for testing)
+    // Check if user is approved and verified
     if (user.status === 'rejected') {
       console.log('❌ User rejected');
       return NextResponse.json(
@@ -62,6 +72,16 @@ async function loginHandler(request: NextRequest) {
       console.log('❌ User suspended');
       return NextResponse.json(
         { error: 'Your account has been suspended. Please contact admin.' },
+        { status: 403 }
+      );
+    } else if (user.status === 'pending' && !user.emailVerified) {
+      console.log('❌ User not verified');
+      return NextResponse.json(
+        { 
+          error: 'Please verify your email address before logging in.',
+          requiresVerification: true,
+          email: user.email
+        },
         { status: 403 }
       );
     } else if (user.status === 'pending') {

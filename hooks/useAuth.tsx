@@ -17,12 +17,12 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   mounted: boolean;
-  login: (emailOrUsername: string, password: string) => Promise<{ success: boolean; error?: string; user?: User }>;
+  login: (emailOrUsername: string, password: string) => Promise<{ success: boolean; error?: string; user?: User; requiresVerification?: boolean; email?: string }>;
   register: (userData: { name: string; email: string; password: string; bio?: string; socialLinks?: object }) => Promise<{ success: boolean; error?: string; message?: string }>;
   logout: () => void;
   checkAuth: () => Promise<void>;
   refreshToken: () => Promise<string | null>;
-  updateUser: (userData: Partial<User>) => void;
+  updateUser: (userData: Partial<User> & { id?: string }) => void;
   refreshUserData: () => Promise<void>;
 }
 
@@ -90,7 +90,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(false);
         return { success: true, user: data.user };
       } else {
-        return { success: false, error: data.error };
+        return { 
+          success: false, 
+          error: data.error,
+          requiresVerification: data.requiresVerification,
+          email: data.email
+        };
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -134,9 +139,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push('/');
   };
 
-  const updateUser = (userData: Partial<User>) => {
+  const updateUser = (userData: Partial<User> & { id?: string }) => {
+    // Map 'id' field to '_id' if it exists
+    const mappedUserData = userData.id ? { ...userData, _id: userData.id } : userData;
+    delete (mappedUserData as any).id; // Remove the 'id' field
+    
     if (user) {
-      setUser({ ...user, ...userData });
+      setUser({ ...user, ...mappedUserData });
+    } else if (mappedUserData._id) {
+      // If no user exists but we have user data with an ID, create a new user state
+      setUser(mappedUserData as User);
     }
   };
 

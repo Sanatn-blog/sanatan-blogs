@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 import { rateLimit } from '@/middleware/auth';
-import { generateSecureAccessToken, generateRefreshToken } from '@/lib/jwt';
+import { sendEmail, generateEmailVerificationEmail } from '@/lib/email';
 
 async function registerHandler(request: NextRequest) {
   try {
@@ -91,7 +91,11 @@ async function registerHandler(request: NextRequest) {
       }
     }
 
-    // Create new user
+    // Generate 6-digit OTP for email verification
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    // Create new user with pending status and email verification required
     const newUser = new User({
       name: name.trim(),
       username: username.toLowerCase().trim(),
@@ -100,15 +104,33 @@ async function registerHandler(request: NextRequest) {
       phoneNumber: phoneNumber?.trim(),
       bio: bio?.trim(),
       socialLinks: socialLinks || {},
-      status: process.env.NODE_ENV === 'development' ? 'approved' : 'pending', // Auto-approve in development
-      authProvider: phoneNumber ? 'phone' : 'email'
+      status: 'pending', // Always pending until email verification
+      authProvider: 'email',
+      emailVerified: false,
+      otp: otp,
+      otpExpiry: otpExpiry,
+      isActive: false // Not active until email verification
     });
 
     await newUser.save();
 
-    // Generate JWT tokens with password hash for additional security
-    const accessToken = generateSecureAccessToken(newUser._id.toString(), newUser.password);
-    const refreshToken = generateRefreshToken(newUser._id.toString());
+    // Send email verification OTP
+    const emailContent = generateEmailVerificationEmail(email, otp, name);
+    const emailSent = await sendEmail({
+      to: email,
+      subject: emailContent.subject,
+      html: emailContent.html,
+      text: emailContent.text
+    });
+
+    if (!emailSent) {
+      // If email sending fails, delete the user and return error
+      await User.findByIdAndDelete(newUser._id);
+      return NextResponse.json(
+        { error: 'Failed to send verification email. Please try again.' },
+        { status: 500 }
+      );
+    }
 
     // Remove sensitive information before sending response
     const userResponse = {
@@ -125,10 +147,9 @@ async function registerHandler(request: NextRequest) {
     };
 
     return NextResponse.json({
-      message: 'User registered successfully. Please wait for admin approval.',
+      message: 'Registration successful! Please check your email for verification code.',
       user: userResponse,
-      accessToken,
-      refreshToken
+      requiresVerification: true
     }, { status: 201 });
 
   } catch (error: unknown) {
