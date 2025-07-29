@@ -53,6 +53,8 @@ async function getMyBlogsHandler(request: AuthenticatedRequest) {
     console.log('Fetching user blogs...');
     const blogs = await Blog.find(query)
       .populate('author', 'name avatar bio')
+      .populate('likes', '_id')
+      .populate('comments', '_id')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)

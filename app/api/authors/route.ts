@@ -54,7 +54,8 @@ export async function GET(request: NextRequest) {
         // Get total likes
         const totalLikesResult = await Blog.aggregate([
           { $match: { author: author._id, status: 'published' } },
-          { $group: { _id: null, totalLikes: { $sum: { $size: '$likes' } } } }
+          { $project: { likesCount: { $size: '$likes' } } },
+          { $group: { _id: null, totalLikes: { $sum: '$likesCount' } } }
         ]);
         const totalLikes = totalLikesResult[0]?.totalLikes || 0;
         
@@ -70,7 +71,8 @@ export async function GET(request: NextRequest) {
           totalBlogs,
           totalViews,
           totalLikes,
-          followers: author.followers?.length || 0
+          followers: author.followers?.length || 0,
+          following: author.following?.length || 0
         };
       })
     );

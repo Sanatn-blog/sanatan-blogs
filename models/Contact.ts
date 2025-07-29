@@ -72,6 +72,7 @@ ContactSchema.methods.toJSON = function() {
   return contactObject;
 };
 
+// Simple model registration
 const Contact = mongoose.models.Contact || mongoose.model<IContact>('Contact', ContactSchema);
 
 export default Contact; 

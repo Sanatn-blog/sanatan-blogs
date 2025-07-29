@@ -58,6 +58,7 @@ SubscriptionSchema.methods.toJSON = function() {
   return subscriptionObject;
 };
 
+// Simple model registration
 const Subscription = mongoose.models.Subscription || mongoose.model<ISubscription>('Subscription', SubscriptionSchema);
 
 export default Subscription; 

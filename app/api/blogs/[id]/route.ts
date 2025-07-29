@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
-import Blog from '@/models/Blog';
 import { requireAuth, AuthenticatedRequest } from '@/middleware/auth';
+import Blog from '@/models/Blog';
+import User from '@/models/User';
+import Comment from '@/models/Comment';
 
 interface LeanBlog {
   _id: string;
@@ -14,15 +16,19 @@ interface LeanBlog {
   content: string;
   featuredImage?: string;
   author: {
+    _id?: string;
     name?: string;
     avatar?: string;
     bio?: string;
     socialLinks?: unknown;
+    followers?: number;
+    following?: number;
   };
   status: string;
   isPublished: boolean;
   seo?: unknown;
   readingTime: number;
+  likes: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -80,9 +86,31 @@ async function getBlogHandler(request: Request, { params }: { params: Promise<{ 
     }
 
     // Find blog by ID or slug
+    console.log('Searching for blog with query:', JSON.stringify(query, null, 2));
     const blog = await Blog.findOne(query)
     .populate('author', 'name avatar bio socialLinks')
+    .populate('likes', '_id')
+    .populate('comments', '_id')
+    .select('title excerpt content featuredImage author category tags status isPublished publishedAt views likes comments readingTime seo createdAt updatedAt')
     .lean<LeanBlog>();
+    
+    console.log('Blog found:', !!blog);
+
+    // Get author with follower/following counts
+    if (blog?.author) {
+      const author = await User.findById(blog.author._id)
+        .select('name avatar bio socialLinks followers following')
+        .lean();
+      
+      if (author) {
+        const authorWithArrays = author as { followers?: unknown[]; following?: unknown[] };
+        blog.author = {
+          ...blog.author,
+          followers: Array.isArray(authorWithArrays.followers) ? authorWithArrays.followers.length : 0,
+          following: Array.isArray(authorWithArrays.following) ? authorWithArrays.following.length : 0
+        };
+      }
+    }
 
     if (!blog) {
       return NextResponse.json(
@@ -90,6 +118,12 @@ async function getBlogHandler(request: Request, { params }: { params: Promise<{ 
         { status: 404 }
       );
     }
+
+    // Get comments count for this blog
+    const commentsCount = await Comment.countDocuments({
+      blog: blog._id,
+      isApproved: true
+    });
     const { _id, category } = blog;
 
     // Only increment view count and get related blogs for published blogs
@@ -134,7 +168,9 @@ async function getBlogHandler(request: Request, { params }: { params: Promise<{ 
       return NextResponse.json({
         blog: {
           ...blog,
-          views: (blog.views || 0) + 1 // Return updated view count
+          views: (blog.views || 0) + 1, // Return updated view count
+          commentsCount: commentsCount, // Include comments count
+          likesCount: blog.likes?.length || 0 // Include likes count
         },
         relatedBlogs,
         navigation: {
@@ -143,14 +179,21 @@ async function getBlogHandler(request: Request, { params }: { params: Promise<{ 
         }
       });
     } else {
-      // For drafts or non-published blogs, return just the blog data
-      return NextResponse.json(blog);
+      // For drafts or non-published blogs, return just the blog data with comments count
+      return NextResponse.json({
+        ...blog,
+        commentsCount: commentsCount,
+        likesCount: blog.likes?.length || 0
+      });
     }
 
   } catch (error) {
     console.error('Get blog error:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch blog' },
+      { 
+        error: 'Failed to fetch blog',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     );
   }

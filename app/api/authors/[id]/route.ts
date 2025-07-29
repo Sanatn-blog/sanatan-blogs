@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 import Blog from '@/models/Blog';
+import mongoose from 'mongoose';
 
 export async function GET(
   request: NextRequest,
@@ -19,8 +20,11 @@ export async function GET(
       );
     }
 
+    // Convert string ID to ObjectId
+    const authorObjectId = new mongoose.Types.ObjectId(authorId);
+
     // Fetch author data
-    const author = await User.findById(authorId).select('-password');
+    const author = await User.findById(authorObjectId).select('-password');
     if (!author) {
       return NextResponse.json(
         { error: 'Author not found' },
@@ -30,7 +34,7 @@ export async function GET(
 
     // Fetch authors published blogs
     const blogs = await Blog.find({ 
-      author: authorId,
+      author: authorObjectId,
       status: 'published'
     })
     .select('title slug excerpt featuredImage category readingTime views likes publishedAt status')
@@ -39,27 +43,28 @@ export async function GET(
 
     // Calculate statistics
     const totalBlogs = await Blog.countDocuments({ 
-      author: authorId,
+      author: authorObjectId,
       status: 'published'
     });
 
     const totalViews = await Blog.aggregate([
-      { $match: { author: authorId, status: 'published' } },
+      { $match: { author: authorObjectId, status: 'published' } },
       { $group: { _id: null, totalViews: { $sum: '$views' } } }
     ]);
 
     const totalLikes = await Blog.aggregate([
-      { $match: { author: authorId, status: 'published' } },
-      { $group: { _id: null, totalLikes: { $sum: { $size: '$likes' } } } }
+      { $match: { author: authorObjectId, status: 'published' } },
+      { $project: { likesCount: { $size: '$likes' } } },
+      { $group: { _id: null, totalLikes: { $sum: '$likesCount' } } }
     ]);
 
     const averageReadingTime = await Blog.aggregate([
-      { $match: { author: authorId, status: 'published' } },
+      { $match: { author: authorObjectId, status: 'published' } },
       { $group: { _id: null, avgReadingTime: { $avg: '$readingTime' } } }
     ]);
 
     const mostPopularCategory = await Blog.aggregate([
-      { $match: { author: authorId, status: 'published' } },
+      { $match: { author: authorObjectId, status: 'published' } },
       { $group: { _id: '$category', count: { $sum: 1 } } },
       { $sort: { count: -1 } },
       { $limit: 1 }

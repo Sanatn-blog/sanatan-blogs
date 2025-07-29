@@ -30,6 +30,7 @@ export interface IUser extends Document {
   achievements?: string[];
   followers?: string[];
   following?: string[];
+  bookmarks?: string[];
   createdAt: Date;
   updatedAt: Date;
   lastLogin?: Date;
@@ -138,6 +139,10 @@ const UserSchema = new Schema<IUser>({
     type: Schema.Types.ObjectId,
     ref: 'User'
   }],
+  bookmarks: [{
+    type: Schema.Types.ObjectId,
+    ref: 'Blog'
+  }],
   lastLogin: Date,
   emailVerified: {
     type: Boolean,
@@ -208,6 +213,7 @@ UserSchema.methods.toJSON = function() {
   return userObject;
 };
 
+// Simple model registration
 const User = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
 
 export default User; 

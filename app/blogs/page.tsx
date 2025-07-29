@@ -55,6 +55,8 @@ export default function BlogsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ _id: string; name: string; role?: string; avatar?: string } | null>(null);
+  const [likedBlogs, setLikedBlogs] = useState<Set<string>>(new Set());
 
   const [pagination, setPagination] = useState({
     currentPage: 1,
@@ -64,6 +66,50 @@ export default function BlogsPage() {
     hasPrev: false
   });
   const blogsPerPage = 6;
+
+  // Check if user is logged in and get current user
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      fetch('/api/auth/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.user) {
+          setCurrentUser({
+            _id: data.user._id,
+            name: data.user.name,
+            role: data.user.role,
+            avatar: data.user.avatar
+          });
+        }
+      })
+      .catch(err => console.error('Error fetching current user:', err));
+    }
+  }, []);
+
+  // Check which blogs are liked by current user
+  useEffect(() => {
+    if (currentUser && blogs.length > 0) {
+      const likedBlogIds = new Set<string>();
+      blogs.forEach(blog => {
+        if (blog.likes?.includes(currentUser._id)) {
+          likedBlogIds.add(blog._id);
+        }
+      });
+      setLikedBlogs(likedBlogIds);
+    } else if (!currentUser) {
+      setLikedBlogs(new Set());
+    }
+  }, [currentUser, blogs]);
+
+  // Update filtered blogs when blogs change
+  useEffect(() => {
+    setFilteredBlogs(blogs);
+  }, [blogs]);
 
 
 
@@ -158,6 +204,67 @@ export default function BlogsPage() {
       month: 'long',
       day: 'numeric'
     });
+  };
+
+  const handleLike = async (blogId: string) => {
+    // If user is not logged in, redirect to login
+    if (!currentUser) {
+      window.location.href = '/login';
+      return;
+    }
+    
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        window.location.href = '/login';
+        return;
+      }
+
+      const response = await fetch(`/api/blogs/${blogId}/like`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Update the blog's like count and liked status
+        setBlogs(prevBlogs => prevBlogs.map(blog => {
+          if (blog._id === blogId) {
+            return {
+              ...blog,
+              likes: data.liked 
+                ? [...(blog.likes || []), currentUser._id]
+                : (blog.likes || []).filter(id => id !== currentUser._id)
+            };
+          }
+          return blog;
+        }));
+
+        // Update liked blogs set
+        setLikedBlogs(prev => {
+          const newSet = new Set(prev);
+          if (data.liked) {
+            newSet.add(blogId);
+          } else {
+            newSet.delete(blogId);
+          }
+          return newSet;
+        });
+      } else {
+        const errorData = await response.json();
+        if (response.status === 401) {
+          window.location.href = '/login';
+        } else {
+          alert(errorData.error || 'Failed to like/unlike blog');
+        }
+      }
+    } catch (error) {
+      console.error('Error liking/unliking blog:', error);
+      alert('Failed to like/unlike blog');
+    }
   };
 
 
@@ -315,6 +422,21 @@ export default function BlogsPage() {
                           {blog.readingTime}
                         </span>
                       </div>
+                      <button
+                        onClick={() => handleLike(blog._id)}
+                        className={`flex items-center transition-colors ${
+                          likedBlogs.has(blog._id)
+                            ? 'text-red-500 hover:text-red-600'
+                            : 'text-gray-500 hover:text-red-500'
+                        }`}
+                        title={currentUser ? (likedBlogs.has(blog._id) ? 'Unlike' : 'Like') : 'Login to like'}
+                      >
+                        <Heart className={`h-4 w-4 mr-1 ${likedBlogs.has(blog._id) ? 'fill-current' : ''}`} />
+                        {(blog.likes || []).length}
+                        {!currentUser && (
+                          <span className="ml-1 text-xs">(Login)</span>
+                        )}
+                      </button>
                     </div>
 
                     <div className="flex items-center justify-between">
@@ -563,10 +685,21 @@ export default function BlogsPage() {
                           <Eye className="h-3 w-3 mr-1" />
                           {blog.views}
                         </span>
-                        <span className="flex items-center">
-                          <Heart className="h-3 w-3 mr-1" />
+                        <button
+                          onClick={() => handleLike(blog._id)}
+                          className={`flex items-center transition-colors ${
+                            likedBlogs.has(blog._id)
+                              ? 'text-red-500 hover:text-red-600'
+                              : 'text-gray-500 hover:text-red-500'
+                          }`}
+                          title={currentUser ? (likedBlogs.has(blog._id) ? 'Unlike' : 'Like') : 'Login to like'}
+                        >
+                          <Heart className={`h-3 w-3 mr-1 ${likedBlogs.has(blog._id) ? 'fill-current' : ''}`} />
                           {(blog.likes || []).length}
-                        </span>
+                          {!currentUser && (
+                            <span className="ml-1 text-xs">(Login)</span>
+                          )}
+                        </button>
                       </div>
                     </div>
 

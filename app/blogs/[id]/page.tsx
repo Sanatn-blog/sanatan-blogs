@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { 
@@ -23,7 +23,14 @@ import {
   Loader2,
   Github,
   MessageCircle as Telegram,
-  ExternalLink
+  ExternalLink,
+  UserPlus,
+  UserMinus,
+  Users,
+  Send,
+  Edit,
+  Trash2,
+  Reply
 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -33,6 +40,8 @@ interface Author {
   name: string;
   bio?: string;
   avatar?: string;
+  followers?: number;
+  following?: number;
   socialLinks?: {
     twitter?: string;
     linkedin?: string;
@@ -64,6 +73,7 @@ interface Blog {
   views: number;
   likes: string[];
   comments: string[];
+  commentsCount?: number;
   featured?: boolean;
   status: 'draft' | 'published' | 'archived';
   seo?: {
@@ -84,6 +94,30 @@ interface RelatedBlog {
   author: {
     name: string;
     avatar?: string;
+  };
+}
+
+interface Comment {
+  _id: string;
+  content: string;
+  author: {
+    _id: string;
+    name: string;
+    avatar?: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+  replies?: Comment[];
+  likes: string[];
+}
+
+interface CommentResponse {
+  comments: Comment[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
   };
 }
 
@@ -251,6 +285,378 @@ export default function BlogDetailPage() {
   const [bookmarks, setBookmarks] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
+  const [currentUser, setCurrentUser] = useState<{ _id: string; name: string; role?: string; avatar?: string } | null>(null);
+  
+  // Comment states
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [commentContent, setCommentContent] = useState('');
+  const [replyContent, setReplyContent] = useState('');
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [editingComment, setEditingComment] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState('');
+  const [commentLoading, setCommentLoading] = useState(false);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentError, setCommentError] = useState<string | null>(null);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+
+  // Check if user is logged in and get current user
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      fetch('/api/auth/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.user) {
+          setCurrentUser({
+            _id: data.user._id,
+            name: data.user.name,
+            role: data.user.role,
+            avatar: data.user.avatar
+          });
+        }
+      })
+      .catch(err => console.error('Error fetching current user:', err));
+    }
+  }, []);
+
+  // Check like status when current user or blog changes
+  useEffect(() => {
+    if (blog && currentUser) {
+      const isUserLiked = blog.likes?.includes(currentUser._id) || false;
+      setIsLiked(isUserLiked);
+    } else if (blog && !currentUser) {
+      setIsLiked(false);
+    }
+  }, [blog, currentUser]);
+
+  const checkFollowStatus = useCallback(async () => {
+    if (!currentUser || !blog) return;
+    
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) return;
+
+      const response = await fetch(`/api/users/follow?userId=${blog.author._id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setIsFollowing(data.isFollowing);
+      }
+    } catch (error) {
+      console.error('Error checking follow status:', error);
+    }
+  }, [currentUser, blog]);
+
+  // Check follow status when blog and current user are loaded
+  useEffect(() => {
+    if (blog && currentUser && blog.author._id !== currentUser._id) {
+      checkFollowStatus();
+    }
+  }, [blog, currentUser, checkFollowStatus]);
+
+  const handleFollow = async () => {
+    if (!currentUser || !blog) {
+      window.location.href = '/login';
+      return;
+    }
+
+    if (blog.author._id === currentUser._id) return;
+
+    setFollowLoading(true);
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        window.location.href = '/login';
+        return;
+      }
+
+      const response = await fetch('/api/users/follow', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ targetUserId: blog.author._id })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setIsFollowing(data.isFollowing);
+        // Update blog author's follower count if available
+        if (blog && data.followersCount !== undefined) {
+          setBlog(prev => prev ? {
+            ...prev,
+            author: {
+              ...prev.author,
+              followers: data.followersCount
+            }
+          } : null);
+        }
+      } else {
+        const errorData = await response.json();
+        alert(errorData.error || 'Failed to follow/unfollow user');
+      }
+    } catch (error) {
+      console.error('Error following/unfollowing:', error);
+      alert('Failed to follow/unfollow user');
+    } finally {
+      setFollowLoading(false);
+    }
+  };
+
+  // Comment functions
+  const fetchComments = useCallback(async () => {
+    if (!blog) return;
+    
+    setCommentsLoading(true);
+    try {
+      console.log('Fetching comments for blog:', blogId);
+      const response = await fetch(`/api/blogs/${blogId}/comments`);
+      console.log('Comments response status:', response.status);
+      
+      if (response.ok) {
+        const data: CommentResponse = await response.json();
+        console.log('Comments fetched successfully:', data.comments.length);
+        setComments(data.comments);
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Failed to fetch comments:', errorData);
+      }
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+    } finally {
+      setCommentsLoading(false);
+    }
+  }, [blog, blogId]);
+
+  const handleSubmitComment = async () => {
+    if (!currentUser || !blog) {
+      window.location.href = '/login';
+      return;
+    }
+
+    if (!commentContent.trim()) {
+      setCommentError('Comment cannot be empty');
+      return;
+    }
+
+    setCommentLoading(true);
+    setCommentError(null);
+
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        window.location.href = '/login';
+        return;
+      }
+
+      console.log('Submitting comment:', { content: commentContent, blogId });
+
+      const response = await fetch(`/api/blogs/${blogId}/comments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ content: commentContent })
+      });
+
+      console.log('Comment submission response status:', response.status);
+
+      if (response.ok) {
+        const newComment = await response.json();
+        console.log('Comment submitted successfully:', newComment);
+        setComments(prev => [newComment, ...prev]);
+        setCommentContent('');
+        setCommentError(null);
+        // Show success message
+        setShowSuccessMessage(true);
+        setTimeout(() => setShowSuccessMessage(false), 3000);
+      } else {
+        const errorData = await response.json();
+        console.error('Comment submission failed:', errorData);
+        
+        // Handle specific error cases
+        if (response.status === 401) {
+          setCommentError('Please log in to post a comment');
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, 2000);
+        } else if (response.status === 403) {
+          setCommentError('Your account is not approved to post comments');
+        } else if (response.status === 404) {
+          setCommentError('Blog not found');
+        } else {
+          setCommentError(errorData.error || 'Failed to post comment. Please try again.');
+        }
+      }
+    } catch (error) {
+      console.error('Error posting comment:', error);
+      setCommentError('Failed to post comment. Please try again.');
+    } finally {
+      setCommentLoading(false);
+    }
+  };
+
+  const handleReply = async (parentCommentId: string) => {
+    if (!currentUser || !blog) {
+      window.location.href = '/login';
+      return;
+    }
+
+    if (!replyContent.trim()) {
+      setCommentError('Reply cannot be empty');
+      return;
+    }
+
+    setCommentLoading(true);
+    setCommentError(null);
+
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        window.location.href = '/login';
+        return;
+      }
+
+      const response = await fetch(`/api/blogs/${blogId}/comments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ 
+          content: replyContent,
+          parentCommentId 
+        })
+      });
+
+      if (response.ok) {
+        const newReply = await response.json();
+        // Update the parent comment with the new reply
+        setComments(prev => prev.map(comment => {
+          if (comment._id === parentCommentId) {
+            return {
+              ...comment,
+              replies: [...(comment.replies || []), newReply]
+            };
+          }
+          return comment;
+        }));
+        setReplyContent('');
+        setReplyingTo(null);
+        setCommentError(null);
+      } else {
+        const errorData = await response.json();
+        setCommentError(errorData.error || 'Failed to post reply');
+      }
+    } catch (error) {
+      console.error('Error posting reply:', error);
+      setCommentError('Failed to post reply');
+    } finally {
+      setCommentLoading(false);
+    }
+  };
+
+  const handleEditComment = async (commentId: string) => {
+    if (!editContent.trim()) {
+      setCommentError('Comment cannot be empty');
+      return;
+    }
+
+    setCommentLoading(true);
+    setCommentError(null);
+
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        window.location.href = '/login';
+        return;
+      }
+
+      const response = await fetch(`/api/blogs/${blogId}/comments/${commentId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ content: editContent })
+      });
+
+      if (response.ok) {
+        const updatedComment = await response.json();
+        setComments(prev => prev.map(comment => 
+          comment._id === commentId ? updatedComment : comment
+        ));
+        setEditingComment(null);
+        setEditContent('');
+        setCommentError(null);
+      } else {
+        const errorData = await response.json();
+        setCommentError(errorData.error || 'Failed to update comment');
+      }
+    } catch (error) {
+      console.error('Error updating comment:', error);
+      setCommentError('Failed to update comment');
+    } finally {
+      setCommentLoading(false);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!confirm('Are you sure you want to delete this comment?')) return;
+
+    setCommentLoading(true);
+
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        window.location.href = '/login';
+        return;
+      }
+
+      const response = await fetch(`/api/blogs/${blogId}/comments/${commentId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        setComments(prev => prev.filter(comment => comment._id !== commentId));
+      } else {
+        const errorData = await response.json();
+        alert(errorData.error || 'Failed to delete comment');
+      }
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+      alert('Failed to delete comment');
+    } finally {
+      setCommentLoading(false);
+    }
+  };
+
+  const canEditComment = (comment: Comment) => {
+    return currentUser && comment.author._id === currentUser._id;
+  };
+
+  const canDeleteComment = (comment: Comment) => {
+    return currentUser && (
+      comment.author._id === currentUser._id || 
+      currentUser.role === 'admin' || 
+      currentUser.role === 'super_admin'
+    );
+  };
 
   // Fetch blog data
   useEffect(() => {
@@ -284,6 +690,32 @@ export default function BlogDetailPage() {
         setLikes(data.blog.likes?.length || 0);
         setBookmarks(0); // Bookmarks not implemented in backend yet
         
+        // Check if current user has liked this blog
+        if (currentUser) {
+          const isUserLiked = data.blog.likes?.includes(currentUser._id) || false;
+          setIsLiked(isUserLiked);
+          
+          // Check if current user has bookmarked this blog
+          const token = localStorage.getItem('accessToken');
+          if (token) {
+            try {
+              const bookmarkResponse = await fetch(`/api/blogs/${blogId}/bookmark`, {
+                headers: {
+                  'Authorization': `Bearer ${token}`
+                }
+              });
+              
+              if (bookmarkResponse.ok) {
+                const bookmarkData = await bookmarkResponse.json();
+                setIsBookmarked(bookmarkData.bookmarked);
+                setBookmarks(bookmarkData.bookmarksCount);
+              }
+            } catch (error) {
+              console.error('Error fetching bookmark status:', error);
+            }
+          }
+        }
+        
       } catch (err) {
         console.error('Error fetching blog:', err);
         const errorMessage = err instanceof Error ? err.message : 'Failed to load blog';
@@ -294,7 +726,14 @@ export default function BlogDetailPage() {
     };
 
     fetchBlog();
-  }, [blogId]);
+  }, [blogId, currentUser]);
+
+  // Fetch comments when blog is loaded
+  useEffect(() => {
+    if (blog) {
+      fetchComments();
+    }
+  }, [blog, fetchComments]);
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'Recently';
@@ -309,25 +748,83 @@ export default function BlogDetailPage() {
   const handleLike = async () => {
     if (!blog) return;
     
-    setIsLiked(!isLiked);
-    setLikes(isLiked ? likes - 1 : likes + 1);
+    // If user is not logged in, redirect to login
+    if (!currentUser) {
+      window.location.href = '/login';
+      return;
+    }
     
-    // TODO: Implement like API call
-    // const response = await fetch(`/api/blogs/${blog._id}/like`, {
-    //   method: 'POST',
-    //   headers: {
-    //     'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-    //   }
-    // });
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        window.location.href = '/login';
+        return;
+      }
+
+      const response = await fetch(`/api/blogs/${blog._id}/like`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setIsLiked(data.liked);
+        setLikes(data.likesCount);
+      } else {
+        const errorData = await response.json();
+        if (response.status === 401) {
+          window.location.href = '/login';
+        } else {
+          alert(errorData.error || 'Failed to like/unlike blog');
+        }
+      }
+    } catch (error) {
+      console.error('Error liking/unliking blog:', error);
+      alert('Failed to like/unlike blog');
+    }
   };
 
   const handleBookmark = async () => {
     if (!blog) return;
     
-    setIsBookmarked(!isBookmarked);
-    setBookmarks(isBookmarked ? bookmarks - 1 : bookmarks + 1);
+    // If user is not logged in, redirect to login
+    if (!currentUser) {
+      window.location.href = '/login';
+      return;
+    }
     
-    // TODO: Implement bookmark API call
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        window.location.href = '/login';
+        return;
+      }
+
+      const response = await fetch(`/api/blogs/${blog._id}/bookmark`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setIsBookmarked(data.bookmarked);
+        setBookmarks(data.bookmarksCount);
+      } else {
+        const errorData = await response.json();
+        if (response.status === 401) {
+          window.location.href = '/login';
+        } else {
+          alert(errorData.error || 'Failed to bookmark/unbookmark blog');
+        }
+      }
+    } catch (error) {
+      console.error('Error bookmarking/unbookmarking blog:', error);
+      alert('Failed to bookmark/unbookmark blog');
+    }
   };
 
   const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
@@ -466,12 +963,6 @@ export default function BlogDetailPage() {
             </div>
           </div>
         </main>
-
-        {/* Loading Indicator */}
-        <div className="fixed bottom-8 right-8 bg-orange-600 text-white px-6 py-3 rounded-full shadow-lg flex items-center space-x-2">
-          <Loader2 className="h-5 w-5 animate-spin" />
-          <span className="font-medium">Loading article...</span>
-        </div>
       </div>
     );
   }
@@ -482,8 +973,8 @@ export default function BlogDetailPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="text-6xl mb-4">📖</div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Article Not Found</h2>
-          <p className="text-gray-600 mb-8">{error}</p>
+          <h2 className="text-2xl font-bold text-gray-100 mb-4">Article Not Found</h2>
+          <p className="text-gray-100 mb-8">{error}</p>
           <Link
             href="/blogs"
             className="inline-flex items-center space-x-2 text-orange-600 hover:text-orange-700 font-medium"
@@ -502,8 +993,8 @@ export default function BlogDetailPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="text-6xl mb-4">📖</div>
-          <h2 className="text-2xl font-bold text-gray-100 mb-4">Article Not Found</h2>
-          <p className="text-gray-100 mb-8">The requested article could not be found.</p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Article Not Found</h2>
+          <p className="text-gray-600 mb-8">The requested article could not be found.</p>
           <Link
             href="/blogs"
             className="inline-flex items-center space-x-2 text-orange-600 hover:text-orange-700 font-medium"
@@ -572,6 +1063,22 @@ export default function BlogDetailPage() {
               </div>
             </div>
 
+            {/* Comment Button */}
+            <div className="flex justify-center mb-6">
+              <button
+                onClick={() => {
+                  const commentsSection = document.getElementById('comments');
+                  if (commentsSection) {
+                    commentsSection.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
+                className="flex items-center space-x-2 px-6 py-3 bg-orange-600 text-white rounded-xl hover:bg-orange-700 transition-colors shadow-lg"
+              >
+                <MessageCircle className="h-5 w-5" />
+                <span className="font-medium">Join the Discussion ({blog?.commentsCount || 0} comments)</span>
+              </button>
+            </div>
+
             {/* Tags */}
             {blog.tags && blog.tags.length > 0 && (
               <div className="flex flex-wrap justify-center gap-2">
@@ -636,9 +1143,13 @@ export default function BlogDetailPage() {
                     ? 'bg-red-500 text-white shadow-lg transform scale-105'
                     : 'bg-gray-100 text-gray-700 hover:bg-red-50 hover:text-red-600'
                 }`}
+                title={currentUser ? (isLiked ? 'Unlike this post' : 'Like this post') : 'Login to like this post'}
               >
                 <Heart className={`h-5 w-5 ${isLiked ? 'fill-current' : ''}`} />
                 <span className="font-medium">{likes}</span>
+                {!currentUser && (
+                  <span className="text-xs text-gray-500 ml-1">(Login)</span>
+                )}
               </button>
 
               {/* Bookmark Button */}
@@ -649,9 +1160,13 @@ export default function BlogDetailPage() {
                     ? 'bg-orange-500 text-white shadow-lg transform scale-105'
                     : 'bg-gray-100 text-gray-700 hover:bg-orange-50 hover:text-orange-600'
                 }`}
+                title={currentUser ? (isBookmarked ? 'Remove bookmark' : 'Bookmark this post') : 'Login to bookmark this post'}
               >
                 <BookmarkPlus className={`h-5 w-5 ${isBookmarked ? 'fill-current' : ''}`} />
                 <span className="font-medium">{bookmarks}</span>
+                {!currentUser && (
+                  <span className="text-xs text-gray-500 ml-1">(Login)</span>
+                )}
               </button>
 
               {/* Share Button */}
@@ -694,15 +1209,62 @@ export default function BlogDetailPage() {
               <Link
                 href="#comments"
                 className="flex items-center space-x-2 py-3 px-6 rounded-xl bg-gray-100 text-gray-700 hover:bg-green-50 hover:text-green-600 transition-colors"
+                onClick={(e) => {
+                  e.preventDefault();
+                  const commentsSection = document.getElementById('comments');
+                  if (commentsSection) {
+                    commentsSection.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
               >
                 <MessageCircle className="h-5 w-5" />
-                <span className="font-medium">{blog.comments?.length || 0}</span>
+                <span className="font-medium">{blog?.commentsCount || 0} Comments</span>
               </Link>
             </div>
 
             {/* Author Bio */}
             <div className="mt-12 p-6 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-2xl border border-orange-100">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">About the Author</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold text-gray-900">About the Author</h3>
+                
+                {/* Follow Button */}
+                {currentUser && blog.author._id !== currentUser._id && (
+                  <button
+                    onClick={handleFollow}
+                    disabled={followLoading}
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                      isFollowing
+                        ? 'bg-gray-100 text-gray-700 hover:bg-red-50 hover:text-red-600'
+                        : 'bg-orange-600 text-white hover:bg-orange-700'
+                    } ${followLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    {followLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : isFollowing ? (
+                      <>
+                        <UserMinus className="h-4 w-4" />
+                        <span>Unfollow</span>
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus className="h-4 w-4" />
+                        <span>Follow</span>
+                      </>
+                    )}
+                  </button>
+                )}
+                
+                {!currentUser && (
+                  <Link
+                    href="/login"
+                    className="flex items-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-lg text-sm font-medium hover:bg-orange-700 transition-colors"
+                  >
+                    <UserPlus className="h-4 w-4" />
+                    <span>Follow</span>
+                  </Link>
+                )}
+              </div>
+              
               <div className="flex items-start space-x-4">
                 {blog.author.avatar ? (
                   <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0">
@@ -728,6 +1290,18 @@ export default function BlogDetailPage() {
                   {blog.author.bio && (
                     <p className="text-gray-600 mb-3">{blog.author.bio}</p>
                   )}
+                  
+                  {/* Author Stats */}
+                  <div className="flex items-center space-x-4 text-sm text-gray-500 mb-3">
+                    <span className="flex items-center">
+                      <Users className="h-4 w-4 mr-1" />
+                      {blog.author.followers || 0} followers
+                    </span>
+                    <span className="flex items-center">
+                      <UserPlus className="h-4 w-4 mr-1" />
+                      {blog.author.following || 0} following
+                    </span>
+                  </div>
                   {blog.author.socialLinks && (
                     <div className="flex space-x-3">
                       {blog.author.socialLinks.twitter && (
@@ -866,6 +1440,330 @@ export default function BlogDetailPage() {
         </div>
       </main>
 
+      {/* Comments Section */}
+      <section id="comments" className="py-16 bg-gray-50">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+
+          
+          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">
+            Comments ({blog?.commentsCount || 0})
+          </h2>
+
+          {/* Comment Form */}
+          <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
+            {currentUser ? (
+              <div>
+                <div className="flex items-start space-x-4 mb-4">
+                  {currentUser.avatar ? (
+                    <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+                      <Image 
+                        src={currentUser.avatar} 
+                        alt={currentUser.name}
+                        width={40}
+                        height={40}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-10 h-10 bg-orange-600 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                      {currentUser.name.charAt(0)}
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <textarea
+                      value={commentContent}
+                      onChange={(e) => setCommentContent(e.target.value)}
+                      placeholder="Share your thoughts on this article..."
+                      className="w-full p-4 border border-gray-200 rounded-xl resize-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-gray-900 placeholder-gray-500"
+                      rows={3}
+                      maxLength={1000}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && e.ctrlKey) {
+                          e.preventDefault();
+                          handleSubmitComment();
+                        }
+                      }}
+                    />
+                    {commentError && (
+                      <p className="text-red-500 text-sm mt-2 flex items-center">
+                        <span className="mr-2">⚠️</span>
+                        {commentError}
+                      </p>
+                    )}
+                    <div className="flex items-center justify-between mt-3">
+                      <span className="text-sm text-gray-500">
+                        {commentContent.length}/1000 characters
+                      </span>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => setCommentContent('')}
+                          disabled={!commentContent.trim() || commentLoading}
+                          className="px-4 py-2 text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          Clear
+                        </button>
+                        <button
+                          onClick={handleSubmitComment}
+                          disabled={commentLoading || !commentContent.trim()}
+                          className="flex items-center space-x-2 px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          {commentLoading ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Send className="h-4 w-4" />
+                          )}
+                          <span>{commentLoading ? 'Posting...' : 'Post Comment'}</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <MessageCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Join the Discussion</h3>
+                <p className="text-gray-600 mb-4">Please log in to leave a comment and engage with other readers.</p>
+                <Link
+                  href="/login"
+                  className="inline-flex items-center space-x-2 px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                >
+                  <span>Login to Comment</span>
+                </Link>
+              </div>
+            )}
+          </div>
+
+          {/* Comments List */}
+          <div className="space-y-6">
+            {commentsLoading ? (
+              <div className="text-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-orange-600 mx-auto mb-4" />
+                <p className="text-gray-600">Loading comments...</p>
+              </div>
+            ) : comments.length > 0 ? (
+              comments.map((comment) => (
+                <div key={comment._id} className="bg-white rounded-2xl shadow-lg p-6">
+                  <div className="flex items-start space-x-4">
+                    {comment.author.avatar ? (
+                      <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+                        <Image 
+                          src={comment.author.avatar} 
+                          alt={comment.author.name}
+                          width={40}
+                          height={40}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-10 h-10 bg-orange-600 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                        {comment.author.name.charAt(0)}
+                      </div>
+                    )}
+                    
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <h4 className="font-semibold text-gray-900">{comment.author.name}</h4>
+                          <p className="text-sm text-gray-500">{formatDate(comment.createdAt)}</p>
+                        </div>
+                        
+                        {(canEditComment(comment) || canDeleteComment(comment)) && (
+                          <div className="flex items-center space-x-2">
+                            {canEditComment(comment) && (
+                              <button
+                                onClick={() => {
+                                  setEditingComment(comment._id);
+                                  setEditContent(comment.content);
+                                }}
+                                className="text-gray-500 hover:text-orange-600 transition-colors p-1"
+                                title="Edit comment"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </button>
+                            )}
+                            {canDeleteComment(comment) && (
+                              <button
+                                onClick={() => handleDeleteComment(comment._id)}
+                                className="text-gray-500 hover:text-red-600 transition-colors p-1"
+                                title="Delete comment"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {editingComment === comment._id ? (
+                        <div className="space-y-3">
+                          <textarea
+                            value={editContent}
+                            onChange={(e) => setEditContent(e.target.value)}
+                            className="w-full p-3 border border-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-gray-900 placeholder-gray-500"
+                            rows={3}
+                            maxLength={1000}
+                          />
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-500">
+                              {editContent.length}/1000 characters
+                            </span>
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => {
+                                  setEditingComment(null);
+                                  setEditContent('');
+                                }}
+                                className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                onClick={() => handleEditComment(comment._id)}
+                                disabled={commentLoading || !editContent.trim()}
+                                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 transition-colors"
+                              >
+                                {commentLoading ? 'Saving...' : 'Save'}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <p className="text-gray-700 mb-3">{comment.content}</p>
+                          
+                          <div className="flex items-center space-x-4">
+                            {currentUser && (
+                              <button
+                                onClick={() => setReplyingTo(comment._id)}
+                                className="flex items-center space-x-1 text-gray-500 hover:text-orange-600 transition-colors"
+                              >
+                                <Reply className="h-4 w-4" />
+                                <span className="text-sm">Reply</span>
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Reply Form */}
+                          {replyingTo === comment._id && (
+                            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                              <div className="flex items-start space-x-3">
+                                <div className="flex-1">
+                                  <textarea
+                                    value={replyContent}
+                                    onChange={(e) => setReplyContent(e.target.value)}
+                                    placeholder="Write a reply..."
+                                    className="w-full p-3 border border-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-gray-900 placeholder-gray-500"
+                                    rows={2}
+                                    maxLength={1000}
+                                  />
+                                  <div className="flex items-center justify-between mt-2">
+                                    <span className="text-sm text-gray-500">
+                                      {replyContent.length}/1000 characters
+                                    </span>
+                                    <div className="flex space-x-2">
+                                      <button
+                                        onClick={() => {
+                                          setReplyingTo(null);
+                                          setReplyContent('');
+                                        }}
+                                        className="px-3 py-1 text-gray-600 hover:text-gray-800 transition-colors text-sm"
+                                      >
+                                        Cancel
+                                      </button>
+                                      <button
+                                        onClick={() => handleReply(comment._id)}
+                                        disabled={commentLoading || !replyContent.trim()}
+                                        className="px-3 py-1 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 transition-colors text-sm"
+                                      >
+                                        {commentLoading ? 'Posting...' : 'Reply'}
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Replies */}
+                          {comment.replies && comment.replies.length > 0 && (
+                            <div className="mt-4 space-y-3">
+                              {comment.replies.map((reply) => (
+                                <div key={reply._id} className="ml-8 p-4 bg-gray-50 rounded-lg">
+                                  <div className="flex items-start space-x-3">
+                                    {reply.author.avatar ? (
+                                      <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+                                        <Image 
+                                          src={reply.author.avatar} 
+                                          alt={reply.author.name}
+                                          width={32}
+                                          height={32}
+                                          className="w-full h-full object-cover"
+                                        />
+                                      </div>
+                                    ) : (
+                                      <div className="w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                                        {reply.author.name.charAt(0)}
+                                      </div>
+                                    )}
+                                    
+                                    <div className="flex-1">
+                                      <div className="flex items-center justify-between mb-1">
+                                        <div>
+                                          <h5 className="font-semibold text-gray-900 text-sm">{reply.author.name}</h5>
+                                          <p className="text-xs text-gray-500">{formatDate(reply.createdAt)}</p>
+                                        </div>
+                                        
+                                        {(canEditComment(reply) || canDeleteComment(reply)) && (
+                                          <div className="flex items-center space-x-1">
+                                            {canEditComment(reply) && (
+                                              <button
+                                                onClick={() => {
+                                                  setEditingComment(reply._id);
+                                                  setEditContent(reply.content);
+                                                }}
+                                                className="text-gray-400 hover:text-orange-600 transition-colors p-1"
+                                                title="Edit reply"
+                                              >
+                                                <Edit className="h-3 w-3" />
+                                              </button>
+                                            )}
+                                            {canDeleteComment(reply) && (
+                                              <button
+                                                onClick={() => handleDeleteComment(reply._id)}
+                                                className="text-gray-400 hover:text-red-600 transition-colors p-1"
+                                                title="Delete reply"
+                                              >
+                                                <Trash2 className="h-3 w-3" />
+                                              </button>
+                                            )}
+                                          </div>
+                                        )}
+                                      </div>
+                                      <p className="text-gray-700 text-sm">{reply.content}</p>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-12">
+                <MessageCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Comments Yet</h3>
+                <p className="text-gray-600">Be the first to share your thoughts!</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
       {/* Related Articles */}
       {relatedBlogs.length > 0 && (
         <section className="py-16 bg-gray-50 mt-16">
@@ -957,6 +1855,33 @@ export default function BlogDetailPage() {
           <ChevronLeft className="h-5 w-5" />
           <span>View All Articles</span>
         </Link>
+      </div>
+
+      {/* Success Message */}
+      {showSuccessMessage && (
+        <div className="fixed top-4 right-4 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg animate-fade-in">
+          <div className="flex items-center space-x-2">
+            <span>✅</span>
+            <span>Comment posted successfully!</span>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Comment Button */}
+      <div className="fixed bottom-8 right-8 z-50">
+        <button
+          onClick={() => {
+            const commentsSection = document.getElementById('comments');
+            if (commentsSection) {
+              commentsSection.scrollIntoView({ behavior: 'smooth' });
+            }
+          }}
+          className="flex items-center space-x-2 px-4 py-3 bg-orange-600 text-white rounded-full shadow-lg hover:bg-orange-700 transition-all duration-300 hover:scale-105"
+          title="Join the discussion"
+        >
+          <MessageCircle className="h-5 w-5" />
+          <span className="font-medium">{blog?.commentsCount || 0}</span>
+        </button>
       </div>
     </div>
   );

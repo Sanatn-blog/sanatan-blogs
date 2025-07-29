@@ -16,7 +16,9 @@ import {
   MessageCircle,
   Settings,
   Moon,
-  Sun
+  Sun,
+  Users,
+  BookmarkPlus
 } from 'lucide-react';
 
 interface UserStats {
@@ -30,7 +32,7 @@ interface Blog {
   _id: string;
   title: string;
   views?: number;
-  likes?: number;
+  likes?: Array<{ _id: string }>;
   comments?: Array<{ _id: string }>;
 }
 
@@ -65,7 +67,7 @@ export default function DashboardPage() {
         const data = await response.json();
         // Calculate stats from blogs data
         const totalViews = data.blogs.reduce((sum: number, blog: Blog) => sum + (blog.views || 0), 0);
-        const totalLikes = data.blogs.reduce((sum: number, blog: Blog) => sum + (blog.likes || 0), 0);
+        const totalLikes = data.blogs.reduce((sum: number, blog: Blog) => sum + (blog.likes?.length || 0), 0);
         const totalComments = data.blogs.reduce((sum: number, blog: Blog) => sum + (blog.comments?.length || 0), 0);
         
         setStats({
@@ -291,7 +293,7 @@ export default function DashboardPage() {
           </Link>
 
           <Link href="/blogs">
-            <div className="bg-gray-800 rounded-2xl shadow-xl p-4 sm:p-6 hover:shadow-2xl transition-all duration-300 cursor-pointer border-2 border-transparent hover:border-green-500/30 sm:col-span-2 lg:col-span-1">
+            <div className="bg-gray-800 rounded-2xl shadow-xl p-4 sm:p-6 hover:shadow-2xl transition-all duration-300 cursor-pointer border-2 border-transparent hover:border-green-500/30">
               <div className="flex items-center space-x-3 sm:space-x-4">
                 <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-900/30 rounded-full flex items-center justify-center">
                   <Eye className="w-5 h-5 sm:w-6 sm:h-6 text-green-400" />
@@ -299,6 +301,34 @@ export default function DashboardPage() {
                 <div>
                   <h3 className="text-base sm:text-lg font-semibold text-white">Explore Blogs</h3>
                   <p className="text-xs sm:text-sm text-gray-400">Read blogs from other writers</p>
+                </div>
+              </div>
+            </div>
+          </Link>
+
+          <Link href="/dashboard/profile/followers">
+            <div className="bg-gray-800 rounded-2xl shadow-xl p-4 sm:p-6 hover:shadow-2xl transition-all duration-300 cursor-pointer border-2 border-transparent hover:border-purple-500/30">
+              <div className="flex items-center space-x-3 sm:space-x-4">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-900/30 rounded-full flex items-center justify-center">
+                  <Users className="w-5 h-5 sm:w-6 sm:h-6 text-purple-400" />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-semibold text-white">Followers</h3>
+                  <p className="text-xs sm:text-sm text-gray-400">Manage your followers and following</p>
+                </div>
+              </div>
+            </div>
+          </Link>
+
+          <Link href="/dashboard/bookmarks">
+            <div className="bg-gray-800 rounded-2xl shadow-xl p-4 sm:p-6 hover:shadow-2xl transition-all duration-300 cursor-pointer border-2 border-transparent hover:border-yellow-500/30">
+              <div className="flex items-center space-x-3 sm:space-x-4">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-yellow-900/30 rounded-full flex items-center justify-center">
+                  <BookmarkPlus className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-400" />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-semibold text-white">My Bookmarks</h3>
+                  <p className="text-xs sm:text-sm text-gray-400">View your saved articles</p>
                 </div>
               </div>
             </div>

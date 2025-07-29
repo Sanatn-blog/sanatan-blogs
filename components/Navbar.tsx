@@ -20,7 +20,8 @@ import {
   Crown,
   Shield,
   BarChart3,
-  Mail
+  Mail,
+  BookmarkPlus
 } from 'lucide-react';
 
 interface User {
@@ -290,6 +291,20 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                           <div>
                             <p className="font-medium">My Blogs</p>
                             <p className="text-xs text-gray-500">View your articles</p>
+                          </div>
+                        </Link>
+
+                        <Link
+                          href="/dashboard/bookmarks"
+                          className="group flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-all duration-200"
+                          onClick={() => setShowProfileMenu(false)}
+                        >
+                          <div className="w-8 h-8 bg-gray-100 group-hover:bg-orange-100 rounded-lg flex items-center justify-center mr-3 transition-colors">
+                            <BookmarkPlus className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <p className="font-medium">My Bookmarks</p>
+                            <p className="text-xs text-gray-500">Saved articles</p>
                           </div>
                         </Link>
 

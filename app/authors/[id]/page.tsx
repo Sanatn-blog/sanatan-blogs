@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -19,7 +19,9 @@ import {
   Facebook,
   ExternalLink,
   ArrowLeft,
-  Loader2
+  Loader2,
+  UserPlus,
+  UserMinus
 } from 'lucide-react';
 
 // TypeScript interfaces
@@ -79,6 +81,111 @@ export default function AuthorProfilePage() {
   const [stats, setStats] = useState<AuthorStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
+  const [currentUser, setCurrentUser] = useState<Author | null>(null);
+
+  // Check if user is logged in and get current user
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      // Get current user from token
+      fetch('/api/auth/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.user) {
+          setCurrentUser(data.user);
+        }
+      })
+      .catch(err => console.error('Error fetching current user:', err));
+    }
+  }, []);
+
+  const checkFollowStatus = useCallback(async () => {
+    if (!currentUser || !author) return;
+    
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) return;
+
+      const response = await fetch(`/api/users/follow?userId=${author._id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setIsFollowing(data.isFollowing);
+      }
+    } catch (error) {
+      console.error('Error checking follow status:', error);
+    }
+  }, [currentUser, author]);
+
+  // Check follow status when author and current user are loaded
+  useEffect(() => {
+    if (author && currentUser && author._id !== currentUser._id) {
+      checkFollowStatus();
+    }
+  }, [author, currentUser, checkFollowStatus]);
+
+  const handleFollow = async () => {
+    if (!currentUser || !author) {
+      // Redirect to login if not logged in
+      window.location.href = '/login';
+      return;
+    }
+
+    if (author._id === currentUser._id) return; // Can't follow yourself
+
+    setFollowLoading(true);
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        window.location.href = '/login';
+        return;
+      }
+
+      const response = await fetch('/api/users/follow', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ targetUserId: author._id })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setIsFollowing(data.isFollowing);
+        // Update author's follower count with the accurate count from API
+        if (author) {
+          setAuthor(prev => prev ? {
+            ...prev,
+            followers: data.followersCount || 0
+          } : null);
+        }
+        
+        // Show success message
+        const message = data.isFollowing ? 'Successfully followed!' : 'Successfully unfollowed!';
+        // You can replace this with a proper toast notification
+        console.log(message);
+      } else {
+        const errorData = await response.json();
+        alert(errorData.error || 'Failed to follow/unfollow user');
+      }
+    } catch (error) {
+      console.error('Error following/unfollowing:', error);
+      alert('Failed to follow/unfollow user');
+    } finally {
+      setFollowLoading(false);
+    }
+  };
 
   useEffect(() => {
     const fetchAuthorData = async () => {
@@ -190,7 +297,47 @@ export default function AuthorProfilePage() {
 
               {/* Author Info */}
               <div className="flex-1">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">{author.name}</h1>
+                <div className="flex items-center justify-between mb-4">
+                  <h1 className="text-3xl font-bold text-gray-900">{author.name}</h1>
+                  
+                  {/* Follow Button */}
+                  {currentUser && author._id !== currentUser._id && (
+                    <button
+                      onClick={handleFollow}
+                      disabled={followLoading}
+                      className={`flex items-center space-x-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
+                        isFollowing
+                          ? 'bg-gray-100 text-gray-700 hover:bg-red-50 hover:text-red-600'
+                          : 'bg-orange-600 text-white hover:bg-orange-700'
+                      } ${followLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      {followLoading ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : isFollowing ? (
+                        <>
+                          <UserMinus className="h-5 w-5" />
+                          <span>Unfollow</span>
+                        </>
+                      ) : (
+                        <>
+                          <UserPlus className="h-5 w-5" />
+                          <span>Follow</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+                  
+                  {!currentUser && (
+                    <Link
+                      href="/login"
+                      className="flex items-center space-x-2 px-6 py-3 bg-orange-600 text-white rounded-xl font-medium hover:bg-orange-700 transition-colors"
+                    >
+                      <UserPlus className="h-5 w-5" />
+                      <span>Follow</span>
+                    </Link>
+                  )}
+                </div>
+                
                 {author.bio && (
                   <p className="text-gray-600 mb-4 max-w-2xl">{author.bio}</p>
                 )}
@@ -283,7 +430,7 @@ export default function AuthorProfilePage() {
       {stats && (
         <section className="py-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
               <div className="bg-white rounded-xl p-6 text-center shadow-sm border border-gray-100">
                 <BookOpen className="h-8 w-8 text-orange-600 mx-auto mb-2" />
                 <div className="text-2xl font-bold text-gray-900">{stats.totalBlogs}</div>
@@ -312,6 +459,12 @@ export default function AuthorProfilePage() {
                 <Users className="h-8 w-8 text-purple-600 mx-auto mb-2" />
                 <div className="text-2xl font-bold text-gray-900">{author.followers}</div>
                 <div className="text-sm text-gray-600">Followers</div>
+              </div>
+              
+              <div className="bg-white rounded-xl p-6 text-center shadow-sm border border-gray-100">
+                <Users className="h-8 w-8 text-green-600 mx-auto mb-2" />
+                <div className="text-2xl font-bold text-gray-900">{author.following}</div>
+                <div className="text-sm text-gray-600">Following</div>
               </div>
             </div>
           </div>

@@ -59,7 +59,9 @@ async function getBlogsHandler(request: Request) {
     console.log('Fetching blogs...');
     const blogs = await Blog.find(query)
       .populate('author', 'name avatar bio')
-      .select('-content') // Exclude full content for list view
+      .populate('likes', '_id')
+      .populate('comments', '_id')
+      .select('title excerpt slug featuredImage author category tags status isPublished publishedAt views likes comments readingTime createdAt updatedAt')
       .sort({ publishedAt: -1, createdAt: -1 })
       .skip(skip)
       .limit(limit)

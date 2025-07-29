@@ -26,6 +26,7 @@ interface Author {
   totalViews: number;
   totalLikes: number;
   followers: number;
+  following: number;
 }
 
 export default function AuthorsPage() {
@@ -202,7 +203,7 @@ export default function AuthorsPage() {
                     )}
                     
                     {/* Stats */}
-                    <div className="grid grid-cols-4 gap-3 text-center">
+                    <div className="grid grid-cols-5 gap-2 text-center">
                       <div className="bg-orange-50 rounded-lg p-2">
                         <BookOpen className="h-4 w-4 text-orange-600 mx-auto mb-1" />
                         <div className="text-xs font-medium text-gray-900">{author.totalBlogs}</div>
@@ -229,6 +230,12 @@ export default function AuthorsPage() {
                         <Users className="h-4 w-4 text-purple-600 mx-auto mb-1" />
                         <div className="text-xs font-medium text-gray-900">{author.followers}</div>
                         <div className="text-xs text-gray-500">Followers</div>
+                      </div>
+                      
+                      <div className="bg-green-50 rounded-lg p-2">
+                        <Users className="h-4 w-4 text-green-600 mx-auto mb-1" />
+                        <div className="text-xs font-medium text-gray-900">{author.following}</div>
+                        <div className="text-xs text-gray-500">Following</div>
                       </div>
                     </div>
                     
