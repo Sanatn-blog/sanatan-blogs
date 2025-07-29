@@ -543,7 +543,7 @@ export default function BlogDetailPage() {
       });
 
       if (response.ok) {
-        const newReply = await response.json();
+        await response.json();
         // Refetch comments to ensure consistency with server state
         await fetchComments();
         setReplyContent('');
@@ -587,7 +587,7 @@ export default function BlogDetailPage() {
       });
 
       if (response.ok) {
-        const updatedComment = await response.json();
+        await response.json();
         // Refetch comments to ensure consistency with server state
         await fetchComments();
         setEditingComment(null);

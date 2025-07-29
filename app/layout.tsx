@@ -4,6 +4,7 @@ import "./globals.css";
 import ClientLayout from "@/components/ClientLayout";
 import GlobalErrorHandler from "@/components/GlobalErrorHandler";
 import HydrationErrorHandler from "@/components/HydrationErrorHandler";
+import { LoadingProvider } from "@/components/LoadingProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -101,9 +102,11 @@ export default function RootLayout({
       >
         <GlobalErrorHandler />
         <HydrationErrorHandler />
-        <ClientLayout>
-          {children}
-        </ClientLayout>
+        <LoadingProvider>
+          <ClientLayout>
+            {children}
+          </ClientLayout>
+        </LoadingProvider>
       </body>
     </html>
   );
