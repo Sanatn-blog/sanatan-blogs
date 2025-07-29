@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
+// Import Comment model to register schema with Mongoose (needed for populate operations)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import Comment from '@/models/Comment';
 import Blog from '@/models/Blog';
 import { requireAuth, AuthenticatedRequest } from '@/middleware/auth';
 
