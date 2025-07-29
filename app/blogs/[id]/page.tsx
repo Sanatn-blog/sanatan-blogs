@@ -476,7 +476,8 @@ export default function BlogDetailPage() {
       if (response.ok) {
         const newComment = await response.json();
         console.log('Comment submitted successfully:', newComment);
-        setComments(prev => [newComment, ...prev]);
+        // Refetch comments to ensure consistency with server state
+        await fetchComments();
         setCommentContent('');
         setCommentError(null);
         // Show success message
@@ -543,16 +544,8 @@ export default function BlogDetailPage() {
 
       if (response.ok) {
         const newReply = await response.json();
-        // Update the parent comment with the new reply
-        setComments(prev => prev.map(comment => {
-          if (comment._id === parentCommentId) {
-            return {
-              ...comment,
-              replies: [...(comment.replies || []), newReply]
-            };
-          }
-          return comment;
-        }));
+        // Refetch comments to ensure consistency with server state
+        await fetchComments();
         setReplyContent('');
         setReplyingTo(null);
         setCommentError(null);
@@ -595,9 +588,8 @@ export default function BlogDetailPage() {
 
       if (response.ok) {
         const updatedComment = await response.json();
-        setComments(prev => prev.map(comment => 
-          comment._id === commentId ? updatedComment : comment
-        ));
+        // Refetch comments to ensure consistency with server state
+        await fetchComments();
         setEditingComment(null);
         setEditContent('');
         setCommentError(null);
@@ -633,7 +625,8 @@ export default function BlogDetailPage() {
       });
 
       if (response.ok) {
-        setComments(prev => prev.filter(comment => comment._id !== commentId));
+        // Refetch comments to ensure consistency with server state
+        await fetchComments();
       } else {
         const errorData = await response.json();
         alert(errorData.error || 'Failed to delete comment');
