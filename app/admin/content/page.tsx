@@ -592,14 +592,14 @@ export default function ContentManagement() {
                         </td>
                         <td className="px-4 py-4">
                           <div className="flex items-center space-x-2">
-                            <div className="flex-shrink-0 h-8 w-8">
+                            <div className="flex-shrink-0 h-8 w-8 relative">
                               {blog.featuredImage ? (
                                 <Image
                                   src={blog.featuredImage}
                                   alt={blog.title}
-                                  width={32}
-                                  height={32}
+                                  fill
                                   className="h-8 w-8 rounded object-cover"
+                                  sizes="32px"
                                 />
                               ) : (
                                 <div className="h-8 w-8 bg-gray-600 rounded flex items-center justify-center">
@@ -727,14 +727,14 @@ export default function ContentManagement() {
 
                       {/* Blog content */}
                       <div className="flex items-start space-x-3 mb-4">
-                        <div className="flex-shrink-0 h-16 w-16">
+                        <div className="flex-shrink-0 h-16 w-16 relative">
                           {blog.featuredImage ? (
                             <Image
                               src={blog.featuredImage}
                               alt={blog.title}
-                              width={64}
-                              height={64}
+                              fill
                               className="h-16 w-16 rounded-lg object-cover"
+                              sizes="64px"
                             />
                           ) : (
                             <div className="h-16 w-16 bg-gray-600 rounded-lg flex items-center justify-center">
@@ -849,6 +849,7 @@ export default function ContentManagement() {
                           alt={selectedBlog.title}
                           fill
                           className="object-cover"
+                          sizes="(max-width: 768px) 100vw, 50vw"
                         />
                       </div>
                     )}

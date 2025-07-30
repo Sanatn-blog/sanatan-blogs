@@ -439,6 +439,28 @@ export default function BlogDetailPage() {
     }
   }, [blog, blogId]);
 
+  // Function to refetch blog data to get updated comment count
+  const refetchBlogData = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`/api/blogs/${blogId}`, { headers });
+      
+      if (response.ok) {
+        const data: BlogResponse = await response.json();
+        if (data.blog) {
+          setBlog(data.blog);
+        }
+      }
+    } catch (error) {
+      console.error('Error refetching blog data:', error);
+    }
+  }, [blogId]);
+
   const handleSubmitComment = async () => {
     if (!currentUser || !blog) {
       window.location.href = '/login';
@@ -478,6 +500,8 @@ export default function BlogDetailPage() {
         console.log('Comment submitted successfully:', newComment);
         // Refetch comments to ensure consistency with server state
         await fetchComments();
+        // Refetch blog data to get updated comment count
+        await refetchBlogData();
         setCommentContent('');
         setCommentError(null);
         // Show success message
@@ -546,6 +570,8 @@ export default function BlogDetailPage() {
         await response.json();
         // Refetch comments to ensure consistency with server state
         await fetchComments();
+        // Refetch blog data to get updated comment count
+        await refetchBlogData();
         setReplyContent('');
         setReplyingTo(null);
         setCommentError(null);
@@ -590,6 +616,8 @@ export default function BlogDetailPage() {
         await response.json();
         // Refetch comments to ensure consistency with server state
         await fetchComments();
+        // Refetch blog data to get updated comment count
+        await refetchBlogData();
         setEditingComment(null);
         setEditContent('');
         setCommentError(null);
@@ -627,6 +655,8 @@ export default function BlogDetailPage() {
       if (response.ok) {
         // Refetch comments to ensure consistency with server state
         await fetchComments();
+        // Refetch blog data to get updated comment count
+        await refetchBlogData();
       } else {
         const errorData = await response.json();
         alert(errorData.error || 'Failed to delete comment');
@@ -1776,9 +1806,9 @@ export default function BlogDetailPage() {
                       <Image 
                         src={relatedBlog.featuredImage} 
                         alt={relatedBlog.title}
-                        width={400}
-                        height={192}
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, 50vw"
                       />
                     )}
                     <div className="absolute top-4 left-4">

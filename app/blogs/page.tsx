@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Search, Filter, Calendar, Eye, Heart, Clock, ChevronRight, TrendingUp, Star } from 'lucide-react';
+import { Search, Filter, Calendar, Eye, Heart, Clock, ChevronRight, TrendingUp, Star, MessageCircle } from 'lucide-react';
 
 interface Blog {
   _id: string;
@@ -24,6 +24,7 @@ interface Blog {
   publishedAt?: string;
   views: number;
   likes: string[];
+  commentCount?: number;
   readingTime: number;
   createdAt: string;
   updatedAt: string;
@@ -380,9 +381,9 @@ export default function BlogsPage() {
                       <Image
                         src={blog.featuredImage}
                         alt={blog.title}
-                        width={400}
-                        height={192}
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       />
                     ) : null}
                     <div className={`absolute inset-0 bg-gradient-to-r from-orange-400 to-orange-600 ${blog.featuredImage ? 'hidden' : ''}`}>
@@ -422,21 +423,27 @@ export default function BlogsPage() {
                           {blog.readingTime}
                         </span>
                       </div>
-                      <button
-                        onClick={() => handleLike(blog._id)}
-                        className={`flex items-center transition-colors ${
-                          likedBlogs.has(blog._id)
-                            ? 'text-red-500 hover:text-red-600'
-                            : 'text-gray-500 hover:text-red-500'
-                        }`}
-                        title={currentUser ? (likedBlogs.has(blog._id) ? 'Unlike' : 'Like') : 'Login to like'}
-                      >
-                        <Heart className={`h-4 w-4 mr-1 ${likedBlogs.has(blog._id) ? 'fill-current' : ''}`} />
-                        {(blog.likes || []).length}
-                        {!currentUser && (
-                          <span className="ml-1 text-xs">(Login)</span>
-                        )}
-                      </button>
+                      <div className="flex items-center space-x-3">
+                        <span className="flex items-center text-gray-500">
+                          <MessageCircle className="h-4 w-4 mr-1" />
+                          {blog.commentCount || 0}
+                        </span>
+                        <button
+                          onClick={() => handleLike(blog._id)}
+                          className={`flex items-center transition-colors ${
+                            likedBlogs.has(blog._id)
+                              ? 'text-red-500 hover:text-red-600'
+                              : 'text-gray-500 hover:text-red-500'
+                          }`}
+                          title={currentUser ? (likedBlogs.has(blog._id) ? 'Unlike' : 'Like') : 'Login to like'}
+                        >
+                          <Heart className={`h-4 w-4 mr-1 ${likedBlogs.has(blog._id) ? 'fill-current' : ''}`} />
+                          {(blog.likes || []).length}
+                          {!currentUser && (
+                            <span className="ml-1 text-xs">(Login)</span>
+                          )}
+                        </button>
+                      </div>
                     </div>
 
                     <div className="flex items-center justify-between">
@@ -611,9 +618,9 @@ export default function BlogsPage() {
                       <Image
                         src={blog.featuredImage}
                         alt={blog.title}
-                        width={400}
-                        height={192}
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       />
                     ) : null}
                     <div className={`absolute inset-0 bg-gradient-to-r from-gray-400 to-gray-600 ${blog.featuredImage ? 'hidden' : ''}`}>

@@ -387,13 +387,13 @@ export default function MyBlogs() {
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
                     {/* Featured Image */}
                     {blog.featuredImage && (
-                      <div className="flex-shrink0 w-24 h-24 sm:w-32 sm:h-32">
+                      <div className="flex-shrink-0 w-24 h-24 sm:w-32 sm:h-32 relative">
                         <Image
                           src={blog.featuredImage}
                           alt={blog.title}
-                          width={128}
-                          height={128}
-                          className="w-full h-full object-cover rounded-xl"
+                          fill
+                          className="object-cover rounded-xl"
+                          sizes="128px"
                         />
                       </div>
                     )}

@@ -90,8 +90,7 @@ async function getBlogHandler(request: Request, { params }: { params: Promise<{ 
     const blog = await Blog.findOne(query)
     .populate('author', 'name avatar bio socialLinks')
     .populate('likes', '_id')
-    .populate('comments', '_id')
-    .select('title excerpt content featuredImage author category tags status isPublished publishedAt views likes comments readingTime seo createdAt updatedAt')
+    .select('title excerpt content featuredImage author category tags status isPublished publishedAt views likes readingTime seo createdAt updatedAt')
     .lean<LeanBlog>();
     
     console.log('Blog found:', !!blog);
@@ -119,10 +118,11 @@ async function getBlogHandler(request: Request, { params }: { params: Promise<{ 
       );
     }
 
-    // Get comments count for this blog
+    // Get comments count for this blog (only top-level comments)
     const commentsCount = await Comment.countDocuments({
       blog: blog._id,
-      isApproved: true
+      isApproved: true,
+      parentComment: null
     });
     const { _id, category } = blog;
 

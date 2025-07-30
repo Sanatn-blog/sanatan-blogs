@@ -494,13 +494,13 @@ export default function AuthorProfilePage() {
               {blogs.map((blog) => (
                 <article key={blog._id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
                   {blog.featuredImage && (
-                    <div className="aspect-video bg-gray-200">
+                    <div className="aspect-video bg-gray-200 relative">
                       <Image
                         src={blog.featuredImage}
                         alt={blog.title}
-                        width={400}
-                        height={225}
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       />
                     </div>
                   )}

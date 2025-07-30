@@ -60,6 +60,13 @@ async function deleteCommentHandler(request: AuthenticatedRequest, { params }: {
     // Delete the comment
     await Comment.findByIdAndDelete(commentId);
 
+    // Remove comment from blog's comments array (only for top-level comments)
+    if (!comment.parentComment) {
+      await Blog.findByIdAndUpdate(blog._id, {
+        $pull: { comments: commentId }
+      });
+    }
+
     return NextResponse.json(
       { message: 'Comment deleted successfully' },
       { status: 200 }

@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
+import { requireAuth, AuthenticatedRequest } from '@/middleware/auth';
 import Blog from '@/models/Blog';
 import User from '@/models/User';
-import { requireAuth, AuthenticatedRequest } from '@/middleware/auth';
 
 // GET - List all published blogs with pagination and filtering (public endpoint)
 async function getBlogsHandler(request: Request) {
@@ -66,6 +66,22 @@ async function getBlogsHandler(request: Request) {
       .limit(limit)
       .lean();
 
+    // Get comment counts for each blog
+    const blogsWithCommentCounts = await Promise.all(
+      blogs.map(async (blog) => {
+        const commentCount = await Blog.aggregate([
+          { $match: { _id: blog._id } },
+          { $lookup: { from: 'comments', localField: '_id', foreignField: 'blog', as: 'commentDetails' } },
+          { $project: { commentCount: { $size: '$commentDetails' } } }
+        ]);
+        
+        return {
+          ...blog,
+          commentCount: commentCount[0]?.commentCount || 0
+        };
+      })
+    );
+
     console.log(`Found ${blogs.length} blogs`);
 
     // Get total count for pagination
@@ -85,7 +101,7 @@ async function getBlogsHandler(request: Request) {
     ]);
 
     const response = {
-      blogs,
+      blogs: blogsWithCommentCounts,
       pagination: {
         currentPage: page,
         totalPages,

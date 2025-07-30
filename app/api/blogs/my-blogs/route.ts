@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
-// Import Comment model to register schema with Mongoose (needed for populate operations)
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import Comment from '@/models/Comment';
-import Blog from '@/models/Blog';
 import { requireAuth, AuthenticatedRequest } from '@/middleware/auth';
+// Import all models to ensure they are registered before use
+import Blog from '@/models/Blog';
+
+
 
 // GET - Get current user's blogs
 async function getMyBlogsHandler(request: AuthenticatedRequest) {
@@ -57,13 +57,29 @@ async function getMyBlogsHandler(request: AuthenticatedRequest) {
     const blogs = await Blog.find(query)
       .populate('author', 'name avatar bio')
       .populate('likes', '_id')
-      .populate('comments', '_id')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .lean();
 
-    console.log(`Found ${blogs.length} blogs for user`);
+    // Get comment counts for each blog
+    const blogsWithCommentCounts = await Promise.all(
+      blogs.map(async (blog) => {
+        const commentCount = await Blog.aggregate([
+          { $match: { _id: blog._id } },
+          { $lookup: { from: 'comments', localField: '_id', foreignField: 'blog', as: 'commentDetails' } },
+          { $project: { commentCount: { $size: '$commentDetails' } } }
+        ]);
+        
+        return {
+          ...blog,
+          commentCount: commentCount[0]?.commentCount || 0
+        };
+      })
+    );
+
+    console.log(`Found ${blogsWithCommentCounts.length} blogs for user`);
+    console.log('Sample blog comment count:', blogsWithCommentCounts[0]?.commentCount || 0, 'comments');
 
     // Get total count for pagination
     const totalBlogs = await Blog.countDocuments(query);
@@ -75,8 +91,16 @@ async function getMyBlogsHandler(request: AuthenticatedRequest) {
     const publishedBlogs = allUserBlogs.filter(blog => blog.status === 'published').length;
     const draftBlogs = allUserBlogs.filter(blog => blog.status === 'draft').length;
 
+    // Calculate total comments across all user blogs
+    const totalComments = await Blog.aggregate([
+      { $match: { author: request.user._id } },
+      { $lookup: { from: 'comments', localField: '_id', foreignField: 'blog', as: 'commentDetails' } },
+      { $project: { commentCount: { $size: '$commentDetails' } } },
+      { $group: { _id: null, totalComments: { $sum: '$commentCount' } } }
+    ]);
+
     const response = {
-      blogs,
+      blogs: blogsWithCommentCounts,
       pagination: {
         currentPage: page,
         totalPages,
@@ -88,7 +112,8 @@ async function getMyBlogsHandler(request: AuthenticatedRequest) {
         totalBlogs: allUserBlogs.length,
         totalViews,
         publishedBlogs,
-        draftBlogs
+        draftBlogs,
+        totalComments: totalComments[0]?.totalComments || 0
       }
     };
 

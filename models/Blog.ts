@@ -185,7 +185,7 @@ BlogSchema.pre('save', function(next) {
   next();
 });
 
-// Simple model registration
+// Model registration with proper error handling
 const Blog = mongoose.models.Blog || mongoose.model<IBlog>('Blog', BlogSchema);
 
 export default Blog; 

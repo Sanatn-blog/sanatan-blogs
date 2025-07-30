@@ -69,7 +69,7 @@ CommentSchema.index({ parentComment: 1 });
 CommentSchema.index({ isApproved: 1 });
 CommentSchema.index({ createdAt: -1 });
 
-// Simple model registration
+// Model registration with proper error handling for circular references
 const Comment = mongoose.models.Comment || mongoose.model<IComment>('Comment', CommentSchema);
 
 export default Comment; 

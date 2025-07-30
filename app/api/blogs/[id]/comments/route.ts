@@ -145,6 +145,13 @@ async function createCommentHandler(request: AuthenticatedRequest, { params }: {
 
     await comment.save();
 
+    // Add comment to blog's comments array (only for top-level comments)
+    if (!parentCommentId) {
+      await Blog.findByIdAndUpdate(blog._id, {
+        $push: { comments: comment._id }
+      });
+    }
+
     // If this is a reply, add it to parent comment's replies
     if (parentCommentId) {
       await Comment.findByIdAndUpdate(parentCommentId, {

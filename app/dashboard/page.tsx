@@ -33,7 +33,7 @@ interface Blog {
   title: string;
   views?: number;
   likes?: Array<{ _id: string }>;
-  comments?: Array<{ _id: string }>;
+  commentCount?: number;
 }
 
 export default function DashboardPage() {
@@ -65,10 +65,15 @@ export default function DashboardPage() {
       
       if (response.ok) {
         const data = await response.json();
+        console.log('Dashboard received blogs:', data.blogs.length);
+        console.log('Sample blog comments:', data.blogs[0]?.comments?.length || 0);
+        
         // Calculate stats from blogs data
         const totalViews = data.blogs.reduce((sum: number, blog: Blog) => sum + (blog.views || 0), 0);
         const totalLikes = data.blogs.reduce((sum: number, blog: Blog) => sum + (blog.likes?.length || 0), 0);
-        const totalComments = data.blogs.reduce((sum: number, blog: Blog) => sum + (blog.comments?.length || 0), 0);
+        const totalComments = data.blogs.reduce((sum: number, blog: Blog) => sum + (blog.commentCount || 0), 0);
+        
+        console.log('Calculated stats:', { totalViews, totalLikes, totalComments });
         
         setStats({
           totalBlogs: data.blogs.length,
