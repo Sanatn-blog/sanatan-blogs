@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import Link from 'next/link';
-import { PenTool, Eye, Edit, Trash2, Plus, Loader2, Calendar, Tag, Search, Filter } from 'lucide-react';
+import { PenTool, Eye, Edit, Trash2, Plus, Loader2, Calendar, Tag, Search, Filter, RefreshCw } from 'lucide-react';
 import Image from 'next/image';
 
 interface Blog {
@@ -43,6 +43,7 @@ export default function MyBlogs() {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [stats, setStats] = useState<BlogStats>({
     totalBlogs: 0,
     totalViews: 0,
@@ -50,15 +51,13 @@ export default function MyBlogs() {
     draftBlogs: 0
   });
 
-  useEffect(() => {
-    if (user) {
-      fetchUserBlogs();
-    }
-  }, [user]);
-
-  const fetchUserBlogs = async () => {
+  const fetchUserBlogs = useCallback(async (showRefreshIndicator = false) => {
     try {
-      setLoadingBlogs(true);
+      if (showRefreshIndicator) {
+        setIsRefreshing(true);
+      } else {
+        setLoadingBlogs(true);
+      }
       setError(null);
 
       // Get the access token
@@ -114,8 +113,53 @@ export default function MyBlogs() {
       }
     } finally {
       setLoadingBlogs(false);
+      setIsRefreshing(false);
     }
-  };
+  }, []);
+
+  // Initial fetch when user loads
+  useEffect(() => {
+    if (user) {
+      fetchUserBlogs();
+    }
+  }, [user, fetchUserBlogs]);
+
+  // Refresh data when page becomes visible (user switches back to tab/app)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && user) {
+        fetchUserBlogs(true);
+      }
+    };
+
+    const handleFocus = () => {
+      if (user) {
+        fetchUserBlogs(true);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [user, fetchUserBlogs]);
+
+  // Refresh data when navigating to this page
+  useEffect(() => {
+    // Since we're using app router, we'll use a different approach
+    // This effect runs when the component mounts, which happens on navigation
+    if (user) {
+      // Small delay to ensure this runs after initial load
+      const timeoutId = setTimeout(() => {
+        fetchUserBlogs(true);
+      }, 100);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [user, fetchUserBlogs]);
 
   // Filter blogs based on search and status
   useEffect(() => {
@@ -239,13 +283,24 @@ export default function MyBlogs() {
               <h1 className="text-2xl sm:text-3xl font-bold text-white">📚 My Blogs</h1>
               <p className="text-gray-400 mt-1 sm:mt-2 text-sm sm:text-base">Manage your blog posts</p>
             </div>
-            <Link
-              href="/write-blog"
-              className="flex items-center justify-center sm:justify-start space-x-2 bg-gradient-to-r from-orange-600 to-pink-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl hover:from-orange-700 hover:to-pink-700 transition-all shadow-lg hover:shadow-xl text-sm sm:text-base w-full sm:w-auto"
-            >
-              <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
-              <span>Write New Blog</span>
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+              <button
+                onClick={() => fetchUserBlogs(true)}
+                disabled={isRefreshing || loadingBlogs}
+                className="flex items-center justify-center space-x-2 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 text-white px-4 py-2 sm:py-3 rounded-xl transition-all shadow-lg hover:shadow-xl text-sm sm:text-base disabled:cursor-not-allowed disabled:opacity-50"
+                title="Refresh blog list"
+              >
+                <RefreshCw className={`h-4 w-4 sm:h-5 sm:w-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">Refresh</span>
+              </button>
+              <Link
+                href="/write-blog"
+                className="flex items-center justify-center sm:justify-start space-x-2 bg-gradient-to-r from-orange-600 to-pink-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl hover:from-orange-700 hover:to-pink-700 transition-all shadow-lg hover:shadow-xl text-sm sm:text-base w-full sm:w-auto"
+              >
+                <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span>Write New Blog</span>
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -346,10 +401,11 @@ export default function MyBlogs() {
               </div>
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
                 <button
-                  onClick={fetchUserBlogs}
-                  className="inline-flex items-center justify-center space-x-2 bg-gradient-to-r from-orange-600 to-pink-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl hover:from-orange-700 hover:to-pink-700 transition-all text-sm sm:text-base"
+                  onClick={() => fetchUserBlogs()}
+                  disabled={loadingBlogs || isRefreshing}
+                  className="inline-flex items-center justify-center space-x-2 bg-gradient-to-r from-orange-600 to-pink-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl hover:from-orange-700 hover:to-pink-700 transition-all text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Loader2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <RefreshCw className={`h-4 w-4 sm:h-5 sm:w-5 ${loadingBlogs || isRefreshing ? 'animate-spin' : ''}`} />
                   <span>Try Again</span>
                 </button>
                 {error.includes('log in') && (

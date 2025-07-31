@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import toast from 'react-hot-toast';
 import { 
   FileText, 
   Eye, 
@@ -18,7 +19,9 @@ import {
   RefreshCw,
   X,
   User,
-  Tag
+  Tag,
+  PartyPopper,
+  Sparkles
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -177,6 +180,82 @@ export default function ContentManagement() {
         throw new Error(errorMessage);
       }
 
+      // Show success message for publish actions
+      if (bulkAction === 'publish') {
+        const blogCount = selectedBlogs.length;
+        toast.custom((t) => (
+          <div className={`${
+            t.visible ? 'animate-enter' : 'animate-leave'
+          } relative max-w-lg w-full mx-auto pointer-events-auto overflow-hidden rounded-2xl`}>
+            {/* Background with gradient and glass effect */}
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 via-teal-600 to-green-600 opacity-95"></div>
+            <div className="absolute inset-0 bg-white/10 backdrop-blur-xl"></div>
+            
+            {/* Animated background particles */}
+            <div className="absolute inset-0 overflow-hidden">
+              <div className="absolute top-2 left-4 w-2 h-2 bg-yellow-300 rounded-full animate-ping opacity-60"></div>
+              <div className="absolute top-8 right-8 w-1 h-1 bg-white rounded-full animate-pulse opacity-40"></div>
+              <div className="absolute bottom-4 left-8 w-1.5 h-1.5 bg-yellow-200 rounded-full animate-bounce opacity-50"></div>
+            </div>
+            
+            {/* Content */}
+            <div className="relative p-6">
+              <div className="flex items-start space-x-4">
+                <div className="flex-shrink-0">
+                  <div className="relative">
+                    <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30">
+                      <PartyPopper className="h-7 w-7 text-white animate-bounce" />
+                    </div>
+                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full animate-ping"></div>
+                  </div>
+                </div>
+                
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <CheckCircle className="h-5 w-5 text-white" />
+                    <h3 className="text-lg font-bold text-white tracking-wide">
+                      🎉 {blogCount} Blog{blogCount > 1 ? 's' : ''} Published!
+                    </h3>
+                  </div>
+                  
+                  <p className="text-sm text-emerald-50 mb-3 leading-relaxed">
+                    {blogCount > 1 ? 'These amazing posts are' : 'This amazing post is'} now live and ready to inspire readers!
+                  </p>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Sparkles className="h-4 w-4 text-yellow-200 animate-pulse" />
+                    <span className="text-xs font-medium text-emerald-100 opacity-90">
+                      Bulk action completed successfully ✨
+                    </span>
+                  </div>
+                </div>
+                
+                <button
+                  onClick={() => toast.dismiss(t.id)}
+                  className="flex-shrink-0 w-8 h-8 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all duration-200 backdrop-blur-sm border border-white/20 hover:border-white/40"
+                >
+                  <X className="h-4 w-4 text-white" />
+                </button>
+              </div>
+            </div>
+            
+            {/* Bottom shine effect */}
+            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/50 to-transparent"></div>
+          </div>
+        ), {
+          duration: 6000,
+          position: 'top-center',
+        });
+      } else if (bulkAction === 'unpublish') {
+        toast.success(`📝 ${selectedBlogs.length} blog${selectedBlogs.length > 1 ? 's' : ''} unpublished successfully!`, {
+          duration: 4000,
+          iconTheme: {
+            primary: '#6366f1',
+            secondary: '#ffffff',
+          },
+        });
+      }
+      
       // Refresh blogs and clear selection
       await fetchBlogs(pagination.currentPage);
       setSelectedBlogs([]);
@@ -230,6 +309,81 @@ export default function ContentManagement() {
         throw new Error(errorMessage);
       }
 
+      // Show success message for publish actions
+      if (action === 'publish') {
+        toast.custom((t) => (
+          <div className={`${
+            t.visible ? 'animate-enter' : 'animate-leave'
+          } relative max-w-lg w-full mx-auto pointer-events-auto overflow-hidden rounded-2xl`}>
+            {/* Background with gradient and glass effect */}
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 via-teal-600 to-green-600 opacity-95"></div>
+            <div className="absolute inset-0 bg-white/10 backdrop-blur-xl"></div>
+            
+            {/* Animated background particles */}
+            <div className="absolute inset-0 overflow-hidden">
+              <div className="absolute top-2 left-4 w-2 h-2 bg-yellow-300 rounded-full animate-ping opacity-60"></div>
+              <div className="absolute top-8 right-8 w-1 h-1 bg-white rounded-full animate-pulse opacity-40"></div>
+              <div className="absolute bottom-4 left-8 w-1.5 h-1.5 bg-yellow-200 rounded-full animate-bounce opacity-50"></div>
+            </div>
+            
+            {/* Content */}
+            <div className="relative p-6">
+              <div className="flex items-start space-x-4">
+                <div className="flex-shrink-0">
+                  <div className="relative">
+                    <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30">
+                      <PartyPopper className="h-7 w-7 text-white animate-bounce" />
+                    </div>
+                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full animate-ping"></div>
+                  </div>
+                </div>
+                
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <CheckCircle className="h-5 w-5 text-white" />
+                    <h3 className="text-lg font-bold text-white tracking-wide">
+                      🎉 Blog Published Successfully!
+                    </h3>
+                  </div>
+                  
+                  <p className="text-sm text-emerald-50 mb-3 leading-relaxed">
+                    This amazing post is now live and ready to inspire readers around the world!
+                  </p>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Sparkles className="h-4 w-4 text-yellow-200 animate-pulse" />
+                    <span className="text-xs font-medium text-emerald-100 opacity-90">
+                      Admin action completed successfully ✨
+                    </span>
+                  </div>
+                </div>
+                
+                <button
+                  onClick={() => toast.dismiss(t.id)}
+                  className="flex-shrink-0 w-8 h-8 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all duration-200 backdrop-blur-sm border border-white/20 hover:border-white/40"
+                >
+                  <X className="h-4 w-4 text-white" />
+                </button>
+              </div>
+            </div>
+            
+            {/* Bottom shine effect */}
+            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/50 to-transparent"></div>
+          </div>
+        ), {
+          duration: 6000,
+          position: 'top-center',
+        });
+      } else if (action === 'unpublish') {
+        toast.success('📝 Blog unpublished successfully!', {
+          duration: 4000,
+          iconTheme: {
+            primary: '#6366f1',
+            secondary: '#ffffff',
+          },
+        });
+      }
+      
       // Refresh blogs
       await fetchBlogs(pagination.currentPage);
       

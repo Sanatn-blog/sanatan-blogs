@@ -17,24 +17,53 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
           {children}
         </ClientLayoutContent>
         <Toaster
-          position="top-right"
+          position="top-center"
           toastOptions={{
             duration: 4000,
             style: {
-              background: '#363636',
-              color: '#fff',
-              marginTop: '80px', // Add margin to position below navbar
+              background: 'linear-gradient(135deg, #1f2937 0%, #374151 100%)',
+              color: '#ffffff',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: '16px',
+              padding: '16px 20px',
+              fontSize: '14px',
+              fontWeight: '500',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.1)',
+              backdropFilter: 'blur(10px)',
+              marginTop: '100px', // Position below navbar
+              maxWidth: '420px',
+              minWidth: '300px',
             },
             success: {
               style: {
-                background: '#22c55e',
-                marginTop: '80px', // Add margin to position below navbar
+                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                color: '#ffffff',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                borderRadius: '16px',
+                padding: '16px 20px',
+                fontSize: '14px',
+                fontWeight: '600',
+                boxShadow: '0 20px 25px -5px rgba(16, 185, 129, 0.4), 0 10px 10px -5px rgba(16, 185, 129, 0.2)',
+                backdropFilter: 'blur(10px)',
+                marginTop: '100px',
+                maxWidth: '420px',
+                minWidth: '300px',
               },
             },
             error: {
               style: {
-                background: '#ef4444',
-                marginTop: '80px', // Add margin to position below navbar
+                background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                color: '#ffffff',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                borderRadius: '16px',
+                padding: '16px 20px',
+                fontSize: '14px',
+                fontWeight: '600',
+                boxShadow: '0 20px 25px -5px rgba(239, 68, 68, 0.4), 0 10px 10px -5px rgba(239, 68, 68, 0.2)',
+                backdropFilter: 'blur(10px)',
+                marginTop: '100px',
+                maxWidth: '420px',
+                minWidth: '300px',
               },
             },
           }}
