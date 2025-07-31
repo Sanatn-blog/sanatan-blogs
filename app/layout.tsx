@@ -5,6 +5,7 @@ import ClientLayout from "@/components/ClientLayout";
 import GlobalErrorHandler from "@/components/GlobalErrorHandler";
 import HydrationErrorHandler from "@/components/HydrationErrorHandler";
 import { LoadingProvider } from "@/components/LoadingProvider";
+import GoogleAnalytics from "@/components/GoogleAnalytics";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -100,6 +101,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
+        <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID || ''} />
         <GlobalErrorHandler />
         <HydrationErrorHandler />
         <LoadingProvider>

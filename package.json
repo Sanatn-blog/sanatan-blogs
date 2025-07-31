@@ -13,6 +13,7 @@
     "debug": "node scripts/debug-my-blogs.js"
   },
   "dependencies": {
+    "@next/third-parties": "^15.4.5",
     "@tailwindcss/line-clamp": "^0.4.4",
     "@tailwindcss/typography": "^0.5.16",
     "@types/nodemailer": "^6.4.17",
