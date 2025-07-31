@@ -163,19 +163,21 @@ export default function BookmarksPage() {
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-6">
-            <div className="flex items-center space-x-4">
-              <Link
-                href="/dashboard"
-                className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                <ArrowLeft className="h-5 w-5" />
-                <span>Back to Dashboard</span>
-              </Link>
-              <div className="h-6 w-px bg-gray-300"></div>
-              <div className="flex items-center space-x-3">
-                <BookmarkPlus className="h-6 w-6 text-orange-600" />
-                <h1 className="text-2xl font-bold text-gray-900">My Bookmarks</h1>
+          <div className="py-4 sm:py-6">
+            <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+              <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4">
+                <Link
+                  href="/dashboard"
+                  className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors w-fit"
+                >
+                  <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <span className="text-sm sm:text-base">Back to Dashboard</span>
+                </Link>
+                <div className="hidden sm:block h-6 w-px bg-gray-300"></div>
+                <div className="flex items-center space-x-2 sm:space-x-3">
+                  <BookmarkPlus className="h-5 w-5 sm:h-6 sm:w-6 text-orange-600" />
+                  <h1 className="text-xl sm:text-2xl font-bold text-gray-900">My Bookmarks</h1>
+                </div>
               </div>
             </div>
           </div>
@@ -183,7 +185,7 @@ export default function BookmarksPage() {
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-orange-600" />
@@ -218,7 +220,7 @@ export default function BookmarksPage() {
               </p>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {bookmarks.map((blog) => (
                 <article
                   key={blog._id}
@@ -226,18 +228,18 @@ export default function BookmarksPage() {
                 >
                   {/* Featured Image */}
                   {blog.featuredImage && (
-                    <div className="relative h-48 bg-gray-200">
+                    <div className="relative h-40 sm:h-48 bg-gray-200">
                       <Image
                         src={blog.featuredImage}
                         alt={blog.title}
                         fill
                         className="object-cover"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       />
                     </div>
                   )}
 
-                  <div className="p-6">
+                  <div className="p-4 sm:p-6">
                     {/* Category */}
                     <div className="mb-3">
                       <span className="inline-block px-3 py-1 bg-orange-100 text-orange-700 text-xs font-medium rounded-full">
@@ -246,7 +248,7 @@ export default function BookmarksPage() {
                     </div>
 
                     {/* Title */}
-                    <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2 hover:text-orange-600 transition-colors">
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-3 line-clamp-2 hover:text-orange-600 transition-colors">
                       <Link href={`/blogs/${blog._id}`}>
                         {blog.title}
                       </Link>
@@ -278,34 +280,36 @@ export default function BookmarksPage() {
                     </div>
 
                     {/* Meta Information */}
-                    <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                      <div className="flex items-center space-x-4">
+                    <div className="text-sm text-gray-500 mb-4">
+                      <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+                        <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+                          <span className="flex items-center">
+                            <Calendar className="h-4 w-4 mr-1 flex-shrink-0" />
+                            <span className="truncate">{formatDate(blog.publishedAt)}</span>
+                          </span>
+                          <span className="flex items-center">
+                            <Clock className="h-4 w-4 mr-1 flex-shrink-0" />
+                            {blog.readingTime} min read
+                          </span>
+                        </div>
                         <span className="flex items-center">
-                          <Calendar className="h-4 w-4 mr-1" />
-                          {formatDate(blog.publishedAt)}
-                        </span>
-                        <span className="flex items-center">
-                          <Clock className="h-4 w-4 mr-1" />
-                          {blog.readingTime} min read
+                          <Eye className="h-4 w-4 mr-1 flex-shrink-0" />
+                          {blog.views}
                         </span>
                       </div>
-                      <span className="flex items-center">
-                        <Eye className="h-4 w-4 mr-1" />
-                        {blog.views}
-                      </span>
                     </div>
 
                     {/* Actions */}
-                    <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                    <div className="flex items-center gap-2 sm:gap-3 pt-4 border-t border-gray-100">
                       <Link
                         href={`/blogs/${blog._id}`}
-                        className="flex-1 bg-orange-600 text-white py-2 px-4 rounded-lg hover:bg-orange-700 transition-colors font-medium text-center"
+                        className="flex-1 bg-orange-600 text-white py-2 px-3 sm:px-4 rounded-lg hover:bg-orange-700 transition-colors font-medium text-center text-sm sm:text-base"
                       >
                         Read Article
                       </Link>
                       <button
                         onClick={() => handleRemoveBookmark(blog._id)}
-                        className="ml-3 p-2 text-gray-500 hover:text-red-600 transition-colors"
+                        className="p-2 text-gray-500 hover:text-red-600 transition-colors flex-shrink-0"
                         title="Remove bookmark"
                       >
                         <BookmarkPlus className="h-5 w-5 fill-current" />
@@ -318,21 +322,21 @@ export default function BookmarksPage() {
 
             {/* Pagination */}
             {pagination.pages > 1 && (
-              <div className="flex items-center justify-center space-x-2 mt-8">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 mt-8">
                 <button
                   onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
                   disabled={pagination.page === 1}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full sm:w-auto px-4 py-2 text-sm sm:text-base text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   Previous
                 </button>
-                <span className="px-4 py-2 text-gray-700">
+                <span className="px-4 py-2 text-sm sm:text-base text-gray-700 font-medium">
                   Page {pagination.page} of {pagination.pages}
                 </span>
                 <button
                   onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
                   disabled={pagination.page === pagination.pages}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full sm:w-auto px-4 py-2 text-sm sm:text-base text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   Next
                 </button>

@@ -1464,40 +1464,40 @@ export default function BlogDetailPage() {
       </main>
 
       {/* Comments Section */}
-      <section id="comments" className="py-16 bg-gray-50">
+      <section id="comments" className="py-8 sm:py-12 lg:py-16 bg-gray-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
 
           
-          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8 text-center">
             Comments ({blog?.commentsCount || 0})
           </h2>
 
           {/* Comment Form */}
-          <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
+          <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 mb-8">
             {currentUser ? (
               <div>
-                <div className="flex items-start space-x-4 mb-4">
+                <div className="flex items-start space-x-3 sm:space-x-4 mb-4">
                   {currentUser.avatar ? (
-                    <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden flex-shrink-0">
                       <Image 
                         src={currentUser.avatar} 
                         alt={currentUser.name}
-                        width={40}
-                        height={40}
+                        width={48}
+                        height={48}
                         className="w-full h-full object-cover"
                       />
                     </div>
                   ) : (
-                    <div className="w-10 h-10 bg-orange-600 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-600 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
                       {currentUser.name.charAt(0)}
                     </div>
                   )}
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <textarea
                       value={commentContent}
                       onChange={(e) => setCommentContent(e.target.value)}
                       placeholder="Share your thoughts on this article..."
-                      className="w-full p-4 border border-gray-200 rounded-xl resize-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-gray-900 placeholder-gray-500"
+                      className="w-full p-3 sm:p-4 border border-gray-200 rounded-xl resize-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-gray-900 placeholder-gray-500 text-sm sm:text-base"
                       rows={3}
                       maxLength={1000}
                       onKeyDown={(e) => {
@@ -1513,22 +1513,22 @@ export default function BlogDetailPage() {
                         {commentError}
                       </p>
                     )}
-                    <div className="flex items-center justify-between mt-3">
-                      <span className="text-sm text-gray-500">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-3 space-y-3 sm:space-y-0">
+                      <span className="text-xs sm:text-sm text-gray-500">
                         {commentContent.length}/1000 characters
                       </span>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-2 sm:space-x-3">
                         <button
                           onClick={() => setCommentContent('')}
                           disabled={!commentContent.trim() || commentLoading}
-                          className="px-4 py-2 text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          className="px-3 py-2 sm:px-4 sm:py-2 text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
                         >
                           Clear
                         </button>
                         <button
                           onClick={handleSubmitComment}
                           disabled={commentLoading || !commentContent.trim()}
-                          className="flex items-center space-x-2 px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          className="flex items-center space-x-1 sm:space-x-2 px-4 py-2 sm:px-6 sm:py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm min-h-[40px]"
                         >
                           {commentLoading ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
@@ -1566,52 +1566,52 @@ export default function BlogDetailPage() {
               </div>
             ) : comments.length > 0 ? (
               comments.map((comment) => (
-                <div key={comment._id} className="bg-white rounded-2xl shadow-lg p-6">
-                  <div className="flex items-start space-x-4">
+                <div key={comment._id} className="bg-white rounded-2xl shadow-lg p-4 sm:p-6">
+                  <div className="flex items-start space-x-3 sm:space-x-4">
                     {comment.author.avatar ? (
-                      <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden flex-shrink-0">
                         <Image 
                           src={comment.author.avatar} 
                           alt={comment.author.name}
-                          width={40}
-                          height={40}
+                          width={48}
+                          height={48}
                           className="w-full h-full object-cover"
                         />
                       </div>
                     ) : (
-                      <div className="w-10 h-10 bg-orange-600 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-600 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
                         {comment.author.name.charAt(0)}
                       </div>
                     )}
                     
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-2">
-                        <div>
-                          <h4 className="font-semibold text-gray-900">{comment.author.name}</h4>
-                          <p className="text-sm text-gray-500">{formatDate(comment.createdAt)}</p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 space-y-1 sm:space-y-0">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-gray-900 text-sm sm:text-base">{comment.author.name}</h4>
+                          <p className="text-xs sm:text-sm text-gray-500">{formatDate(comment.createdAt)}</p>
                         </div>
                         
                         {(canEditComment(comment) || canDeleteComment(comment)) && (
-                          <div className="flex items-center space-x-2">
+                          <div className="flex items-center space-x-1 sm:space-x-2 self-start sm:self-center">
                             {canEditComment(comment) && (
                               <button
                                 onClick={() => {
                                   setEditingComment(comment._id);
                                   setEditContent(comment.content);
                                 }}
-                                className="text-gray-500 hover:text-orange-600 transition-colors p-1"
+                                className="text-gray-500 hover:text-orange-600 transition-colors p-2 sm:p-1 -mr-1 sm:mr-0"
                                 title="Edit comment"
                               >
-                                <Edit className="h-4 w-4" />
+                                <Edit className="h-4 w-4 sm:h-4 sm:w-4" />
                               </button>
                             )}
                             {canDeleteComment(comment) && (
                               <button
                                 onClick={() => handleDeleteComment(comment._id)}
-                                className="text-gray-500 hover:text-red-600 transition-colors p-1"
+                                className="text-gray-500 hover:text-red-600 transition-colors p-2 sm:p-1 -mr-1 sm:mr-0"
                                 title="Delete comment"
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <Trash2 className="h-4 w-4 sm:h-4 sm:w-4" />
                               </button>
                             )}
                           </div>
@@ -1623,28 +1623,28 @@ export default function BlogDetailPage() {
                           <textarea
                             value={editContent}
                             onChange={(e) => setEditContent(e.target.value)}
-                            className="w-full p-3 border border-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-gray-900 placeholder-gray-500"
+                            className="w-full p-3 border border-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-gray-900 placeholder-gray-500 text-sm sm:text-base"
                             rows={3}
                             maxLength={1000}
                           />
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-500">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+                            <span className="text-xs sm:text-sm text-gray-500">
                               {editContent.length}/1000 characters
                             </span>
-                            <div className="flex space-x-2">
+                            <div className="flex space-x-2 sm:space-x-3">
                               <button
                                 onClick={() => {
                                   setEditingComment(null);
                                   setEditContent('');
                                 }}
-                                className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                                className="px-3 py-2 sm:px-4 sm:py-2 text-gray-600 hover:text-gray-800 transition-colors text-sm min-h-[40px]"
                               >
                                 Cancel
                               </button>
                               <button
                                 onClick={() => handleEditComment(comment._id)}
                                 disabled={commentLoading || !editContent.trim()}
-                                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 transition-colors"
+                                className="px-4 py-2 sm:px-4 sm:py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 transition-colors text-sm min-h-[40px]"
                               >
                                 {commentLoading ? 'Saving...' : 'Save'}
                               </button>
@@ -1653,13 +1653,13 @@ export default function BlogDetailPage() {
                         </div>
                       ) : (
                         <div>
-                          <p className="text-gray-700 mb-3">{comment.content}</p>
+                          <p className="text-gray-700 mb-3 text-sm sm:text-base">{comment.content}</p>
                           
                           <div className="flex items-center space-x-4">
                             {currentUser && (
                               <button
                                 onClick={() => setReplyingTo(comment._id)}
-                                className="flex items-center space-x-1 text-gray-500 hover:text-orange-600 transition-colors"
+                                className="flex items-center space-x-1 text-gray-500 hover:text-orange-600 transition-colors p-1 -ml-1 min-h-[32px]"
                               >
                                 <Reply className="h-4 w-4" />
                                 <span className="text-sm">Reply</span>
@@ -1669,19 +1669,19 @@ export default function BlogDetailPage() {
 
                           {/* Reply Form */}
                           {replyingTo === comment._id && (
-                            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                            <div className="mt-4 p-3 sm:p-4 bg-gray-50 rounded-lg">
                               <div className="flex items-start space-x-3">
-                                <div className="flex-1">
+                                <div className="flex-1 min-w-0">
                                   <textarea
                                     value={replyContent}
                                     onChange={(e) => setReplyContent(e.target.value)}
                                     placeholder="Write a reply..."
-                                    className="w-full p-3 border border-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-gray-900 placeholder-gray-500"
+                                    className="w-full p-3 border border-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-gray-900 placeholder-gray-500 text-sm sm:text-base"
                                     rows={2}
                                     maxLength={1000}
                                   />
-                                  <div className="flex items-center justify-between mt-2">
-                                    <span className="text-sm text-gray-500">
+                                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-2 space-y-2 sm:space-y-0">
+                                    <span className="text-xs sm:text-sm text-gray-500">
                                       {replyContent.length}/1000 characters
                                     </span>
                                     <div className="flex space-x-2">
@@ -1690,14 +1690,14 @@ export default function BlogDetailPage() {
                                           setReplyingTo(null);
                                           setReplyContent('');
                                         }}
-                                        className="px-3 py-1 text-gray-600 hover:text-gray-800 transition-colors text-sm"
+                                        className="px-3 py-2 sm:px-3 sm:py-1 text-gray-600 hover:text-gray-800 transition-colors text-sm min-h-[36px]"
                                       >
                                         Cancel
                                       </button>
                                       <button
                                         onClick={() => handleReply(comment._id)}
                                         disabled={commentLoading || !replyContent.trim()}
-                                        className="px-3 py-1 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 transition-colors text-sm"
+                                        className="px-4 py-2 sm:px-3 sm:py-1 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 transition-colors text-sm min-h-[36px]"
                                       >
                                         {commentLoading ? 'Posting...' : 'Reply'}
                                       </button>
@@ -1712,52 +1712,52 @@ export default function BlogDetailPage() {
                           {comment.replies && comment.replies.length > 0 && (
                             <div className="mt-4 space-y-3">
                               {comment.replies.map((reply) => (
-                                <div key={reply._id} className="ml-8 p-4 bg-gray-50 rounded-lg">
-                                  <div className="flex items-start space-x-3">
+                                <div key={reply._id} className="ml-4 sm:ml-8 p-3 sm:p-4 bg-gray-50 rounded-lg">
+                                  <div className="flex items-start space-x-2 sm:space-x-3">
                                     {reply.author.avatar ? (
-                                      <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+                                      <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden flex-shrink-0">
                                         <Image 
                                           src={reply.author.avatar} 
                                           alt={reply.author.name}
-                                          width={32}
-                                          height={32}
+                                          width={36}
+                                          height={36}
                                           className="w-full h-full object-cover"
                                         />
                                       </div>
                                     ) : (
-                                      <div className="w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                                      <div className="w-8 h-8 sm:w-9 sm:h-9 bg-orange-600 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                                         {reply.author.name.charAt(0)}
                                       </div>
                                     )}
                                     
-                                    <div className="flex-1">
-                                      <div className="flex items-center justify-between mb-1">
-                                        <div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-1 space-y-1 sm:space-y-0">
+                                        <div className="flex-1 min-w-0">
                                           <h5 className="font-semibold text-gray-900 text-sm">{reply.author.name}</h5>
                                           <p className="text-xs text-gray-500">{formatDate(reply.createdAt)}</p>
                                         </div>
                                         
                                         {(canEditComment(reply) || canDeleteComment(reply)) && (
-                                          <div className="flex items-center space-x-1">
+                                          <div className="flex items-center space-x-1 self-start sm:self-center">
                                             {canEditComment(reply) && (
                                               <button
                                                 onClick={() => {
                                                   setEditingComment(reply._id);
                                                   setEditContent(reply.content);
                                                 }}
-                                                className="text-gray-400 hover:text-orange-600 transition-colors p-1"
+                                                className="text-gray-400 hover:text-orange-600 transition-colors p-2 sm:p-1 -mr-1 sm:mr-0"
                                                 title="Edit reply"
                                               >
-                                                <Edit className="h-3 w-3" />
+                                                <Edit className="h-4 w-4 sm:h-3 sm:w-3" />
                                               </button>
                                             )}
                                             {canDeleteComment(reply) && (
                                               <button
                                                 onClick={() => handleDeleteComment(reply._id)}
-                                                className="text-gray-400 hover:text-red-600 transition-colors p-1"
+                                                className="text-gray-400 hover:text-red-600 transition-colors p-2 sm:p-1 -mr-1 sm:mr-0"
                                                 title="Delete reply"
                                               >
-                                                <Trash2 className="h-3 w-3" />
+                                                <Trash2 className="h-4 w-4 sm:h-3 sm:w-3" />
                                               </button>
                                             )}
                                           </div>

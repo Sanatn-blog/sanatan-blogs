@@ -499,21 +499,21 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/20 to-slate-50 dark:from-slate-900 dark:via-purple-900/20 dark:to-slate-900">
+    <div className="min-h-screen bg-slate-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div className="flex items-center space-x-4">
             <Link href="/dashboard">
-              <div className="p-3 bg-white/80 dark:bg-slate-800/50 backdrop-blur-sm rounded-xl hover:bg-gray-100/80 dark:hover:bg-slate-700/50 transition-all duration-300 border border-gray-200/50 dark:border-slate-700/50 hover:border-purple-500/50 shadow-sm">
-                <ArrowLeft className="w-5 h-5 text-gray-700 dark:text-slate-300" />
+              <div className="p-3 bg-slate-800/50 backdrop-blur-sm rounded-xl hover:bg-slate-700/50 transition-all duration-300 border border-slate-700/50 hover:border-purple-500/50 shadow-sm">
+                <ArrowLeft className="w-5 h-5 text-slate-300" />
               </div>
             </Link>
             <div>
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">
                 Settings
               </h1>
-              <p className="text-gray-600 dark:text-slate-400 text-sm sm:text-base">Manage your spiritual profile and preferences</p>
+              <p className="text-slate-400 text-sm sm:text-base">Manage your spiritual profile and preferences</p>
             </div>
           </div>
           
@@ -524,8 +524,8 @@ export default function SettingsPage() {
         <div className="grid grid-cols-1 xl:grid-cols-10 gap-6 mb-8">
           {/* Profile Image Section - 70% */}
           <div className="xl:col-span-7">
-            <div className="bg-white/80 dark:bg-slate-800/30 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 dark:border-slate-700/50 shadow-xl h-full">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center space-x-2">
+            <div className="bg-slate-800/30 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 shadow-xl h-full">
+              <h2 className="text-xl font-semibold text-white mb-6 flex items-center space-x-2">
                 <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg">
                   <Camera className="w-5 h-5 text-white" />
                 </div>
@@ -535,7 +535,7 @@ export default function SettingsPage() {
               <div className="flex flex-col lg:flex-row items-center lg:items-start space-y-6 lg:space-y-0 lg:space-x-8">
                 {/* Current Avatar */}
                 <div className="relative">
-                  <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300 dark:from-slate-700 dark:to-slate-800 flex items-center justify-center border-4 border-gray-300/50 dark:border-slate-600/50 shadow-lg">
+                  <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300 dark:from-slate-700 dark:to-slate-800 flex items-center justify-center border-4 border-slate-600/50 shadow-lg">
                     {user.avatar ? (
                       <Image
                         src={user.avatar}
@@ -545,7 +545,7 @@ export default function SettingsPage() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <User className="w-12 h-12 sm:w-16 sm:h-16 text-gray-500 dark:text-slate-400" />
+                      <User className="w-12 h-12 sm:w-16 sm:h-16 text-slate-400" />
                     )}
                   </div>
                   
@@ -574,7 +574,7 @@ export default function SettingsPage() {
                 <div className="flex-1 w-full lg:w-auto">
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-3">
+                      <label className="block text-sm font-medium text-slate-300 mb-3">
                         Update Profile Picture
                       </label>
                       <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
@@ -587,7 +587,7 @@ export default function SettingsPage() {
                         />
                         <label
                           htmlFor="avatar-upload"
-                          className="flex items-center justify-center space-x-2 px-6 py-3 bg-gray-100 hover:bg-gray-200 dark:bg-slate-700/50 dark:hover:bg-slate-600/50 text-gray-700 dark:text-white rounded-xl transition-all duration-300 cursor-pointer border border-gray-300 dark:border-slate-600/50 hover:border-purple-500/50"
+                          className="flex items-center justify-center space-x-2 px-6 py-3 bg-slate-700/50 hover:bg-slate-600/50 text-white rounded-xl transition-all duration-300 cursor-pointer border border-slate-600/50 hover:border-purple-500/50"
                         >
                           <Upload className="w-4 h-4" />
                           <span>Choose Image</span>
@@ -610,8 +610,8 @@ export default function SettingsPage() {
                       </div>
                     </div>
                     
-                    <div className="bg-gray-100 dark:bg-slate-700/30 rounded-lg p-3">
-                      <p className="text-xs text-gray-600 dark:text-slate-400">
+                    <div className="bg-slate-700/30 rounded-lg p-3">
+                      <p className="text-xs text-slate-400">
                         <strong>Recommended:</strong> Square image, at least 200x200 pixels. JPG, PNG, or GIF up to 5MB.
                       </p>
                     </div>
@@ -623,8 +623,8 @@ export default function SettingsPage() {
 
           {/* Save Changes Section - 30% */}
           <div className="xl:col-span-3">
-            <div className="bg-white/80 dark:bg-slate-800/30 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 dark:border-slate-700/50 shadow-xl h-full">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center space-x-2">
+            <div className="bg-slate-800/30 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 shadow-xl h-full">
+              <h3 className="text-lg font-semibold text-white mb-4 flex items-center space-x-2">
                 <Save className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                 <span>Save Changes</span>
               </h3>
@@ -640,7 +640,7 @@ export default function SettingsPage() {
                 )}
                 <span>{saving ? 'Saving Changes...' : 'Save All Changes'}</span>
               </button>
-              <p className="text-xs text-gray-600 dark:text-slate-400 mt-3 text-center">
+              <p className="text-xs text-slate-400 mt-3 text-center">
                 Save your spiritual profile information and preferences
               </p>
             </div>
@@ -651,7 +651,7 @@ export default function SettingsPage() {
         {message && (
           <div className={`mb-6 p-4 rounded-xl border backdrop-blur-sm ${
             message.type === 'success' 
-              ? 'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-900/20 dark:border-emerald-500/50 dark:text-emerald-300 shadow-lg shadow-emerald-500/10' 
+              ? 'bg-emerald-900/20 border-emerald-500/50 text-emerald-300 shadow-lg shadow-emerald-500/10' 
               : 'bg-red-50 border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-500/50 dark:text-red-300 shadow-lg shadow-red-500/10'
           }`}>
             <div className="flex items-center space-x-3">
@@ -673,8 +673,8 @@ export default function SettingsPage() {
           {/* Profile Settings */}
           <div className="xl:col-span-3 space-y-6">
             {/* Basic Information */}
-            <div className="bg-white/80 dark:bg-slate-800/30 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 dark:border-slate-700/50 shadow-xl">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center space-x-2">
+            <div className="bg-slate-800/30 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 shadow-xl">
+              <h2 className="text-xl font-semibold text-white mb-6 flex items-center space-x-2">
                 <div className="p-2 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg">
                   <User className="w-5 h-5 text-white" />
                 </div>
@@ -683,42 +683,42 @@ export default function SettingsPage() {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Full Name</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">Full Name</label>
                   <input
                     type="text"
                     value={form.name}
                     onChange={(e) => setForm(prev => ({ ...prev, name: e.target.value }))}
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-700/50 border border-gray-300 dark:border-slate-600/50 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500/50 transition-all duration-300 backdrop-blur-sm"
+                    className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500/50 transition-all duration-300 backdrop-blur-sm"
                     placeholder="Enter your full name (e.g., Krishna Das, Radha Rani)"
                   />
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Bio</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">Bio</label>
                   <textarea
                     value={form.bio}
                     onChange={(e) => setForm(prev => ({ ...prev, bio: e.target.value }))}
                     rows={4}
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-700/50 border border-gray-300 dark:border-slate-600/50 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500/50 transition-all duration-300 resize-none backdrop-blur-sm"
+                    className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500/50 transition-all duration-300 resize-none backdrop-blur-sm"
                     placeholder="Share your spiritual journey, knowledge of Sanatan Dharma, and what you write about..."
                   />
                   <div className="flex justify-between items-center mt-2">
-                    <p className="text-xs text-gray-500 dark:text-slate-500">Share your spiritual journey with the Sanatan community</p>
-                    <p className={`text-xs ${form.bio.length > 450 ? 'text-orange-600 dark:text-orange-400' : 'text-gray-500 dark:text-slate-500'}`}>
+                    <p className="text-xs text-slate-500">Share your spiritual journey with the Sanatan community</p>
+                    <p className={`text-xs ${form.bio.length > 450 ? 'text-orange-600 dark:text-orange-400' : 'text-slate-500'}`}>
                       {form.bio.length}/500 characters
                     </p>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Location</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">Location</label>
                   <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 dark:text-slate-400" />
+                    <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                       type="text"
                       value={form.location}
                       onChange={(e) => setForm(prev => ({ ...prev, location: e.target.value }))}
-                      className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-slate-700/50 border border-gray-300 dark:border-slate-600/50 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500/50 transition-all duration-300 backdrop-blur-sm"
+                      className="w-full pl-10 pr-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500/50 transition-all duration-300 backdrop-blur-sm"
                       placeholder="e.g., Varanasi, India or New York, USA"
                     />
                   </div>
@@ -727,8 +727,8 @@ export default function SettingsPage() {
             </div>
 
             {/* Expertise */}
-            <div className="bg-white/80 dark:bg-slate-800/30 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 dark:border-slate-700/50 shadow-xl">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center space-x-2">
+            <div className="bg-slate-800/30 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 shadow-xl">
+              <h2 className="text-xl font-semibold text-white mb-6 flex items-center space-x-2">
                 <div className="p-2 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg">
                   <Briefcase className="w-5 h-5 text-white" />
                 </div>
@@ -742,7 +742,7 @@ export default function SettingsPage() {
                     value={newExpertise}
                     onChange={(e) => setNewExpertise(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && addExpertise()}
-                    className="flex-1 px-4 py-3 bg-gray-50 dark:bg-slate-700/50 border border-gray-300 dark:border-slate-600/50 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500/50 transition-all duration-300 backdrop-blur-sm"
+                    className="flex-1 px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500/50 transition-all duration-300 backdrop-blur-sm"
                     placeholder="e.g., Vedic Studies, Sanskrit, Yoga, Meditation, Ayurveda, Philosophy"
                   />
                   <button
@@ -755,8 +755,8 @@ export default function SettingsPage() {
                 </div>
                 
                 {form.expertise.length > 0 && (
-                  <div className="bg-gray-100 dark:bg-slate-700/20 rounded-xl p-4">
-                    <h3 className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-3">Your Skills ({form.expertise.length})</h3>
+                  <div className="bg-slate-700/20 rounded-xl p-4">
+                    <h3 className="text-sm font-medium text-slate-300 mb-3">Your Skills ({form.expertise.length})</h3>
                     <div className="flex flex-wrap gap-3">
                       {form.expertise.map((item, index) => (
                         <span
@@ -779,8 +779,8 @@ export default function SettingsPage() {
             </div>
 
             {/* Achievements */}
-            <div className="bg-white/80 dark:bg-slate-800/30 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 dark:border-slate-700/50 shadow-xl">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center space-x-2">
+            <div className="bg-slate-800/30 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 shadow-xl">
+              <h2 className="text-xl font-semibold text-white mb-6 flex items-center space-x-2">
                 <div className="p-2 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg">
                   <Award className="w-5 h-5 text-white" />
                 </div>
@@ -794,7 +794,7 @@ export default function SettingsPage() {
                     value={newAchievement}
                     onChange={(e) => setNewAchievement(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && addAchievement()}
-                    className="flex-1 px-4 py-3 bg-gray-50 dark:bg-slate-700/50 border border-gray-300 dark:border-slate-600/50 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500/50 transition-all duration-300 backdrop-blur-sm"
+                    className="flex-1 px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500/50 transition-all duration-300 backdrop-blur-sm"
                     placeholder="e.g., Sanskrit Scholar, Yoga Teacher Certification, Published Spiritual Book"
                   />
                   <button
@@ -807,8 +807,8 @@ export default function SettingsPage() {
                 </div>
                 
                 {form.achievements.length > 0 && (
-                  <div className="bg-gray-100 dark:bg-slate-700/20 rounded-xl p-4">
-                    <h3 className="text-sm font-medium text-gray-700 dark:text-slate-300 mb-3">Your Achievements ({form.achievements.length})</h3>
+                  <div className="bg-slate-700/20 rounded-xl p-4">
+                    <h3 className="text-sm font-medium text-slate-300 mb-3">Your Achievements ({form.achievements.length})</h3>
                     <div className="space-y-3">
                       {form.achievements.map((item, index) => (
                         <div
@@ -834,8 +834,8 @@ export default function SettingsPage() {
             </div>
 
             {/* Social Links */}
-            <div className="bg-white/80 dark:bg-slate-800/30 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 dark:border-slate-700/50 shadow-xl">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center space-x-2">
+            <div className="bg-slate-800/30 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 shadow-xl">
+              <h2 className="text-xl font-semibold text-white mb-6 flex items-center space-x-2">
                 <div className="p-2 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg">
                   <Globe className="w-5 h-5 text-white" />
                 </div>
@@ -844,9 +844,9 @@ export default function SettingsPage() {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Twitter</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">Twitter</label>
                   <div className="relative">
-                    <Twitter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 dark:text-slate-400" />
+                    <Twitter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                       type="url"
                       value={form.socialLinks.twitter}
@@ -854,16 +854,16 @@ export default function SettingsPage() {
                         ...prev, 
                         socialLinks: { ...prev.socialLinks, twitter: e.target.value }
                       }))}
-                      className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-slate-700/50 border border-gray-300 dark:border-slate-600/50 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500/50 transition-all duration-300 backdrop-blur-sm"
+                      className="w-full pl-10 pr-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500/50 transition-all duration-300 backdrop-blur-sm"
                       placeholder="https://twitter.com/your_spiritual_handle"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">LinkedIn</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">LinkedIn</label>
                   <div className="relative">
-                    <Linkedin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 dark:text-slate-400" />
+                    <Linkedin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                       type="url"
                       value={form.socialLinks.linkedin}
@@ -871,16 +871,16 @@ export default function SettingsPage() {
                         ...prev, 
                         socialLinks: { ...prev.socialLinks, linkedin: e.target.value }
                       }))}
-                      className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-slate-700/50 border border-gray-300 dark:border-slate-600/50 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500/50 transition-all duration-300 backdrop-blur-sm"
+                      className="w-full pl-10 pr-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500/50 transition-all duration-300 backdrop-blur-sm"
                       placeholder="https://linkedin.com/in/your_professional_profile"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Facebook</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">Facebook</label>
                   <div className="relative">
-                    <Facebook className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 dark:text-slate-400" />
+                    <Facebook className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                       type="url"
                       value={form.socialLinks.facebook}
@@ -888,16 +888,16 @@ export default function SettingsPage() {
                         ...prev, 
                         socialLinks: { ...prev.socialLinks, facebook: e.target.value }
                       }))}
-                      className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-slate-700/50 border border-gray-300 dark:border-slate-600/50 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500/50 transition-all duration-300 backdrop-blur-sm"
+                      className="w-full pl-10 pr-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500/50 transition-all duration-300 backdrop-blur-sm"
                       placeholder="https://facebook.com/your_spiritual_page"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Website</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">Website</label>
                   <div className="relative">
-                    <ExternalLink className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 dark:text-slate-400" />
+                    <ExternalLink className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                       type="url"
                       value={form.socialLinks.website}
@@ -905,16 +905,16 @@ export default function SettingsPage() {
                         ...prev, 
                         socialLinks: { ...prev.socialLinks, website: e.target.value }
                       }))}
-                      className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-slate-700/50 border border-gray-300 dark:border-slate-600/50 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500/50 transition-all duration-300 backdrop-blur-sm"
+                      className="w-full pl-10 pr-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500/50 transition-all duration-300 backdrop-blur-sm"
                       placeholder="https://your-spiritual-website.com"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Instagram</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">Instagram</label>
                   <div className="relative">
-                    <Instagram className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 dark:text-slate-400" />
+                    <Instagram className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                       type="url"
                       value={form.socialLinks.instagram}
@@ -922,16 +922,16 @@ export default function SettingsPage() {
                         ...prev, 
                         socialLinks: { ...prev.socialLinks, instagram: e.target.value }
                       }))}
-                      className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-slate-700/50 border border-gray-300 dark:border-slate-600/50 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500/50 transition-all duration-300 backdrop-blur-sm"
+                      className="w-full pl-10 pr-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500/50 transition-all duration-300 backdrop-blur-sm"
                       placeholder="https://instagram.com/your_spiritual_journey"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">YouTube</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">YouTube</label>
                   <div className="relative">
-                    <Youtube className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 dark:text-slate-400" />
+                    <Youtube className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                       type="url"
                       value={form.socialLinks.youtube}
@@ -939,7 +939,7 @@ export default function SettingsPage() {
                         ...prev, 
                         socialLinks: { ...prev.socialLinks, youtube: e.target.value }
                       }))}
-                      className="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-slate-700/50 border border-gray-300 dark:border-slate-600/50 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500/50 transition-all duration-300 backdrop-blur-sm"
+                      className="w-full pl-10 pr-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500/50 transition-all duration-300 backdrop-blur-sm"
                       placeholder="https://youtube.com/@your_spiritual_channel"
                     />
                   </div>
@@ -948,8 +948,8 @@ export default function SettingsPage() {
             </div>
 
             {/* User ID (Username) Change */}
-            <div className="bg-white/80 dark:bg-slate-800/30 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 dark:border-slate-700/50 shadow-xl">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center space-x-2">
+            <div className="bg-slate-800/30 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 shadow-xl">
+              <h2 className="text-xl font-semibold text-white mb-6 flex items-center space-x-2">
                 <div className="p-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg">
                   <AtSign className="w-5 h-5 text-white" />
                 </div>
@@ -959,7 +959,7 @@ export default function SettingsPage() {
               {userIdMessage && (
                 <div className={`mb-6 p-4 rounded-xl border backdrop-blur-sm ${
                   userIdMessage.type === 'success' 
-                    ? 'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-900/20 dark:border-emerald-500/50 dark:text-emerald-300 shadow-lg shadow-emerald-500/10' 
+                    ? 'bg-emerald-900/20 border-emerald-500/50 text-emerald-300 shadow-lg shadow-emerald-500/10' 
                     : 'bg-red-50 border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-500/50 dark:text-red-300 shadow-lg shadow-red-500/10'
                 }`}>
                   <div className="flex items-center space-x-3">
@@ -979,19 +979,19 @@ export default function SettingsPage() {
               
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Current User ID</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">Current User ID</label>
                   <input
                     type="text"
                     value={user.username || 'Loading...'}
                     disabled
                     className={`w-full px-4 py-3 border rounded-xl cursor-not-allowed backdrop-blur-sm transition-all duration-300 ${
                       userIdMessage?.type === 'success' 
-                        ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-300 dark:border-emerald-500/50 text-emerald-700 dark:text-emerald-300' 
-                        : 'bg-gray-100 dark:bg-slate-700/30 border-gray-300 dark:border-slate-600/50 text-gray-500 dark:text-slate-400'
+                        ? 'bg-emerald-900/20 border-emerald-500/50 text-emerald-300' 
+                        : 'bg-slate-700/30 border-slate-600/50 text-slate-400'
                     }`}
                   />
                   {userIdMessage?.type === 'success' && (
-                    <div className="mt-2 p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-500/30">
+                    <div className="mt-2 p-2 bg-emerald-900/20 rounded-lg border border-emerald-500/30">
                       <p className="text-xs text-emerald-700 dark:text-emerald-300 font-medium">
                         ✓ User ID updated successfully to: <span className="font-bold">{user.username || 'Loading...'}</span>
                       </p>
@@ -1000,18 +1000,18 @@ export default function SettingsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">New User ID</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">New User ID</label>
                   <div className="relative">
                     <input
                       type="text"
                       value={newUserId}
                       onChange={(e) => setNewUserId(e.target.value)}
-                      className={`w-full px-4 py-3 bg-gray-50 dark:bg-slate-700/50 border rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 transition-all duration-300 backdrop-blur-sm ${
+                      className={`w-full px-4 py-3 bg-slate-700/50 border rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 transition-all duration-300 backdrop-blur-sm ${
                         userIdAvailable === true 
                           ? 'border-emerald-300 focus:ring-emerald-500 focus:border-emerald-500/50' 
                           : userIdAvailable === false 
                           ? 'border-red-300 focus:ring-red-500 focus:border-red-500/50'
-                          : 'border-gray-300 dark:border-slate-600/50 focus:ring-purple-500 focus:border-purple-500/50'
+                          : 'border-slate-600/50 focus:ring-purple-500 focus:border-purple-500/50'
                       }`}
                       placeholder="Enter new unique User ID"
                     />
@@ -1034,7 +1034,7 @@ export default function SettingsPage() {
                   
                   {/* Availability Status */}
                   {userIdAvailable === true && (
-                    <div className="mt-2 p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-500/30">
+                    <div className="mt-2 p-3 bg-emerald-900/20 rounded-lg border border-emerald-500/30">
                       <p className="text-xs text-emerald-700 dark:text-emerald-300 font-medium">
                         ✓ User ID is available
                       </p>
@@ -1054,7 +1054,7 @@ export default function SettingsPage() {
                               <button
                                 key={index}
                                 onClick={() => setNewUserId(suggestion)}
-                                className="px-2 py-1 text-xs bg-white dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-md text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-600 transition-colors duration-200"
+                                className="px-2 py-1 text-xs bg-slate-700 border border-slate-600 rounded-md text-slate-300 hover:bg-slate-600 transition-colors duration-200"
                               >
                                 {suggestion}
                               </button>
@@ -1065,8 +1065,8 @@ export default function SettingsPage() {
                     </div>
                   )}
                   
-                  <div className="mt-2 p-3 bg-gray-100 dark:bg-slate-700/20 rounded-lg">
-                    <p className="text-xs text-gray-600 dark:text-slate-400">
+                  <div className="mt-2 p-3 bg-slate-700/20 rounded-lg">
+                    <p className="text-xs text-slate-400">
                       <strong>Requirements:</strong> 3-30 characters, letters, numbers, hyphens, and underscores only
                     </p>
                   </div>
@@ -1088,8 +1088,8 @@ export default function SettingsPage() {
             </div>
 
             {/* Password Change */}
-            <div className="bg-white/80 dark:bg-slate-800/30 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 dark:border-slate-700/50 shadow-xl">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center space-x-2">
+            <div className="bg-slate-800/30 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 shadow-xl">
+              <h2 className="text-xl font-semibold text-white mb-6 flex items-center space-x-2">
                 <div className="p-2 bg-gradient-to-r from-red-500 to-orange-500 rounded-lg">
                   <Lock className="w-5 h-5 text-white" />
                 </div>
@@ -1099,7 +1099,7 @@ export default function SettingsPage() {
               {passwordMessage && (
                 <div className={`mb-6 p-4 rounded-xl border backdrop-blur-sm ${
                   passwordMessage.type === 'success' 
-                    ? 'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-900/20 dark:border-emerald-500/50 dark:text-emerald-300 shadow-lg shadow-emerald-500/10' 
+                    ? 'bg-emerald-900/20 border-emerald-500/50 text-emerald-300 shadow-lg shadow-emerald-500/10' 
                     : 'bg-red-50 border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-500/50 dark:text-red-300 shadow-lg shadow-red-500/10'
                 }`}>
                   <div className="flex items-center space-x-3">
@@ -1119,39 +1119,39 @@ export default function SettingsPage() {
               
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Current Password</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">Current Password</label>
                   <input
                     type="password"
                     value={passwordData.currentPassword}
                     onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-700/50 border border-gray-300 dark:border-slate-600/50 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500/50 transition-all duration-300 backdrop-blur-sm"
+                    className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500/50 transition-all duration-300 backdrop-blur-sm"
                     placeholder="Enter your current password"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">New Password</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">New Password</label>
                   <input
                     type="password"
                     value={passwordData.newPassword}
                     onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-700/50 border border-gray-300 dark:border-slate-600/50 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500/50 transition-all duration-300 backdrop-blur-sm"
+                    className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500/50 transition-all duration-300 backdrop-blur-sm"
                     placeholder="Enter your new secure password"
                   />
-                  <div className="mt-2 p-3 bg-gray-100 dark:bg-slate-700/20 rounded-lg">
-                    <p className="text-xs text-gray-600 dark:text-slate-400">
+                  <div className="mt-2 p-3 bg-slate-700/20 rounded-lg">
+                    <p className="text-xs text-slate-400">
                       <strong>Requirements:</strong> At least 6 characters long
                     </p>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Confirm New Password</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">Confirm New Password</label>
                   <input
                     type="password"
                     value={passwordData.confirmPassword}
                     onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                    className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-700/50 border border-gray-300 dark:border-slate-600/50 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500/50 transition-all duration-300 backdrop-blur-sm"
+                    className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500/50 transition-all duration-300 backdrop-blur-sm"
                     placeholder="Confirm your new secure password"
                   />
                 </div>
@@ -1175,30 +1175,30 @@ export default function SettingsPage() {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Account Info */}
-            <div className="bg-white/80 dark:bg-slate-800/30 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50 dark:border-slate-700/50 shadow-xl">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6 flex items-center space-x-2">
+            <div className="bg-slate-800/30 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 shadow-xl">
+              <h3 className="text-lg font-semibold text-white mb-6 flex items-center space-x-2">
                 <div className="p-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg">
                   <User className="w-4 h-4 text-white" />
                 </div>
                 <span>Account Information</span>
               </h3>
               <div className="space-y-4">
-                <div className="flex items-center space-x-3 p-3 bg-gray-100 dark:bg-slate-700/20 rounded-lg">
-                  <Mail className="w-4 h-4 text-gray-500 dark:text-slate-400" />
+                <div className="flex items-center space-x-3 p-3 bg-slate-700/20 rounded-lg">
+                  <Mail className="w-4 h-4 text-slate-400" />
                   <div>
-                    <p className="text-xs text-gray-500 dark:text-slate-500">Email</p>
-                    <p className="text-gray-700 dark:text-slate-300 text-sm font-medium">{user.email}</p>
+                    <p className="text-xs text-slate-500">Email</p>
+                    <p className="text-slate-300 text-sm font-medium">{user.email}</p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-3 p-3 bg-gray-100 dark:bg-slate-700/20 rounded-lg">
-                  <User className="w-4 h-4 text-gray-500 dark:text-slate-400" />
+                <div className="flex items-center space-x-3 p-3 bg-slate-700/20 rounded-lg">
+                  <User className="w-4 h-4 text-slate-400" />
                   <div>
-                    <p className="text-xs text-gray-500 dark:text-slate-500">Role</p>
-                    <p className="text-gray-700 dark:text-slate-300 text-sm font-medium capitalize">{user.role}</p>
+                    <p className="text-xs text-slate-500">Role</p>
+                    <p className="text-slate-300 text-sm font-medium capitalize">{user.role}</p>
                   </div>
                 </div>
-                <div className="p-3 bg-gray-100 dark:bg-slate-700/20 rounded-lg">
-                  <p className="text-xs text-gray-500 dark:text-slate-500 mb-1">Status</p>
+                <div className="p-3 bg-slate-700/20 rounded-lg">
+                  <p className="text-xs text-slate-500 mb-1">Status</p>
                   <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
                     user.status === 'approved' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/30' :
                     user.status === 'rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border border-red-300 dark:border-red-500/30' :

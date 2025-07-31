@@ -71,25 +71,25 @@ export async function POST(
 
     if (isBookmarked) {
       // Remove bookmark
-      await User.findByIdAndUpdate(userId, {
+      const updatedUser = await User.findByIdAndUpdate(userId, {
         $pull: { bookmarks: blogId }
-      });
+      }, { new: true });
       
       return NextResponse.json({
         message: 'Blog unbookmarked successfully',
         bookmarked: false,
-        bookmarksCount: user.bookmarks.length - 1
+        bookmarksCount: updatedUser?.bookmarks?.length || 0
       });
     } else {
       // Add bookmark
-      await User.findByIdAndUpdate(userId, {
+      const updatedUser = await User.findByIdAndUpdate(userId, {
         $addToSet: { bookmarks: blogId }
-      });
+      }, { new: true });
       
       return NextResponse.json({
         message: 'Blog bookmarked successfully',
         bookmarked: true,
-        bookmarksCount: user.bookmarks.length + 1
+        bookmarksCount: updatedUser?.bookmarks?.length || 0
       });
     }
 
