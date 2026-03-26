@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import Link from 'next/link';
-import { useParams } from 'next/navigation';
-import { 
-  Calendar, 
-  User, 
-  Clock, 
-  Eye, 
-  Heart, 
-  Share2, 
+import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import {
+  Calendar,
+  User,
+  Clock,
+  Eye,
+  Heart,
+  Share2,
   BookmarkPlus,
   ChevronLeft,
   ChevronRight,
@@ -30,9 +30,12 @@ import {
   Send,
   Edit,
   Trash2,
-  Reply
-} from 'lucide-react';
-import Image from 'next/image';
+  Reply,
+} from "lucide-react";
+import Image from "next/image";
+import RelatedArticles from "@/components/RelatedArticles";
+import BlogHeader from "@/components/BlogHeader";
+import AuthorBio from "@/components/AuthorBio";
 
 // TypeScript interfaces
 interface Author {
@@ -75,7 +78,7 @@ interface Blog {
   comments: string[];
   commentsCount?: number;
   featured?: boolean;
-  status: 'draft' | 'published' | 'archived';
+  status: "draft" | "published" | "archived";
   seo?: {
     metaTitle?: string;
     metaDescription?: string;
@@ -132,150 +135,156 @@ interface BlogResponse {
 
 // Function to convert markdown to formatted HTML
 const formatContent = (content: string): string => {
-  if (!content) return '';
-  
+  if (!content) return "";
+
   let formattedContent = content;
-  
+
   // Handle code blocks first (before other formatting)
   formattedContent = formattedContent.replace(
     /```([\s\S]*?)```/g,
-    '<pre class="bg-gray-100 p-4 rounded-lg overflow-x-auto mb-4"><code class="text-sm text-gray-800">$1</code></pre>'
+    '<pre class="bg-gray-100 p-4 rounded-lg overflow-x-auto mb-4"><code class="text-sm text-gray-800">$1</code></pre>',
   );
-  
+
   // Handle inline code
   formattedContent = formattedContent.replace(
     /`([^`]+)`/g,
-    '<code class="bg-gray-100 px-1 py-0.5 rounded text-sm font-mono text-gray-800">$1</code>'
+    '<code class="bg-gray-100 px-1 py-0.5 rounded text-sm font-mono text-gray-800">$1</code>',
   );
-  
+
   // Handle horizontal rules
   formattedContent = formattedContent.replace(
     /^---$/gm,
-    '<hr class="border-gray-300 my-6">'
+    '<hr class="border-gray-300 my-6">',
   );
-  
+
   // Handle tables
   formattedContent = formattedContent.replace(
     /^\|(.+)\|$/gm,
     (match, content) => {
-      const cells = content.split('|').map((cell: string) => cell.trim());
-      const headerCells = cells.map((cell: string) => 
-        `<th class="border border-gray-300 px-4 py-2 text-left font-semibold">${cell}</th>`
-      ).join('');
+      const cells = content.split("|").map((cell: string) => cell.trim());
+      const headerCells = cells
+        .map(
+          (cell: string) =>
+            `<th class="border border-gray-300 px-4 py-2 text-left font-semibold">${cell}</th>`,
+        )
+        .join("");
       return `<table class="border-collapse border border-gray-300 mb-4 w-full"><thead><tr>${headerCells}</tr></thead><tbody>`;
-    }
+    },
   );
-  
+
   // Handle table rows (non-header)
   formattedContent = formattedContent.replace(
     /^\|(.+)\|$/gm,
     (match, content) => {
-      if (content.includes('---')) return ''; // Skip separator rows
-      const cells = content.split('|').map((cell: string) => cell.trim());
-      const rowCells = cells.map((cell: string) => 
-        `<td class="border border-gray-300 px-4 py-2">${cell}</td>`
-      ).join('');
+      if (content.includes("---")) return ""; // Skip separator rows
+      const cells = content.split("|").map((cell: string) => cell.trim());
+      const rowCells = cells
+        .map(
+          (cell: string) =>
+            `<td class="border border-gray-300 px-4 py-2">${cell}</td>`,
+        )
+        .join("");
       return `<tr>${rowCells}</tr>`;
-    }
+    },
   );
-  
+
   // Close table tags
   formattedContent = formattedContent.replace(
     /<\/tr>\n<\/tbody><\/table>/g,
-    '</tr></tbody></table>'
+    "</tr></tbody></table>",
   );
-  
+
   // Handle headings
   formattedContent = formattedContent.replace(
     /^### (.+)$/gm,
-    '<h3 class="text-xl font-semibold text-gray-800 mb-4 mt-6">$1</h3>'
+    '<h3 class="text-xl font-semibold text-gray-800 mb-4 mt-6">$1</h3>',
   );
-  
+
   formattedContent = formattedContent.replace(
     /^## (.+)$/gm,
-    '<h2 class="text-2xl font-bold text-gray-900 mb-4 mt-6">$1</h2>'
+    '<h2 class="text-2xl font-bold text-gray-900 mb-4 mt-6">$1</h2>',
   );
-  
+
   formattedContent = formattedContent.replace(
     /^# (.+)$/gm,
-    '<h1 class="text-3xl font-bold text-gray-900 mb-4 mt-6">$1</h1>'
+    '<h1 class="text-3xl font-bold text-gray-900 mb-4 mt-6">$1</h1>',
   );
-  
+
   // Handle blockquotes
   formattedContent = formattedContent.replace(
     /^> (.+)$/gm,
-    '<blockquote class="bg-orange-50 border-l-4 border-orange-500 italic text-gray-700 p-4 mb-4">$1</blockquote>'
+    '<blockquote class="bg-orange-50 border-l-4 border-orange-500 italic text-gray-700 p-4 mb-4">$1</blockquote>',
   );
-  
+
   // Handle numbered lists
   formattedContent = formattedContent.replace(
     /^(\d+)\. (.+)$/gm,
-    '<li class="mb-2 text-gray-700">$2</li>'
+    '<li class="mb-2 text-gray-700">$2</li>',
   );
-  
+
   // Handle bullet lists
   formattedContent = formattedContent.replace(
     /^[-*] (.+)$/gm,
-    '<li class="mb-2 text-gray-700">$1</li>'
+    '<li class="mb-2 text-gray-700">$1</li>',
   );
-  
+
   // Wrap consecutive list items in ul/ol tags
   formattedContent = formattedContent.replace(
     /(<li[^>]*>.*?<\/li>)+/g,
-    (match) => `<ul class="list-disc list-inside mb-4 space-y-2">${match}</ul>`
+    (match) => `<ul class="list-disc list-inside mb-4 space-y-2">${match}</ul>`,
   );
-  
+
   // Handle bold text
   formattedContent = formattedContent.replace(
     /\*\*(.+?)\*\*/g,
-    '<strong class="font-bold">$1</strong>'
+    '<strong class="font-bold">$1</strong>',
   );
-  
+
   // Handle italic text
   formattedContent = formattedContent.replace(
     /\*(.+?)\*/g,
-    '<em class="italic">$1</em>'
+    '<em class="italic">$1</em>',
   );
-  
+
   // Handle strikethrough
   formattedContent = formattedContent.replace(
     /~~(.+?)~~/g,
-    '<del class="line-through">$1</del>'
+    '<del class="line-through">$1</del>',
   );
-  
+
   // Handle links
   formattedContent = formattedContent.replace(
     /\[([^\]]+)\]\(([^)]+)\)/g,
-    '<a href="$2" class="text-blue-600 hover:text-blue-800 underline" target="_blank" rel="noopener noreferrer">$1</a>'
+    '<a href="$2" class="text-blue-600 hover:text-blue-800 underline" target="_blank" rel="noopener noreferrer">$1</a>',
   );
-  
+
   // Handle images
   formattedContent = formattedContent.replace(
     /!\[([^\]]*)\]\(([^)]+)\)/g,
-    '<img src="$2" alt="$1" class="max-w-full h-auto rounded-lg mb-4" />'
+    '<img src="$2" alt="$1" class="max-w-full h-auto rounded-lg mb-4" />',
   );
-  
+
   // Split into paragraphs and handle remaining text
-  const paragraphs = formattedContent.split('\n\n');
-  const processedParagraphs = paragraphs.map(paragraph => {
+  const paragraphs = formattedContent.split("\n\n");
+  const processedParagraphs = paragraphs.map((paragraph) => {
     const trimmed = paragraph.trim();
-    if (!trimmed) return '';
-    
+    if (!trimmed) return "";
+
     // Skip if it's already HTML
-    if (trimmed.startsWith('<')) return trimmed;
-    
+    if (trimmed.startsWith("<")) return trimmed;
+
     // Handle single line breaks within paragraphs
-    const withLineBreaks = trimmed.replace(/\n/g, '<br>');
+    const withLineBreaks = trimmed.replace(/\n/g, "<br>");
     return `<p class="mb-4 text-gray-700 leading-relaxed">${withLineBreaks}</p>`;
   });
-  
-  return processedParagraphs.filter(p => p).join('\n');
+
+  return processedParagraphs.filter((p) => p).join("\n");
 };
 
 export default function BlogDetailPage() {
   const params = useParams();
   const blogId = params.id as string;
-  
+
   const [blog, setBlog] = useState<Blog | null>(null);
   const [relatedBlogs, setRelatedBlogs] = useState<RelatedBlog[]>([]);
   const [isLiked, setIsLiked] = useState(false);
@@ -287,15 +296,20 @@ export default function BlogDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
-  const [currentUser, setCurrentUser] = useState<{ _id: string; name: string; role?: string; avatar?: string } | null>(null);
-  
+  const [currentUser, setCurrentUser] = useState<{
+    _id: string;
+    name: string;
+    role?: string;
+    avatar?: string;
+  } | null>(null);
+
   // Comment states
   const [comments, setComments] = useState<Comment[]>([]);
-  const [commentContent, setCommentContent] = useState('');
-  const [replyContent, setReplyContent] = useState('');
+  const [commentContent, setCommentContent] = useState("");
+  const [replyContent, setReplyContent] = useState("");
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [editingComment, setEditingComment] = useState<string | null>(null);
-  const [editContent, setEditContent] = useState('');
+  const [editContent, setEditContent] = useState("");
   const [commentLoading, setCommentLoading] = useState(false);
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [commentError, setCommentError] = useState<string | null>(null);
@@ -303,25 +317,25 @@ export default function BlogDetailPage() {
 
   // Check if user is logged in and get current user
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem("accessToken");
     if (token) {
-      fetch('/api/auth/me', {
+      fetch("/api/auth/me", {
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       })
-      .then(res => res.json())
-      .then(data => {
-        if (data.user) {
-          setCurrentUser({
-            _id: data.user._id,
-            name: data.user.name,
-            role: data.user.role,
-            avatar: data.user.avatar
-          });
-        }
-      })
-      .catch(err => console.error('Error fetching current user:', err));
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.user) {
+            setCurrentUser({
+              _id: data.user._id,
+              name: data.user.name,
+              role: data.user.role,
+              avatar: data.user.avatar,
+            });
+          }
+        })
+        .catch((err) => console.error("Error fetching current user:", err));
     }
   }, []);
 
@@ -337,23 +351,26 @@ export default function BlogDetailPage() {
 
   const checkFollowStatus = useCallback(async () => {
     if (!currentUser || !blog) return;
-    
+
     try {
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem("accessToken");
       if (!token) return;
 
-      const response = await fetch(`/api/users/follow?userId=${blog.author._id}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await fetch(
+        `/api/users/follow?userId=${blog.author._id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
 
       if (response.ok) {
         const data = await response.json();
         setIsFollowing(data.isFollowing);
       }
     } catch (error) {
-      console.error('Error checking follow status:', error);
+      console.error("Error checking follow status:", error);
     }
   }, [currentUser, blog]);
 
@@ -366,7 +383,7 @@ export default function BlogDetailPage() {
 
   const handleFollow = async () => {
     if (!currentUser || !blog) {
-      window.location.href = '/login';
+      window.location.href = "/login";
       return;
     }
 
@@ -374,19 +391,19 @@ export default function BlogDetailPage() {
 
     setFollowLoading(true);
     try {
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem("accessToken");
       if (!token) {
-        window.location.href = '/login';
+        window.location.href = "/login";
         return;
       }
 
-      const response = await fetch('/api/users/follow', {
-        method: 'POST',
+      const response = await fetch("/api/users/follow", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ targetUserId: blog.author._id })
+        body: JSON.stringify({ targetUserId: blog.author._id }),
       });
 
       if (response.ok) {
@@ -394,21 +411,25 @@ export default function BlogDetailPage() {
         setIsFollowing(data.isFollowing);
         // Update blog author's follower count if available
         if (blog && data.followersCount !== undefined) {
-          setBlog(prev => prev ? {
-            ...prev,
-            author: {
-              ...prev.author,
-              followers: data.followersCount
-            }
-          } : null);
+          setBlog((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  author: {
+                    ...prev.author,
+                    followers: data.followersCount,
+                  },
+                }
+              : null,
+          );
         }
       } else {
         const errorData = await response.json();
-        alert(errorData.error || 'Failed to follow/unfollow user');
+        alert(errorData.error || "Failed to follow/unfollow user");
       }
     } catch (error) {
-      console.error('Error following/unfollowing:', error);
-      alert('Failed to follow/unfollow user');
+      console.error("Error following/unfollowing:", error);
+      alert("Failed to follow/unfollow user");
     } finally {
       setFollowLoading(false);
     }
@@ -417,23 +438,23 @@ export default function BlogDetailPage() {
   // Comment functions
   const fetchComments = useCallback(async () => {
     if (!blog) return;
-    
+
     setCommentsLoading(true);
     try {
-      console.log('Fetching comments for blog:', blogId);
+      console.log("Fetching comments for blog:", blogId);
       const response = await fetch(`/api/blogs/${blogId}/comments`);
-      console.log('Comments response status:', response.status);
-      
+      console.log("Comments response status:", response.status);
+
       if (response.ok) {
         const data: CommentResponse = await response.json();
-        console.log('Comments fetched successfully:', data.comments.length);
+        console.log("Comments fetched successfully:", data.comments.length);
         setComments(data.comments);
       } else {
         const errorData = await response.json().catch(() => ({}));
-        console.error('Failed to fetch comments:', errorData);
+        console.error("Failed to fetch comments:", errorData);
       }
     } catch (error) {
-      console.error('Error fetching comments:', error);
+      console.error("Error fetching comments:", error);
     } finally {
       setCommentsLoading(false);
     }
@@ -442,14 +463,14 @@ export default function BlogDetailPage() {
   // Function to refetch blog data to get updated comment count
   const refetchBlogData = useCallback(async () => {
     try {
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem("accessToken");
       const headers: Record<string, string> = {};
       if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+        headers["Authorization"] = `Bearer ${token}`;
       }
 
       const response = await fetch(`/api/blogs/${blogId}`, { headers });
-      
+
       if (response.ok) {
         const data: BlogResponse = await response.json();
         if (data.blog) {
@@ -457,18 +478,18 @@ export default function BlogDetailPage() {
         }
       }
     } catch (error) {
-      console.error('Error refetching blog data:', error);
+      console.error("Error refetching blog data:", error);
     }
   }, [blogId]);
 
   const handleSubmitComment = async () => {
     if (!currentUser || !blog) {
-      window.location.href = '/login';
+      window.location.href = "/login";
       return;
     }
 
     if (!commentContent.trim()) {
-      setCommentError('Comment cannot be empty');
+      setCommentError("Comment cannot be empty");
       return;
     }
 
@@ -476,58 +497,60 @@ export default function BlogDetailPage() {
     setCommentError(null);
 
     try {
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem("accessToken");
       if (!token) {
-        window.location.href = '/login';
+        window.location.href = "/login";
         return;
       }
 
-      console.log('Submitting comment:', { content: commentContent, blogId });
+      console.log("Submitting comment:", { content: commentContent, blogId });
 
       const response = await fetch(`/api/blogs/${blogId}/comments`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ content: commentContent })
+        body: JSON.stringify({ content: commentContent }),
       });
 
-      console.log('Comment submission response status:', response.status);
+      console.log("Comment submission response status:", response.status);
 
       if (response.ok) {
         const newComment = await response.json();
-        console.log('Comment submitted successfully:', newComment);
+        console.log("Comment submitted successfully:", newComment);
         // Refetch comments to ensure consistency with server state
         await fetchComments();
         // Refetch blog data to get updated comment count
         await refetchBlogData();
-        setCommentContent('');
+        setCommentContent("");
         setCommentError(null);
         // Show success message
         setShowSuccessMessage(true);
         setTimeout(() => setShowSuccessMessage(false), 3000);
       } else {
         const errorData = await response.json();
-        console.error('Comment submission failed:', errorData);
-        
+        console.error("Comment submission failed:", errorData);
+
         // Handle specific error cases
         if (response.status === 401) {
-          setCommentError('Please log in to post a comment');
+          setCommentError("Please log in to post a comment");
           setTimeout(() => {
-            window.location.href = '/login';
+            window.location.href = "/login";
           }, 2000);
         } else if (response.status === 403) {
-          setCommentError('Your account is not approved to post comments');
+          setCommentError("Your account is not approved to post comments");
         } else if (response.status === 404) {
-          setCommentError('Blog not found');
+          setCommentError("Blog not found");
         } else {
-          setCommentError(errorData.error || 'Failed to post comment. Please try again.');
+          setCommentError(
+            errorData.error || "Failed to post comment. Please try again.",
+          );
         }
       }
     } catch (error) {
-      console.error('Error posting comment:', error);
-      setCommentError('Failed to post comment. Please try again.');
+      console.error("Error posting comment:", error);
+      setCommentError("Failed to post comment. Please try again.");
     } finally {
       setCommentLoading(false);
     }
@@ -535,12 +558,12 @@ export default function BlogDetailPage() {
 
   const handleReply = async (parentCommentId: string) => {
     if (!currentUser || !blog) {
-      window.location.href = '/login';
+      window.location.href = "/login";
       return;
     }
 
     if (!replyContent.trim()) {
-      setCommentError('Reply cannot be empty');
+      setCommentError("Reply cannot be empty");
       return;
     }
 
@@ -548,22 +571,22 @@ export default function BlogDetailPage() {
     setCommentError(null);
 
     try {
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem("accessToken");
       if (!token) {
-        window.location.href = '/login';
+        window.location.href = "/login";
         return;
       }
 
       const response = await fetch(`/api/blogs/${blogId}/comments`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           content: replyContent,
-          parentCommentId 
-        })
+          parentCommentId,
+        }),
       });
 
       if (response.ok) {
@@ -572,16 +595,16 @@ export default function BlogDetailPage() {
         await fetchComments();
         // Refetch blog data to get updated comment count
         await refetchBlogData();
-        setReplyContent('');
+        setReplyContent("");
         setReplyingTo(null);
         setCommentError(null);
       } else {
         const errorData = await response.json();
-        setCommentError(errorData.error || 'Failed to post reply');
+        setCommentError(errorData.error || "Failed to post reply");
       }
     } catch (error) {
-      console.error('Error posting reply:', error);
-      setCommentError('Failed to post reply');
+      console.error("Error posting reply:", error);
+      setCommentError("Failed to post reply");
     } finally {
       setCommentLoading(false);
     }
@@ -589,7 +612,7 @@ export default function BlogDetailPage() {
 
   const handleEditComment = async (commentId: string) => {
     if (!editContent.trim()) {
-      setCommentError('Comment cannot be empty');
+      setCommentError("Comment cannot be empty");
       return;
     }
 
@@ -597,20 +620,23 @@ export default function BlogDetailPage() {
     setCommentError(null);
 
     try {
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem("accessToken");
       if (!token) {
-        window.location.href = '/login';
+        window.location.href = "/login";
         return;
       }
 
-      const response = await fetch(`/api/blogs/${blogId}/comments/${commentId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+      const response = await fetch(
+        `/api/blogs/${blogId}/comments/${commentId}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ content: editContent }),
         },
-        body: JSON.stringify({ content: editContent })
-      });
+      );
 
       if (response.ok) {
         await response.json();
@@ -619,38 +645,41 @@ export default function BlogDetailPage() {
         // Refetch blog data to get updated comment count
         await refetchBlogData();
         setEditingComment(null);
-        setEditContent('');
+        setEditContent("");
         setCommentError(null);
       } else {
         const errorData = await response.json();
-        setCommentError(errorData.error || 'Failed to update comment');
+        setCommentError(errorData.error || "Failed to update comment");
       }
     } catch (error) {
-      console.error('Error updating comment:', error);
-      setCommentError('Failed to update comment');
+      console.error("Error updating comment:", error);
+      setCommentError("Failed to update comment");
     } finally {
       setCommentLoading(false);
     }
   };
 
   const handleDeleteComment = async (commentId: string) => {
-    if (!confirm('Are you sure you want to delete this comment?')) return;
+    if (!confirm("Are you sure you want to delete this comment?")) return;
 
     setCommentLoading(true);
 
     try {
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem("accessToken");
       if (!token) {
-        window.location.href = '/login';
+        window.location.href = "/login";
         return;
       }
 
-      const response = await fetch(`/api/blogs/${blogId}/comments/${commentId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await fetch(
+        `/api/blogs/${blogId}/comments/${commentId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
 
       if (response.ok) {
         // Refetch comments to ensure consistency with server state
@@ -659,11 +688,11 @@ export default function BlogDetailPage() {
         await refetchBlogData();
       } else {
         const errorData = await response.json();
-        alert(errorData.error || 'Failed to delete comment');
+        alert(errorData.error || "Failed to delete comment");
       }
     } catch (error) {
-      console.error('Error deleting comment:', error);
-      alert('Failed to delete comment');
+      console.error("Error deleting comment:", error);
+      alert("Failed to delete comment");
     } finally {
       setCommentLoading(false);
     }
@@ -674,10 +703,11 @@ export default function BlogDetailPage() {
   };
 
   const canDeleteComment = (comment: Comment) => {
-    return currentUser && (
-      comment.author._id === currentUser._id || 
-      currentUser.role === 'admin' || 
-      currentUser.role === 'super_admin'
+    return (
+      currentUser &&
+      (comment.author._id === currentUser._id ||
+        currentUser.role === "admin" ||
+        currentUser.role === "super_admin")
     );
   };
 
@@ -685,63 +715,70 @@ export default function BlogDetailPage() {
   useEffect(() => {
     const fetchBlog = async () => {
       if (!blogId) return;
-      
+
       try {
         setLoading(true);
         setError(null);
-        
-        console.log('Fetching blog with ID:', blogId);
+
+        console.log("Fetching blog with ID:", blogId);
         const response = await fetch(`/api/blogs/${blogId}`);
-        
+
         if (!response.ok) {
           if (response.status === 404) {
-            throw new Error('Blog not found');
+            throw new Error("Blog not found");
           }
           const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+          throw new Error(
+            errorData.error ||
+              `HTTP ${response.status}: ${response.statusText}`,
+          );
         }
 
         const data: BlogResponse = await response.json();
-        
+
         if (!data.blog) {
-          throw new Error('Invalid blog data received');
+          throw new Error("Invalid blog data received");
         }
-        
-        console.log('Blog data received:', data.blog);
+
+        console.log("Blog data received:", data.blog);
         setBlog(data.blog);
         setRelatedBlogs(data.relatedBlogs || []);
         setLikes(data.blog.likes?.length || 0);
         setBookmarks(0); // Bookmarks not implemented in backend yet
-        
+
         // Check if current user has liked this blog
         if (currentUser) {
-          const isUserLiked = data.blog.likes?.includes(currentUser._id) || false;
+          const isUserLiked =
+            data.blog.likes?.includes(currentUser._id) || false;
           setIsLiked(isUserLiked);
-          
+
           // Check if current user has bookmarked this blog
-          const token = localStorage.getItem('accessToken');
+          const token = localStorage.getItem("accessToken");
           if (token) {
             try {
-              const bookmarkResponse = await fetch(`/api/blogs/${blogId}/bookmark`, {
-                headers: {
-                  'Authorization': `Bearer ${token}`
-                }
-              });
-              
+              const bookmarkResponse = await fetch(
+                `/api/blogs/${blogId}/bookmark`,
+                {
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                  },
+                },
+              );
+
               if (bookmarkResponse.ok) {
                 const bookmarkData = await bookmarkResponse.json();
                 setIsBookmarked(bookmarkData.bookmarked);
                 setBookmarks(bookmarkData.bookmarksCount);
               }
             } catch (error) {
-              console.error('Error fetching bookmark status:', error);
+              console.error("Error fetching bookmark status:", error);
             }
           }
         }
-        
       } catch (err) {
-        console.error('Error fetching blog:', err);
-        const errorMessage = err instanceof Error ? err.message : 'Failed to load blog';
+        console.error("Error fetching blog:", err);
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to load blog";
         setError(errorMessage);
       } finally {
         setLoading(false);
@@ -759,36 +796,36 @@ export default function BlogDetailPage() {
   }, [blog, fetchComments]);
 
   const formatDate = (dateString?: string) => {
-    if (!dateString) return 'Recently';
+    if (!dateString) return "Recently";
     const date = new Date(dateString);
-    return date.toLocaleDateString('hi-IN', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    return date.toLocaleDateString("hi-IN", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
   const handleLike = async () => {
     if (!blog) return;
-    
+
     // If user is not logged in, redirect to login
     if (!currentUser) {
-      window.location.href = '/login';
+      window.location.href = "/login";
       return;
     }
-    
+
     try {
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem("accessToken");
       if (!token) {
-        window.location.href = '/login';
+        window.location.href = "/login";
         return;
       }
 
       const response = await fetch(`/api/blogs/${blog._id}/like`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       if (response.ok) {
@@ -798,38 +835,38 @@ export default function BlogDetailPage() {
       } else {
         const errorData = await response.json();
         if (response.status === 401) {
-          window.location.href = '/login';
+          window.location.href = "/login";
         } else {
-          alert(errorData.error || 'Failed to like/unlike blog');
+          alert(errorData.error || "Failed to like/unlike blog");
         }
       }
     } catch (error) {
-      console.error('Error liking/unliking blog:', error);
-      alert('Failed to like/unlike blog');
+      console.error("Error liking/unliking blog:", error);
+      alert("Failed to like/unlike blog");
     }
   };
 
   const handleBookmark = async () => {
     if (!blog) return;
-    
+
     // If user is not logged in, redirect to login
     if (!currentUser) {
-      window.location.href = '/login';
+      window.location.href = "/login";
       return;
     }
-    
+
     try {
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem("accessToken");
       if (!token) {
-        window.location.href = '/login';
+        window.location.href = "/login";
         return;
       }
 
       const response = await fetch(`/api/blogs/${blog._id}/bookmark`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       if (response.ok) {
@@ -839,43 +876,43 @@ export default function BlogDetailPage() {
       } else {
         const errorData = await response.json();
         if (response.status === 401) {
-          window.location.href = '/login';
+          window.location.href = "/login";
         } else {
-          alert(errorData.error || 'Failed to bookmark/unbookmark blog');
+          alert(errorData.error || "Failed to bookmark/unbookmark blog");
         }
       }
     } catch (error) {
-      console.error('Error bookmarking/unbookmarking blog:', error);
-      alert('Failed to bookmark/unbookmark blog');
+      console.error("Error bookmarking/unbookmarking blog:", error);
+      alert("Failed to bookmark/unbookmark blog");
     }
   };
 
-  const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
-  
+  const shareUrl = typeof window !== "undefined" ? window.location.href : "";
+
   const shareOptions = [
     {
-      name: 'Facebook',
+      name: "Facebook",
       icon: Facebook,
       url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
-      color: 'text-blue-600'
+      color: "text-blue-600",
     },
     {
-      name: 'Twitter',
+      name: "Twitter",
       icon: Twitter,
-      url: `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(blog?.title || '')}`,
-      color: 'text-blue-400'
+      url: `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(blog?.title || "")}`,
+      color: "text-blue-400",
     },
     {
-      name: 'LinkedIn',
+      name: "LinkedIn",
       icon: Linkedin,
       url: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`,
-      color: 'text-blue-700'
-    }
+      color: "text-blue-700",
+    },
   ];
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(shareUrl);
-    alert('Link copied!');
+    alert("Link copied!");
     setShowShareMenu(false);
   };
 
@@ -929,7 +966,10 @@ export default function BlogDetailPage() {
               {/* Tags Skeleton */}
               <div className="flex flex-wrap justify-center gap-2">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-6 w-16 bg-gray-200 rounded-full animate-pulse"></div>
+                  <div
+                    key={i}
+                    className="h-6 w-16 bg-gray-200 rounded-full animate-pulse"
+                  ></div>
                 ))}
               </div>
             </div>
@@ -954,7 +994,10 @@ export default function BlogDetailPage() {
             <div className="lg:col-span-1 order-2 lg:order-1">
               <div className="sticky top-24 space-y-4">
                 {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="h-12 bg-gray-200 rounded-xl animate-pulse"></div>
+                  <div
+                    key={i}
+                    className="h-12 bg-gray-200 rounded-xl animate-pulse"
+                  ></div>
                 ))}
               </div>
             </div>
@@ -996,7 +1039,9 @@ export default function BlogDetailPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="text-6xl mb-4">📖</div>
-          <h2 className="text-2xl font-bold text-gray-100 mb-4">Article Not Found</h2>
+          <h2 className="text-2xl font-bold text-gray-100 mb-4">
+            Article Not Found
+          </h2>
           <p className="text-gray-100 mb-8">{error}</p>
           <Link
             href="/blogs"
@@ -1016,8 +1061,12 @@ export default function BlogDetailPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="text-6xl mb-4">📖</div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Article Not Found</h2>
-          <p className="text-gray-600 mb-8">The requested article could not be found.</p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            Article Not Found
+          </h2>
+          <p className="text-gray-600 mb-8">
+            The requested article could not be found.
+          </p>
           <Link
             href="/blogs"
             className="inline-flex items-center space-x-2 text-orange-600 hover:text-orange-700 font-medium"
@@ -1036,140 +1085,72 @@ export default function BlogDetailPage() {
       <nav className="bg-gray-50 py-4">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center space-x-2 text-sm">
-            <Link href="/" className="text-orange-600 hover:text-orange-700">Home</Link>
+            <Link href="/" className="text-orange-600 hover:text-orange-700">
+              Home
+            </Link>
             <ChevronRight className="h-4 w-4 text-gray-400" />
-            <Link href="/blogs" className="text-orange-600 hover:text-orange-700">Blogs</Link>
+            <Link
+              href="/blogs"
+              className="text-orange-600 hover:text-orange-700"
+            >
+              Blogs
+            </Link>
             <ChevronRight className="h-4 w-4 text-gray-400" />
             <span className="text-gray-500 truncate">{blog.title}</span>
           </div>
         </div>
       </nav>
 
-      {/* Article Header */}
-      <header className="py-12 bg-gradient-to-r from-orange-50 to-yellow-50">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            {/* Category Badge */}
-            <span className="inline-block bg-orange-600 text-white px-4 py-2 rounded-full text-sm font-medium mb-6">
-              {blog.category}
-            </span>
-
-            {/* Title */}
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight break-words overflow-hidden">
-              {blog.title}
-            </h1>
-
-            {/* Excerpt */}
-            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto break-words overflow-hidden">
-              {blog.excerpt}
-            </p>
-
-            {/* Meta Information */}
-            <div className="flex flex-wrap items-center justify-center gap-6 text-gray-600 mb-8">
-              <div className="flex items-center">
-                <User className="h-5 w-5 mr-2" />
-                <Link href={`/authors/${blog.author._id}`} className="hover:text-orange-600 transition-colors font-semibold">
-                  {blog.author.name}
-                </Link>
-              </div>
-              <div className="flex items-center">
-                <Calendar className="h-5 w-5 mr-2" />
-                <span>{formatDate(blog.publishedAt)}</span>
-              </div>
-              <div className="flex items-center">
-                <Clock className="h-5 w-5 mr-2" />
-                <span>{blog.readingTime} min read</span>
-              </div>
-              <div className="flex items-center">
-                <Eye className="h-5 w-5 mr-2" />
-                <span>{blog.views.toLocaleString()} views</span>
-              </div>
-            </div>
-
-            {/* Comment Button */}
-            <div className="flex justify-center mb-6">
-              <button
-                onClick={() => {
-                  const commentsSection = document.getElementById('comments');
-                  if (commentsSection) {
-                    commentsSection.scrollIntoView({ behavior: 'smooth' });
-                  }
-                }}
-                className="flex items-center space-x-2 px-6 py-3 bg-orange-600 text-white rounded-xl hover:bg-orange-700 transition-colors shadow-lg"
-              >
-                <MessageCircle className="h-5 w-5" />
-                <span className="font-medium">Join the Discussion ({blog?.commentsCount || 0} comments)</span>
-              </button>
-            </div>
-
-            {/* Tags */}
-            {blog.tags && blog.tags.length > 0 && (
-              <div className="flex flex-wrap justify-center gap-2">
-                {blog.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm hover:bg-orange-100 hover:text-orange-700 transition-colors"
-                  >
-                    #{tag}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
-
-      {/* Featured Image */}
-      {blog.featuredImage && (
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6 mb-12">
-          <div className="relative h-96 bg-gradient-to-r from-orange-400 to-orange-600 rounded-2xl overflow-hidden shadow-2xl">
-            <Image 
-              src={blog.featuredImage} 
-              alt={blog.title}
-              fill
-              className="w-full h-full object-cover"
-              style={{objectFit: 'cover'}}
-            />
-            <div className="absolute inset-0 bg-black opacity-20"></div>
-            <div className="absolute bottom-6 left-6 right-6">
-              <div className="bg-white bg-opacity-90 backdrop-blur-sm rounded-lg p-4">
-                <p className="text-gray-800 font-medium">
-                  📖 Estimated reading time: {blog.readingTime} min
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Blog Header */}
+      <BlogHeader
+        title={blog.title}
+        excerpt={blog.excerpt}
+        category={blog.category}
+        author={blog.author}
+        publishedAt={blog.publishedAt}
+        readingTime={blog.readingTime}
+        views={blog.views}
+        commentsCount={blog.commentsCount}
+        tags={blog.tags}
+        featuredImage={blog.featuredImage}
+      />
 
       {/* Article Content */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 overflow-hidden">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 overflow-hidden">
+        <div className="grid grid-cols-1 gap-8">
           {/* Main Content */}
-          <div className="lg:col-span-4 order-1 overflow-hidden">
-            <article className="prose prose-lg max-w-none blog-content">
+          <div className="order-1 overflow-hidden">
+            <article className="prose prose-xl max-w-none blog-content">
               <div className="overflow-hidden">
-                <div 
-                  dangerouslySetInnerHTML={{ __html: formatContent(blog.content) }}
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: formatContent(blog.content),
+                  }}
                   className="text-gray-800 leading-relaxed break-words overflow-hidden"
                 />
               </div>
             </article>
 
             {/* Social Actions */}
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+            <div className="mt-12 flex flex-wrap items-center justify-center gap-4 p-6 bg-gray-50 rounded-2xl">
               {/* Like Button */}
               <button
                 onClick={handleLike}
-                className={`flex items-center space-x-2 py-3 px-6 rounded-xl transition-all duration-300 ${
+                className={`flex items-center space-x-2 py-4 px-8 rounded-full transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 ${
                   isLiked
-                    ? 'bg-red-500 text-white shadow-lg transform scale-105'
-                    : 'bg-gray-100 text-gray-700 hover:bg-red-50 hover:text-red-600'
+                    ? "bg-gradient-to-r from-red-500 to-pink-500 text-white"
+                    : "bg-white text-gray-700 hover:bg-red-50 hover:text-red-600"
                 }`}
-                title={currentUser ? (isLiked ? 'Unlike this post' : 'Like this post') : 'Login to like this post'}
+                title={
+                  currentUser
+                    ? isLiked
+                      ? "Unlike this post"
+                      : "Like this post"
+                    : "Login to like this post"
+                }
               >
-                <Heart className={`h-5 w-5 ${isLiked ? 'fill-current' : ''}`} />
-                <span className="font-medium">{likes}</span>
+                <Heart className={`h-6 w-6 ${isLiked ? "fill-current" : ""}`} />
+                <span className="font-bold">{likes}</span>
                 {!currentUser && (
                   <span className="text-xs text-gray-500 ml-1">(Login)</span>
                 )}
@@ -1178,14 +1159,22 @@ export default function BlogDetailPage() {
               {/* Bookmark Button */}
               <button
                 onClick={handleBookmark}
-                className={`flex items-center space-x-2 py-3 px-6 rounded-xl transition-all duration-300 ${
+                className={`flex items-center space-x-2 py-4 px-8 rounded-full transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 ${
                   isBookmarked
-                    ? 'bg-orange-500 text-white shadow-lg transform scale-105'
-                    : 'bg-gray-100 text-gray-700 hover:bg-orange-50 hover:text-orange-600'
+                    ? "bg-gradient-to-r from-orange-500 to-pink-500 text-white"
+                    : "bg-white text-gray-700 hover:bg-orange-50 hover:text-orange-600"
                 }`}
-                title={currentUser ? (isBookmarked ? 'Remove bookmark' : 'Bookmark this post') : 'Login to bookmark this post'}
+                title={
+                  currentUser
+                    ? isBookmarked
+                      ? "Remove bookmark"
+                      : "Bookmark this post"
+                    : "Login to bookmark this post"
+                }
               >
-                <BookmarkPlus className={`h-5 w-5 ${isBookmarked ? 'fill-current' : ''}`} />
+                <BookmarkPlus
+                  className={`h-5 w-5 ${isBookmarked ? "fill-current" : ""}`}
+                />
                 <span className="font-medium">{bookmarks}</span>
                 {!currentUser && (
                   <span className="text-xs text-gray-500 ml-1">(Login)</span>
@@ -1214,7 +1203,9 @@ export default function BlogDetailPage() {
                         className={`flex items-center space-x-3 px-4 py-2 hover:bg-gray-50 transition-colors ${option.color}`}
                       >
                         <option.icon className="h-4 w-4" />
-                        <span className="text-sm font-medium text-gray-700">{option.name}</span>
+                        <span className="text-sm font-medium text-gray-700">
+                          {option.name}
+                        </span>
                       </a>
                     ))}
                     <button
@@ -1222,7 +1213,9 @@ export default function BlogDetailPage() {
                       className="w-full flex items-center space-x-3 px-4 py-2 hover:bg-gray-50 transition-colors text-gray-600"
                     >
                       <Copy className="h-4 w-4" />
-                      <span className="text-sm font-medium text-gray-700">Copy Link</span>
+                      <span className="text-sm font-medium text-gray-700">
+                        Copy Link
+                      </span>
                     </button>
                   </div>
                 )}
@@ -1234,231 +1227,27 @@ export default function BlogDetailPage() {
                 className="flex items-center space-x-2 py-3 px-6 rounded-xl bg-gray-100 text-gray-700 hover:bg-green-50 hover:text-green-600 transition-colors"
                 onClick={(e) => {
                   e.preventDefault();
-                  const commentsSection = document.getElementById('comments');
+                  const commentsSection = document.getElementById("comments");
                   if (commentsSection) {
-                    commentsSection.scrollIntoView({ behavior: 'smooth' });
+                    commentsSection.scrollIntoView({ behavior: "smooth" });
                   }
                 }}
               >
                 <MessageCircle className="h-5 w-5" />
-                <span className="font-medium">{blog?.commentsCount || 0} Comments</span>
+                <span className="font-medium">
+                  {blog?.commentsCount || 0} Comments
+                </span>
               </Link>
             </div>
 
             {/* Author Bio */}
-            <div className="mt-12 p-6 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-2xl border border-orange-100">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold text-gray-900">About the Author</h3>
-                
-                {/* Follow Button */}
-                {currentUser && blog.author._id !== currentUser._id && (
-                  <button
-                    onClick={handleFollow}
-                    disabled={followLoading}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                      isFollowing
-                        ? 'bg-gray-100 text-gray-700 hover:bg-red-50 hover:text-red-600'
-                        : 'bg-orange-600 text-white hover:bg-orange-700'
-                    } ${followLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  >
-                    {followLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : isFollowing ? (
-                      <>
-                        <UserMinus className="h-4 w-4" />
-                        <span>Unfollow</span>
-                      </>
-                    ) : (
-                      <>
-                        <UserPlus className="h-4 w-4" />
-                        <span>Follow</span>
-                      </>
-                    )}
-                  </button>
-                )}
-                
-                {!currentUser && (
-                  <Link
-                    href="/login"
-                    className="flex items-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-lg text-sm font-medium hover:bg-orange-700 transition-colors"
-                  >
-                    <UserPlus className="h-4 w-4" />
-                    <span>Follow</span>
-                  </Link>
-                )}
-              </div>
-              
-              <div className="flex items-start space-x-4">
-                {blog.author.avatar ? (
-                  <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0">
-                    <Image 
-                      src={blog.author.avatar} 
-                      alt={blog.author.name}
-                      width={64}
-                      height={64}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-16 h-16 bg-orange-600 rounded-full flex items-center justify-center text-white text-xl font-bold flex-shrink-0">
-                    {blog.author.name.charAt(0)}
-                  </div>
-                )}
-                <div className="flex-1">
-                  <h4 className="text-lg font-bold text-gray-900">
-                    <Link href={`/authors/${blog.author._id}`} className="hover:text-orange-600 transition-colors">
-                      {blog.author.name}
-                    </Link>
-                  </h4>
-                  {blog.author.bio && (
-                    <p className="text-gray-600 mb-3">{blog.author.bio}</p>
-                  )}
-                  
-                  {/* Author Stats */}
-                  <div className="flex items-center space-x-4 text-sm text-gray-500 mb-3">
-                    <span className="flex items-center">
-                      <Users className="h-4 w-4 mr-1" />
-                      {blog.author.followers || 0} followers
-                    </span>
-                    <span className="flex items-center">
-                      <UserPlus className="h-4 w-4 mr-1" />
-                      {blog.author.following || 0} following
-                    </span>
-                  </div>
-                  {blog.author.socialLinks && (
-                    <div className="flex space-x-3">
-                      {blog.author.socialLinks.twitter && (
-                        <a
-                          href={blog.author.socialLinks.twitter}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-400 hover:text-blue-500 transition-colors p-1 rounded-full hover:bg-blue-50"
-                          title="Twitter"
-                        >
-                          <Twitter className="h-5 w-5" />
-                        </a>
-                      )}
-                      {blog.author.socialLinks.linkedin && (
-                        <a
-                          href={blog.author.socialLinks.linkedin}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-700 transition-colors p-1 rounded-full hover:bg-blue-50"
-                          title="LinkedIn"
-                        >
-                          <Linkedin className="h-5 w-5" />
-                        </a>
-                      )}
-                      {blog.author.socialLinks.website && (
-                        <a
-                          href={blog.author.socialLinks.website}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-gray-600 hover:text-orange-600 transition-colors p-1 rounded-full hover:bg-orange-50"
-                          title="Website"
-                        >
-                          <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clipRule="evenodd" />
-                          </svg>
-                        </a>
-                      )}
-                      {blog.author.socialLinks.instagram && (
-                        <a
-                          href={blog.author.socialLinks.instagram}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-pink-600 hover:text-pink-700 transition-colors p-1 rounded-full hover:bg-pink-50"
-                          title="Instagram"
-                        >
-                          <Instagram className="h-5 w-5" />
-                        </a>
-                      )}
-                      {blog.author.socialLinks.youtube && (
-                        <a
-                          href={blog.author.socialLinks.youtube}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-red-600 hover:text-red-700 transition-colors p-1 rounded-full hover:bg-red-50"
-                          title="YouTube"
-                        >
-                          <Youtube className="h-5 w-5" />
-                        </a>
-                      )}
-                      {blog.author.socialLinks.facebook && (
-                        <a
-                          href={blog.author.socialLinks.facebook}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-700 transition-colors p-1 rounded-full hover:bg-blue-50"
-                          title="Facebook"
-                        >
-                          <Facebook className="h-5 w-5" />
-                        </a>
-                      )}
-                      {blog.author.socialLinks.github && (
-                        <a
-                          href={blog.author.socialLinks.github}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-gray-600 hover:text-gray-700 transition-colors p-1 rounded-full hover:bg-gray-100"
-                          title="GitHub"
-                        >
-                          <Github className="h-5 w-5" />
-                        </a>
-                      )}
-                      {blog.author.socialLinks.telegram && (
-                        <a
-                          href={blog.author.socialLinks.telegram}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-400 hover:text-blue-500 transition-colors p-1 rounded-full hover:bg-blue-50"
-                          title="Telegram"
-                        >
-                          <Telegram className="h-5 w-5" />
-                        </a>
-                      )}
-                      {blog.author.socialLinks.reddit && (
-                        <a
-                          href={blog.author.socialLinks.reddit}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-red-500 hover:text-red-600 transition-colors p-1 rounded-full hover:bg-red-50"
-                          title="Reddit"
-                        >
-                          <ExternalLink className="h-5 w-5" />
-                        </a>
-                      )}
-                      {blog.author.socialLinks.pinterest && (
-                        <a
-                          href={blog.author.socialLinks.pinterest}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-red-600 hover:text-red-700 transition-colors p-1 rounded-full hover:bg-red-50"
-                          title="Pinterest"
-                        >
-                          <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M10 3.2a1.5 1.5 0 00-3 0c0 1.3.8 2.2 2 3.2.8.6 1.5 1.3 1.5 2.5 0 1.2-.7 2-1.5 2.5-.8.5-1.5 1.2-1.5 2.5a1.5 1.5 0 003 0c0-1.3.8-2.2 2-3.2.8-.6 1.5-1.3 1.5-2.5 0-1.2-.7-2-1.5-2.5-.8-.5-1.5-1.2-1.5-2.5z" />
-                          </svg>
-                        </a>
-                      )}
-                      {blog.author.socialLinks.tiktok && (
-                        <a
-                          href={blog.author.socialLinks.tiktok}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-black hover:text-black-600 transition-colors p-1 rounded-full hover:bg-gray-100"
-                          title="TikTok"
-                        >
-                          <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M10 3.2a1.5 1.5 0 00-3 0c0 1.3.8 2.2 2 3.2.8.6 1.5 1.3 1.5 2.5 0 1.2-.7 2-1.5 2.5-.8.5-1.5 1.2-1.5 2.5a1.5 1.5 0 003 0c0-1.3.8-2.2 2-3.2.8-.6 1.5-1.3 1.5-2.5 0-1.2-.7-2-1.5-2.5-.8-.5-1.5-1.2-1.5-2.5z" />
-                          </svg>
-                        </a>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+            <AuthorBio
+              author={blog.author}
+              currentUser={currentUser}
+              isFollowing={isFollowing}
+              followLoading={followLoading}
+              onFollow={handleFollow}
+            />
           </div>
         </div>
       </main>
@@ -1466,8 +1255,6 @@ export default function BlogDetailPage() {
       {/* Comments Section */}
       <section id="comments" className="py-8 sm:py-12 lg:py-16 bg-gray-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-
-          
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8 text-center">
             Comments ({blog?.commentsCount || 0})
           </h2>
@@ -1479,8 +1266,8 @@ export default function BlogDetailPage() {
                 <div className="flex items-start space-x-3 sm:space-x-4 mb-4">
                   {currentUser.avatar ? (
                     <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden flex-shrink-0">
-                      <Image 
-                        src={currentUser.avatar} 
+                      <Image
+                        src={currentUser.avatar}
                         alt={currentUser.name}
                         width={48}
                         height={48}
@@ -1501,7 +1288,7 @@ export default function BlogDetailPage() {
                       rows={3}
                       maxLength={1000}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter' && e.ctrlKey) {
+                        if (e.key === "Enter" && e.ctrlKey) {
                           e.preventDefault();
                           handleSubmitComment();
                         }
@@ -1519,7 +1306,7 @@ export default function BlogDetailPage() {
                       </span>
                       <div className="flex items-center space-x-2 sm:space-x-3">
                         <button
-                          onClick={() => setCommentContent('')}
+                          onClick={() => setCommentContent("")}
                           disabled={!commentContent.trim() || commentLoading}
                           className="px-3 py-2 sm:px-4 sm:py-2 text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
                         >
@@ -1535,7 +1322,9 @@ export default function BlogDetailPage() {
                           ) : (
                             <Send className="h-4 w-4" />
                           )}
-                          <span>{commentLoading ? 'Posting...' : 'Post Comment'}</span>
+                          <span>
+                            {commentLoading ? "Posting..." : "Post Comment"}
+                          </span>
                         </button>
                       </div>
                     </div>
@@ -1545,8 +1334,13 @@ export default function BlogDetailPage() {
             ) : (
               <div className="text-center py-8">
                 <MessageCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Join the Discussion</h3>
-                <p className="text-gray-600 mb-4">Please log in to leave a comment and engage with other readers.</p>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Join the Discussion
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  Please log in to leave a comment and engage with other
+                  readers.
+                </p>
                 <Link
                   href="/login"
                   className="inline-flex items-center space-x-2 px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
@@ -1566,12 +1360,15 @@ export default function BlogDetailPage() {
               </div>
             ) : comments.length > 0 ? (
               comments.map((comment) => (
-                <div key={comment._id} className="bg-white rounded-2xl shadow-lg p-4 sm:p-6">
+                <div
+                  key={comment._id}
+                  className="bg-white rounded-2xl shadow-lg p-4 sm:p-6"
+                >
                   <div className="flex items-start space-x-3 sm:space-x-4">
                     {comment.author.avatar ? (
                       <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden flex-shrink-0">
-                        <Image 
-                          src={comment.author.avatar} 
+                        <Image
+                          src={comment.author.avatar}
                           alt={comment.author.name}
                           width={48}
                           height={48}
@@ -1583,15 +1380,20 @@ export default function BlogDetailPage() {
                         {comment.author.name.charAt(0)}
                       </div>
                     )}
-                    
+
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 space-y-1 sm:space-y-0">
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-semibold text-gray-900 text-sm sm:text-base">{comment.author.name}</h4>
-                          <p className="text-xs sm:text-sm text-gray-500">{formatDate(comment.createdAt)}</p>
+                          <h4 className="font-semibold text-gray-900 text-sm sm:text-base">
+                            {comment.author.name}
+                          </h4>
+                          <p className="text-xs sm:text-sm text-gray-500">
+                            {formatDate(comment.createdAt)}
+                          </p>
                         </div>
-                        
-                        {(canEditComment(comment) || canDeleteComment(comment)) && (
+
+                        {(canEditComment(comment) ||
+                          canDeleteComment(comment)) && (
                           <div className="flex items-center space-x-1 sm:space-x-2 self-start sm:self-center">
                             {canEditComment(comment) && (
                               <button
@@ -1635,7 +1437,7 @@ export default function BlogDetailPage() {
                               <button
                                 onClick={() => {
                                   setEditingComment(null);
-                                  setEditContent('');
+                                  setEditContent("");
                                 }}
                                 className="px-3 py-2 sm:px-4 sm:py-2 text-gray-600 hover:text-gray-800 transition-colors text-sm min-h-[40px]"
                               >
@@ -1646,15 +1448,17 @@ export default function BlogDetailPage() {
                                 disabled={commentLoading || !editContent.trim()}
                                 className="px-4 py-2 sm:px-4 sm:py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 transition-colors text-sm min-h-[40px]"
                               >
-                                {commentLoading ? 'Saving...' : 'Save'}
+                                {commentLoading ? "Saving..." : "Save"}
                               </button>
                             </div>
                           </div>
                         </div>
                       ) : (
                         <div>
-                          <p className="text-gray-700 mb-3 text-sm sm:text-base">{comment.content}</p>
-                          
+                          <p className="text-gray-700 mb-3 text-sm sm:text-base">
+                            {comment.content}
+                          </p>
+
                           <div className="flex items-center space-x-4">
                             {currentUser && (
                               <button
@@ -1674,7 +1478,9 @@ export default function BlogDetailPage() {
                                 <div className="flex-1 min-w-0">
                                   <textarea
                                     value={replyContent}
-                                    onChange={(e) => setReplyContent(e.target.value)}
+                                    onChange={(e) =>
+                                      setReplyContent(e.target.value)
+                                    }
                                     placeholder="Write a reply..."
                                     className="w-full p-3 border border-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-gray-900 placeholder-gray-500 text-sm sm:text-base"
                                     rows={2}
@@ -1688,7 +1494,7 @@ export default function BlogDetailPage() {
                                       <button
                                         onClick={() => {
                                           setReplyingTo(null);
-                                          setReplyContent('');
+                                          setReplyContent("");
                                         }}
                                         className="px-3 py-2 sm:px-3 sm:py-1 text-gray-600 hover:text-gray-800 transition-colors text-sm min-h-[36px]"
                                       >
@@ -1696,10 +1502,14 @@ export default function BlogDetailPage() {
                                       </button>
                                       <button
                                         onClick={() => handleReply(comment._id)}
-                                        disabled={commentLoading || !replyContent.trim()}
+                                        disabled={
+                                          commentLoading || !replyContent.trim()
+                                        }
                                         className="px-4 py-2 sm:px-3 sm:py-1 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 transition-colors text-sm min-h-[36px]"
                                       >
-                                        {commentLoading ? 'Posting...' : 'Reply'}
+                                        {commentLoading
+                                          ? "Posting..."
+                                          : "Reply"}
                                       </button>
                                     </div>
                                   </div>
@@ -1712,12 +1522,15 @@ export default function BlogDetailPage() {
                           {comment.replies && comment.replies.length > 0 && (
                             <div className="mt-4 space-y-3">
                               {comment.replies.map((reply) => (
-                                <div key={reply._id} className="ml-4 sm:ml-8 p-3 sm:p-4 bg-gray-50 rounded-lg">
+                                <div
+                                  key={reply._id}
+                                  className="ml-4 sm:ml-8 p-3 sm:p-4 bg-gray-50 rounded-lg"
+                                >
                                   <div className="flex items-start space-x-2 sm:space-x-3">
                                     {reply.author.avatar ? (
                                       <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden flex-shrink-0">
-                                        <Image 
-                                          src={reply.author.avatar} 
+                                        <Image
+                                          src={reply.author.avatar}
                                           alt={reply.author.name}
                                           width={36}
                                           height={36}
@@ -1729,15 +1542,20 @@ export default function BlogDetailPage() {
                                         {reply.author.name.charAt(0)}
                                       </div>
                                     )}
-                                    
+
                                     <div className="flex-1 min-w-0">
                                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-1 space-y-1 sm:space-y-0">
                                         <div className="flex-1 min-w-0">
-                                          <h5 className="font-semibold text-gray-900 text-sm">{reply.author.name}</h5>
-                                          <p className="text-xs text-gray-500">{formatDate(reply.createdAt)}</p>
+                                          <h5 className="font-semibold text-gray-900 text-sm">
+                                            {reply.author.name}
+                                          </h5>
+                                          <p className="text-xs text-gray-500">
+                                            {formatDate(reply.createdAt)}
+                                          </p>
                                         </div>
-                                        
-                                        {(canEditComment(reply) || canDeleteComment(reply)) && (
+
+                                        {(canEditComment(reply) ||
+                                          canDeleteComment(reply)) && (
                                           <div className="flex items-center space-x-1 self-start sm:self-center">
                                             {canEditComment(reply) && (
                                               <button
@@ -1753,7 +1571,9 @@ export default function BlogDetailPage() {
                                             )}
                                             {canDeleteComment(reply) && (
                                               <button
-                                                onClick={() => handleDeleteComment(reply._id)}
+                                                onClick={() =>
+                                                  handleDeleteComment(reply._id)
+                                                }
                                                 className="text-gray-400 hover:text-red-600 transition-colors p-2 sm:p-1 -mr-1 sm:mr-0"
                                                 title="Delete reply"
                                               >
@@ -1763,7 +1583,9 @@ export default function BlogDetailPage() {
                                           </div>
                                         )}
                                       </div>
-                                      <p className="text-gray-700 text-sm">{reply.content}</p>
+                                      <p className="text-gray-700 text-sm">
+                                        {reply.content}
+                                      </p>
                                     </div>
                                   </div>
                                 </div>
@@ -1779,8 +1601,12 @@ export default function BlogDetailPage() {
             ) : (
               <div className="text-center py-12">
                 <MessageCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Comments Yet</h3>
-                <p className="text-gray-600">Be the first to share your thoughts!</p>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  No Comments Yet
+                </h3>
+                <p className="text-gray-600">
+                  Be the first to share your thoughts!
+                </p>
               </div>
             )}
           </div>
@@ -1788,92 +1614,13 @@ export default function BlogDetailPage() {
       </section>
 
       {/* Related Articles */}
-      {relatedBlogs.length > 0 && (
-        <section className="py-16 bg-gray-50 mt-16">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
-              Related Articles
-            </h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {relatedBlogs.map((relatedBlog) => (
-                <article
-                  key={relatedBlog._id}
-                  className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2"
-                >
-                  <div className="relative h-48 bg-gradient-to-r from-gray-400 to-gray-600">
-                    {relatedBlog.featuredImage && (
-                      <Image 
-                        src={relatedBlog.featuredImage} 
-                        alt={relatedBlog.title}
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 768px) 100vw, 50vw"
-                      />
-                    )}
-                    <div className="absolute top-4 left-4">
-                      <span className="bg-white bg-opacity-90 text-gray-900 px-2 py-1 rounded-full text-xs font-medium">
-                        {relatedBlog.category}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="p-6">
-                    <div className="flex items-center mb-3">
-                      {relatedBlog.author.avatar ? (
-                        <div className="w-8 h-8 rounded-full overflow-hidden mr-3">
-                          <Image 
-                            src={relatedBlog.author.avatar} 
-                            alt={relatedBlog.author.name}
-                            width={32}
-                            height={32}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      ) : (
-                        <div className="w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">
-                          {relatedBlog.author.name.charAt(0)}
-                        </div>
-                      )}
-                      <span className="text-sm text-gray-600 font-medium">{relatedBlog.author.name}</span>
-                    </div>
-
-                    <h3 className="text-xl font-bold text-gray-900 mb-3 hover:text-orange-600 transition-colors">
-                      <Link href={`/blogs/${relatedBlog.slug}`}>
-                        {relatedBlog.title}
-                      </Link>
-                    </h3>
-
-                    <p className="text-gray-600 mb-4">
-                      {relatedBlog.excerpt}
-                    </p>
-
-                    <div className="flex items-center justify-between">
-                      <span className="flex items-center text-sm text-gray-500">
-                        <Clock className="h-4 w-4 mr-1" />
-                        {relatedBlog.readingTime} min
-                      </span>
-
-                      <Link
-                        href={`/blogs/${relatedBlog.slug}`}
-                        className="text-orange-600 hover:text-orange-700 font-medium"
-                      >
-                        Read →
-                      </Link>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
+      <RelatedArticles articles={relatedBlogs} />
 
       {/* Back to Blogs */}
-      <div className="py-8 text-center">
+      <div className="py-12 text-center bg-white">
         <Link
           href="/blogs"
-          className="inline-flex items-center space-x-2 text-orange-600 hover:text-orange-700 font-medium"
+          className="inline-flex items-center space-x-2 px-8 py-4 bg-white text-orange-600 border-2 border-orange-600 rounded-full font-semibold hover:bg-orange-600 hover:text-white transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
         >
           <ChevronLeft className="h-5 w-5" />
           <span>View All Articles</span>
@@ -1894,9 +1641,9 @@ export default function BlogDetailPage() {
       <div className="fixed bottom-8 right-8 z-50">
         <button
           onClick={() => {
-            const commentsSection = document.getElementById('comments');
+            const commentsSection = document.getElementById("comments");
             if (commentsSection) {
-              commentsSection.scrollIntoView({ behavior: 'smooth' });
+              commentsSection.scrollIntoView({ behavior: "smooth" });
             }
           }}
           className="flex items-center space-x-2 px-4 py-3 bg-orange-600 text-white rounded-full shadow-lg hover:bg-orange-700 transition-all duration-300 hover:scale-105"
@@ -1908,4 +1655,4 @@ export default function BlogDetailPage() {
       </div>
     </div>
   );
-} 
+}
