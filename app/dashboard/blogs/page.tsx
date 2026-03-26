@@ -85,9 +85,14 @@ export default function MyBlogs() {
       console.log("Fetching user blogs with token...");
 
       // Fetch user's blogs using the dedicated endpoint
-      const response = await fetch("/api/blogs/my-blogs", {
+      // Add timestamp to prevent browser caching
+      const timestamp = new Date().getTime();
+      const response = await fetch(`/api/blogs/my-blogs?_t=${timestamp}`, {
+        method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
         },
         cache: "no-store",
       });
