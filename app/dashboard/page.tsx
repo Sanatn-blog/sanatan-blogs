@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { useAuth } from '@/hooks/useAuth';
-import { useTheme } from '@/hooks/useTheme';
-import { 
-  User, 
-  FileText, 
-  Edit, 
-  LogOut, 
+import React, { useEffect, useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { useAuth } from "@/hooks/useAuth";
+import { useTheme } from "@/hooks/useTheme";
+import {
+  User,
+  FileText,
+  Edit,
+  LogOut,
   Calendar,
   Eye,
   ThumbsUp,
@@ -18,8 +18,8 @@ import {
   Moon,
   Sun,
   Users,
-  BookmarkPlus
-} from 'lucide-react';
+  BookmarkPlus,
+} from "lucide-react";
 
 interface UserStats {
   totalBlogs: number;
@@ -43,7 +43,7 @@ export default function DashboardPage() {
     totalBlogs: 0,
     totalViews: 0,
     totalLikes: 0,
-    totalComments: 0
+    totalComments: 0,
   });
   const [mounted, setMounted] = useState(false);
 
@@ -56,34 +56,51 @@ export default function DashboardPage() {
 
   const fetchUserStats = async () => {
     try {
-      const token = localStorage.getItem('accessToken');
-      const response = await fetch('/api/blogs/my-blogs', {
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch("/api/blogs/my-blogs", {
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
+        cache: "no-store",
       });
-      
+
       if (response.ok) {
         const data = await response.json();
-        console.log('Dashboard received blogs:', data.blogs.length);
-        console.log('Sample blog comments:', data.blogs[0]?.comments?.length || 0);
-        
+        console.log("Dashboard received blogs:", data.blogs.length);
+        console.log(
+          "Sample blog comments:",
+          data.blogs[0]?.comments?.length || 0,
+        );
+
         // Calculate stats from blogs data
-        const totalViews = data.blogs.reduce((sum: number, blog: Blog) => sum + (blog.views || 0), 0);
-        const totalLikes = data.blogs.reduce((sum: number, blog: Blog) => sum + (blog.likes?.length || 0), 0);
-        const totalComments = data.blogs.reduce((sum: number, blog: Blog) => sum + (blog.commentCount || 0), 0);
-        
-        console.log('Calculated stats:', { totalViews, totalLikes, totalComments });
-        
+        const totalViews = data.blogs.reduce(
+          (sum: number, blog: Blog) => sum + (blog.views || 0),
+          0,
+        );
+        const totalLikes = data.blogs.reduce(
+          (sum: number, blog: Blog) => sum + (blog.likes?.length || 0),
+          0,
+        );
+        const totalComments = data.blogs.reduce(
+          (sum: number, blog: Blog) => sum + (blog.commentCount || 0),
+          0,
+        );
+
+        console.log("Calculated stats:", {
+          totalViews,
+          totalLikes,
+          totalComments,
+        });
+
         setStats({
           totalBlogs: data.blogs.length,
           totalViews,
           totalLikes,
-          totalComments
+          totalComments,
         });
       }
     } catch (error) {
-      console.error('Error fetching user stats:', error);
+      console.error("Error fetching user stats:", error);
     }
   };
 
@@ -103,7 +120,9 @@ export default function DashboardPage() {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center px-4">
         <div className="text-center">
-          <h1 className="text-xl sm:text-2xl font-bold text-white mb-4">Please log in to access your dashboard</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-white mb-4">
+            Please log in to access your dashboard
+          </h1>
           <Link href="/login">
             <span className="inline-block px-4 sm:px-6 py-3 bg-gradient-to-r from-orange-600 to-pink-600 text-white rounded-xl font-medium shadow hover:from-orange-700 hover:to-pink-700 transition-all text-sm sm:text-base">
               Login
@@ -115,32 +134,57 @@ export default function DashboardPage() {
   }
 
   // If user status is pending, show application submitted page
-  if (user.status === 'pending') {
+  if (user.status === "pending") {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-900 px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-gray-800 rounded-2xl shadow-xl p-6 sm:p-8 border border-gray-700 max-w-lg w-full text-center">
           <div className="mb-6">
             <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-6 h-6 sm:w-8 sm:h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                className="w-6 h-6 sm:w-8 sm:h-8 text-blue-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
             </div>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-3 sm:mb-4">Application Submitted!</h1>
-          <p className="text-sm sm:text-base text-gray-300 mb-3 sm:mb-4">Thank you for submitting your application to become a blog writer.</p>
-          <p className="text-xs sm:text-sm text-gray-400 mb-4 sm:mb-6 leading-relaxed">Our admin team will review your application and verify your credentials. Once approved, you&apos;ll be able to write and publish your own blogs.</p>
-          
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-3 sm:mb-4">
+            Application Submitted!
+          </h1>
+          <p className="text-sm sm:text-base text-gray-300 mb-3 sm:mb-4">
+            Thank you for submitting your application to become a blog writer.
+          </p>
+          <p className="text-xs sm:text-sm text-gray-400 mb-4 sm:mb-6 leading-relaxed">
+            Our admin team will review your application and verify your
+            credentials. Once approved, you&apos;ll be able to write and publish
+            your own blogs.
+          </p>
+
           <div className="bg-yellow-900/20 border border-yellow-700 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
             <p className="text-yellow-300 text-xs sm:text-sm font-medium">
               <strong>Current Status:</strong> Awaiting Admin Verification
             </p>
-            <p className="text-yellow-400 text-xs mt-1 leading-relaxed">You&apos;ll receive a notification once your application is reviewed.</p>
+            <p className="text-yellow-400 text-xs mt-1 leading-relaxed">
+              You&apos;ll receive a notification once your application is
+              reviewed.
+            </p>
           </div>
-          
+
           <div className="space-y-3">
-            <p className="text-gray-400 text-xs sm:text-sm">While you wait, explore our existing blog collection:</p>
+            <p className="text-gray-400 text-xs sm:text-sm">
+              While you wait, explore our existing blog collection:
+            </p>
             <Link href="/blogs">
-              <span className="inline-block w-full sm:w-auto px-4 sm:px-6 py-3 bg-gradient-to-r from-orange-600 to-pink-600 text-white rounded-xl font-medium shadow hover:from-orange-700 hover:to-pink-700 transition-all text-sm sm:text-base">Explore Blogs</span>
+              <span className="inline-block w-full sm:w-auto px-4 sm:px-6 py-3 bg-gradient-to-r from-orange-600 to-pink-600 text-white rounded-xl font-medium shadow hover:from-orange-700 hover:to-pink-700 transition-all text-sm sm:text-base">
+                Explore Blogs
+              </span>
             </Link>
           </div>
         </div>
@@ -169,23 +213,31 @@ export default function DashboardPage() {
                 )}
               </div>
               <div>
-                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">Welcome back, {user.name}!</h1>
-                <p className="text-xs sm:text-sm text-gray-400">Manage your blog content and track your performance</p>
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">
+                  Welcome back, {user.name}!
+                </h1>
+                <p className="text-xs sm:text-sm text-gray-400">
+                  Manage your blog content and track your performance
+                </p>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-              <span className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${
-                user.status === 'approved' ? 'bg-green-900/30 text-green-300' :
-                user.status === 'rejected' ? 'bg-red-900/30 text-red-300' :
-                'bg-yellow-900/30 text-yellow-300'
-              }`}>
+              <span
+                className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${
+                  user.status === "approved"
+                    ? "bg-green-900/30 text-green-300"
+                    : user.status === "rejected"
+                      ? "bg-red-900/30 text-red-300"
+                      : "bg-yellow-900/30 text-yellow-300"
+                }`}
+              >
                 {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
               </span>
               <button
                 onClick={toggleTheme}
                 className="p-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors"
               >
-                {theme === 'dark' ? (
+                {theme === "dark" ? (
                   <Sun className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400" />
                 ) : (
                   <Moon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-300" />
@@ -207,8 +259,12 @@ export default function DashboardPage() {
           <div className="bg-gray-800 rounded-2xl shadow-xl p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-400">Total Blogs</p>
-                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">{stats.totalBlogs}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-400">
+                  Total Blogs
+                </p>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">
+                  {stats.totalBlogs}
+                </p>
               </div>
               <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-blue-900/30 rounded-full flex items-center justify-center">
                 <FileText className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-blue-400" />
@@ -219,8 +275,12 @@ export default function DashboardPage() {
           <div className="bg-gray-800 rounded-2xl shadow-xl p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-400">Total Views</p>
-                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">{stats.totalViews}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-400">
+                  Total Views
+                </p>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">
+                  {stats.totalViews}
+                </p>
               </div>
               <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-green-900/30 rounded-full flex items-center justify-center">
                 <Eye className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-green-400" />
@@ -231,8 +291,12 @@ export default function DashboardPage() {
           <div className="bg-gray-800 rounded-2xl shadow-xl p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-400">Total Likes</p>
-                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">{stats.totalLikes}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-400">
+                  Total Likes
+                </p>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">
+                  {stats.totalLikes}
+                </p>
               </div>
               <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-pink-900/30 rounded-full flex items-center justify-center">
                 <ThumbsUp className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-pink-400" />
@@ -243,8 +307,12 @@ export default function DashboardPage() {
           <div className="bg-gray-800 rounded-2xl shadow-xl p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-400">Total Comments</p>
-                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">{stats.totalComments}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-400">
+                  Total Comments
+                </p>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">
+                  {stats.totalComments}
+                </p>
               </div>
               <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-purple-900/30 rounded-full flex items-center justify-center">
                 <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-purple-400" />
@@ -262,8 +330,12 @@ export default function DashboardPage() {
                   <Edit className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-lg font-semibold text-white">Write New Blog</h3>
-                  <p className="text-xs sm:text-sm text-gray-400">Create and publish a new blog post</p>
+                  <h3 className="text-base sm:text-lg font-semibold text-white">
+                    Write New Blog
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-400">
+                    Create and publish a new blog post
+                  </p>
                 </div>
               </div>
             </div>
@@ -276,8 +348,12 @@ export default function DashboardPage() {
                   <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" />
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-lg font-semibold text-white">My Blogs</h3>
-                  <p className="text-xs sm:text-sm text-gray-400">Manage your published blogs</p>
+                  <h3 className="text-base sm:text-lg font-semibold text-white">
+                    My Blogs
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-400">
+                    Manage your published blogs
+                  </p>
                 </div>
               </div>
             </div>
@@ -290,8 +366,12 @@ export default function DashboardPage() {
                   <Settings className="w-5 h-5 sm:w-6 sm:h-6 text-purple-400" />
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-lg font-semibold text-white">Settings</h3>
-                  <p className="text-xs sm:text-sm text-gray-400">Update your profile and preferences</p>
+                  <h3 className="text-base sm:text-lg font-semibold text-white">
+                    Settings
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-400">
+                    Update your profile and preferences
+                  </p>
                 </div>
               </div>
             </div>
@@ -304,8 +384,12 @@ export default function DashboardPage() {
                   <Eye className="w-5 h-5 sm:w-6 sm:h-6 text-green-400" />
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-lg font-semibold text-white">Explore Blogs</h3>
-                  <p className="text-xs sm:text-sm text-gray-400">Read blogs from other writers</p>
+                  <h3 className="text-base sm:text-lg font-semibold text-white">
+                    Explore Blogs
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-400">
+                    Read blogs from other writers
+                  </p>
                 </div>
               </div>
             </div>
@@ -318,8 +402,12 @@ export default function DashboardPage() {
                   <Users className="w-5 h-5 sm:w-6 sm:h-6 text-purple-400" />
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-lg font-semibold text-white">Followers</h3>
-                  <p className="text-xs sm:text-sm text-gray-400">Manage your followers and following</p>
+                  <h3 className="text-base sm:text-lg font-semibold text-white">
+                    Followers
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-400">
+                    Manage your followers and following
+                  </p>
                 </div>
               </div>
             </div>
@@ -332,8 +420,12 @@ export default function DashboardPage() {
                   <BookmarkPlus className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-400" />
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-lg font-semibold text-white">My Bookmarks</h3>
-                  <p className="text-xs sm:text-sm text-gray-400">View your saved articles</p>
+                  <h3 className="text-base sm:text-lg font-semibold text-white">
+                    My Bookmarks
+                  </h3>
+                  <p className="text-xs sm:text-sm text-gray-400">
+                    View your saved articles
+                  </p>
                 </div>
               </div>
             </div>
@@ -342,15 +434,21 @@ export default function DashboardPage() {
 
         {/* Recent Activity */}
         <div className="mt-6 sm:mt-8 bg-gray-800 rounded-2xl shadow-xl p-4 sm:p-6 lg:p-8">
-          <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">Recent Activity</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">
+            Recent Activity
+          </h2>
           <div className="space-y-3 sm:space-y-4">
             <div className="flex items-center space-x-3 sm:space-x-4 p-3 sm:p-4 bg-gray-700 rounded-xl">
               <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-900/30 rounded-full flex items-center justify-center">
                 <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
               </div>
               <div>
-                <p className="text-xs sm:text-sm font-medium text-white">Account created</p>
-                <p className="text-xs text-gray-400">Welcome to our community!</p>
+                <p className="text-xs sm:text-sm font-medium text-white">
+                  Account created
+                </p>
+                <p className="text-xs text-gray-400">
+                  Welcome to our community!
+                </p>
               </div>
             </div>
             {stats.totalBlogs > 0 && (
@@ -359,8 +457,12 @@ export default function DashboardPage() {
                   <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-green-400" />
                 </div>
                 <div>
-                  <p className="text-xs sm:text-sm font-medium text-white">Blog published</p>
-                  <p className="text-xs text-gray-400">Your first blog is now live!</p>
+                  <p className="text-xs sm:text-sm font-medium text-white">
+                    Blog published
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    Your first blog is now live!
+                  </p>
                 </div>
               </div>
             )}
@@ -369,4 +471,4 @@ export default function DashboardPage() {
       </div>
     </div>
   );
-} 
+}
