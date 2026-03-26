@@ -118,6 +118,10 @@ export default function MyBlogs() {
       // Show more specific error messages to user
       if (errorMessage.includes("User not authenticated")) {
         setError("Please log in to view your blogs");
+      } else if (errorMessage.includes("User not approved")) {
+        setError(
+          "Your account is pending approval. Please wait for admin approval to access your blogs.",
+        );
       } else if (errorMessage.includes("Database connection failed")) {
         setError(
           "Unable to connect to the database. Please try again in a few moments.",
@@ -313,6 +317,46 @@ export default function MyBlogs() {
           >
             Login
           </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Check if user is not approved
+  if (user.status !== "approved") {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center px-4">
+        <div className="text-center max-w-md mx-auto bg-gray-800 rounded-2xl shadow-xl border border-gray-700 p-6">
+          <AlertTriangle className="h-16 w-16 text-yellow-500 mx-auto mb-4" />
+          <h1 className="text-xl sm:text-2xl font-bold text-white mb-4">
+            Account Pending Approval
+          </h1>
+          <p className="text-gray-300 text-sm sm:text-base mb-4">
+            Your account status is:{" "}
+            <span className="font-semibold text-yellow-400">{user.status}</span>
+          </p>
+          <p className="text-gray-400 text-sm mb-6">
+            {user.status === "pending" &&
+              "Your account is awaiting admin approval. You will be able to create and manage blogs once your account is approved."}
+            {user.status === "rejected" &&
+              "Your account has been rejected. Please contact support for more information."}
+            {user.status === "suspended" &&
+              "Your account has been suspended. Please contact support for assistance."}
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link
+              href="/dashboard"
+              className="inline-block bg-gray-700 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg hover:bg-gray-600 transition-colors text-sm sm:text-base"
+            >
+              Back to Dashboard
+            </Link>
+            <Link
+              href="/contact"
+              className="inline-block bg-orange-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg hover:bg-orange-700 transition-colors text-sm sm:text-base"
+            >
+              Contact Support
+            </Link>
+          </div>
         </div>
       </div>
     );
