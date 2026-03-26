@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { 
-  Menu, 
-  X, 
-  User, 
-  LogOut, 
-  PenTool, 
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { useRouter, usePathname } from "next/navigation";
+import {
+  Menu,
+  X,
+  User,
+  LogOut,
+  PenTool,
   Users,
   Heart,
   Settings,
@@ -21,8 +21,10 @@ import {
   Shield,
   BarChart3,
   Mail,
-  BookmarkPlus
-} from 'lucide-react';
+  BookmarkPlus,
+  Sparkles,
+  Bell,
+} from "lucide-react";
 
 interface User {
   _id: string;
@@ -41,9 +43,18 @@ interface NavbarProps {
 export default function Navbar({ user, onLogout }: NavbarProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
 
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
 
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -54,11 +65,11 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
     };
 
     if (showProfileMenu) {
-      document.addEventListener('click', handleClickOutside);
+      document.addEventListener("click", handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener('click', handleClickOutside);
+      document.removeEventListener("click", handleClickOutside);
     };
   }, [showProfileMenu]);
 
@@ -66,37 +77,47 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
     if (onLogout) {
       onLogout();
     }
-    localStorage.removeItem('accessToken');
-    document.cookie = 'refreshToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-    router.push('/');
+    localStorage.removeItem("accessToken");
+    document.cookie =
+      "refreshToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+    router.push("/");
   };
 
   const navLinks = [
-    { href: '/', label: 'Home', icon: Home },
-    { href: '/blogs', label: 'Blogs', icon: BookOpen },
-    { href: '/about', label: 'About', icon: Info },
-    { href: '/contact', label: 'Contact', icon: Mail },
+    { href: "/", label: "Home", icon: Home },
+    { href: "/blogs", label: "Blogs", icon: BookOpen },
+    { href: "/about", label: "About", icon: Info },
+    { href: "/contact", label: "Contact", icon: Mail },
   ];
 
+  const isActive = (path: string) => pathname === path;
+
   return (
-    <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200/20 shadow-sm">
+    <nav
+      className={`sticky top-0 z-50 transition-all duration-300 ${
+        scrolled
+          ? "bg-white/95 backdrop-blur-xl shadow-lg border-b border-gray-200/50"
+          : "bg-white/80 backdrop-blur-md border-b border-gray-200/20 shadow-sm"
+      }`}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          
           {/* Logo Section */}
           <div className="flex items-center space-x-8">
             <Link href="/" className="flex items-center space-x-3 group">
               <div className="relative">
-                <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-pink-500 rounded-xl flex items-center justify-center text-white font-bold text-lg transform group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-xl">
-                  SB
+                <div className="w-11 h-11 bg-gradient-to-br from-orange-500 via-pink-500 to-purple-500 rounded-2xl flex items-center justify-center text-white font-bold text-lg transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg group-hover:shadow-2xl">
+                  <Sparkles className="h-6 w-6" />
                 </div>
-                <div className="absolute -inset-1 bg-gradient-to-br from-orange-500 to-pink-500 rounded-xl opacity-20 group-hover:opacity-40 transition-opacity duration-300 blur"></div>
+                <div className="absolute -inset-1 bg-gradient-to-br from-orange-500 via-pink-500 to-purple-500 rounded-2xl opacity-20 group-hover:opacity-50 transition-opacity duration-300 blur-md"></div>
               </div>
               <div className="hidden sm:block">
-                <h1 className="text-xl font-bold bg-gradient-to-r from-orange-600 to-pink-600 bg-clip-text text-transparent">
-                सनातन Blogs
+                <h1 className="text-xl font-bold bg-gradient-to-r from-orange-600 via-pink-600 to-purple-600 bg-clip-text text-transparent group-hover:scale-105 transition-transform duration-300 inline-block">
+                  सनातन Blogs
                 </h1>
-                <p className="text-xs text-gray-500 -mt-1">Spiritual Wisdom</p>
+                <p className="text-xs text-gray-500 -mt-1 font-medium">
+                  Spiritual Wisdom ✨
+                </p>
               </div>
             </Link>
 
@@ -104,14 +125,26 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
             <div className="hidden lg:flex items-center space-x-1">
               {navLinks.map((link) => {
                 const IconComponent = link.icon;
+                const active = isActive(link.href);
                 return (
                   <Link
                     key={link.href}
                     href={link.href}
-                    className="group flex items-center space-x-2 px-4 py-2 rounded-xl text-gray-700 hover:text-orange-600 hover:bg-orange-50 transition-all duration-300 font-medium"
+                    className={`group relative flex items-center space-x-2 px-4 py-2 rounded-xl font-medium transition-all duration-300 ${
+                      active
+                        ? "text-orange-600 bg-orange-50"
+                        : "text-gray-700 hover:text-orange-600 hover:bg-orange-50"
+                    }`}
                   >
-                    <IconComponent className="h-4 w-4 group-hover:scale-110 transition-transform duration-300" />
+                    <IconComponent
+                      className={`h-4 w-4 transition-transform duration-300 ${
+                        active ? "scale-110" : "group-hover:scale-110"
+                      }`}
+                    />
                     <span>{link.label}</span>
+                    {active && (
+                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-0.5 bg-gradient-to-r from-orange-500 to-pink-500 rounded-full"></div>
+                    )}
                   </Link>
                 );
               })}
@@ -120,25 +153,33 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
 
           {/* Right Section */}
           <div className="flex items-center space-x-3">
-            
             {/* Donate Button */}
             <Link
               href="/donate"
-              className="hidden sm:flex items-center space-x-2 bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white px-4 py-2 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+              className="hidden sm:flex items-center space-x-2 bg-gradient-to-r from-pink-500 via-red-500 to-rose-500 hover:from-pink-600 hover:via-red-600 hover:to-rose-600 text-white px-4 py-2.5 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl group"
             >
-              <Heart className="h-4 w-4" />
+              <Heart className="h-4 w-4 group-hover:animate-pulse" />
               <span className="hidden md:inline">Donate</span>
             </Link>
 
             {/* User Section */}
             {user ? (
               <>
+                {/* Notifications Button */}
+                <button
+                  className="hidden md:flex relative p-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 transition-all duration-300 group"
+                  aria-label="Notifications"
+                >
+                  <Bell className="h-5 w-5 group-hover:scale-110 transition-transform" />
+                  <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                </button>
+
                 {/* Write Blog Button - Only for logged in users */}
                 <Link
                   href="/write-blog"
-                  className="hidden md:flex items-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                  className="hidden md:flex items-center space-x-2 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white px-4 py-2.5 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl group"
                 >
-                  <PenTool className="h-4 w-4" />
+                  <PenTool className="h-4 w-4 group-hover:rotate-12 transition-transform" />
                   <span>Write</span>
                 </Link>
 
@@ -147,118 +188,151 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      console.log('Profile button clicked, current state:', showProfileMenu);
+                      console.log(
+                        "Profile button clicked, current state:",
+                        showProfileMenu,
+                      );
                       setShowProfileMenu(!showProfileMenu);
                     }}
                     className={`flex items-center space-x-3 p-2 rounded-xl transition-all duration-300 group ${
-                      showProfileMenu 
-                        ? 'bg-orange-50 ring-2 ring-orange-500/20' 
-                        : 'hover:bg-gray-100'
+                      showProfileMenu
+                        ? "bg-gradient-to-r from-orange-50 to-pink-50 ring-2 ring-orange-500/30 shadow-md"
+                        : "hover:bg-gray-100"
                     }`}
                     aria-expanded={showProfileMenu}
                     aria-haspopup="true"
                   >
                     <div className="relative">
                       {user.avatar ? (
-                        <Image
-                          src={user.avatar}
-                          alt={user.name}
-                          width={36}
-                          height={36}
-                          className="w-9 h-9 rounded-xl object-cover"
-                        />
+                        <div className="relative">
+                          <Image
+                            src={user.avatar}
+                            alt={user.name}
+                            width={40}
+                            height={40}
+                            className="w-10 h-10 rounded-xl object-cover ring-2 ring-white shadow-md"
+                          />
+                        </div>
                       ) : (
-                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-white text-sm font-bold shadow-lg ${
-                          user.role === 'super_admin' 
-                            ? 'bg-gradient-to-r from-purple-600 to-orange-600' 
-                            : user.role === 'admin' 
-                            ? 'bg-gradient-to-r from-blue-600 to-orange-600'
-                            : 'bg-gradient-to-r from-orange-600 to-orange-700'
-                        }`}>
+                        <div
+                          className={`w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-bold shadow-lg group-hover:shadow-xl transition-shadow ${
+                            user.role === "super_admin"
+                              ? "bg-gradient-to-br from-purple-600 via-pink-600 to-orange-600"
+                              : user.role === "admin"
+                                ? "bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600"
+                                : "bg-gradient-to-br from-orange-600 to-pink-600"
+                          }`}
+                        >
                           {user.name.charAt(0).toUpperCase()}
                         </div>
                       )}
-                      
+
                       {/* Role Badge */}
-                      {user.role === 'super_admin' && (
-                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full border-2 border-white flex items-center justify-center">
-                          <Crown className="h-2 w-2 text-white" />
+                      {user.role === "super_admin" && (
+                        <div className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full border-2 border-white flex items-center justify-center shadow-lg">
+                          <Crown className="h-2.5 w-2.5 text-white" />
                         </div>
                       )}
-                      {user.role === 'admin' && (
-                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full border-2 border-white flex items-center justify-center">
-                          <Shield className="h-2 w-2 text-white" />
+                      {user.role === "admin" && (
+                        <div className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full border-2 border-white flex items-center justify-center shadow-lg">
+                          <Shield className="h-2.5 w-2.5 text-white" />
                         </div>
                       )}
-                      
+
                       {/* Online Indicator */}
-                      <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
-                    </div>
-                    
-                    <div className="hidden lg:block text-left">
-                      <div className="font-semibold text-gray-900 text-sm">{user.name.split(' ')[0]}</div>
-                      <div className={`text-xs ${
-                        user.role === 'super_admin' 
-                          ? 'text-purple-600' 
-                          : user.role === 'admin' 
-                          ? 'text-blue-600'
-                          : 'text-gray-500'
-                      }`}>
-                        {user.role === 'super_admin' ? 'Super Admin' : 
-                         user.role === 'admin' ? 'Admin' : 'User'}
+                      <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white shadow-sm">
+                        <div className="w-full h-full bg-green-400 rounded-full animate-ping opacity-75"></div>
                       </div>
                     </div>
-                    
-                    <ChevronDown className={`h-4 w-4 text-gray-400 group-hover:text-gray-600 transition-all duration-300 ${
-                      showProfileMenu ? 'rotate-180 text-orange-500' : ''
-                    }`} />
+
+                    <div className="hidden lg:block text-left">
+                      <div className="font-semibold text-gray-900 text-sm leading-tight">
+                        {user.name.split(" ")[0]}
+                      </div>
+                      <div
+                        className={`text-xs font-medium leading-tight ${
+                          user.role === "super_admin"
+                            ? "text-purple-600"
+                            : user.role === "admin"
+                              ? "text-blue-600"
+                              : "text-gray-500"
+                        }`}
+                      >
+                        {user.role === "super_admin"
+                          ? "👑 Super Admin"
+                          : user.role === "admin"
+                            ? "🛡️ Admin"
+                            : "👤 Member"}
+                      </div>
+                    </div>
+
+                    <ChevronDown
+                      className={`h-4 w-4 text-gray-400 group-hover:text-orange-600 transition-all duration-300 ${
+                        showProfileMenu ? "rotate-180 text-orange-600" : ""
+                      }`}
+                    />
                   </button>
 
                   {/* Profile Dropdown */}
                   {showProfileMenu && (
-                    <div 
-                      className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-gray-200 py-2 z-50 transform opacity-0 scale-95 animate-in fade-in slide-in-from-top-2 duration-200"
-                      style={{ 
-                        opacity: 1, 
-                        transform: 'scale(1) translateY(0)' 
+                    <div
+                      className="absolute right-0 mt-3 w-72 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 z-50 transform opacity-0 scale-95 animate-in fade-in slide-in-from-top-2 duration-200"
+                      style={{
+                        opacity: 1,
+                        transform: "scale(1) translateY(0)",
                       }}
                       onClick={(e) => e.stopPropagation()}
                     >
-                      
                       {/* User Info Header */}
-                      <div className="px-4 py-3 border-b border-gray-100">
+                      <div className="px-4 py-4 border-b border-gray-100 bg-gradient-to-br from-orange-50 via-pink-50 to-purple-50">
                         <div className="flex items-center space-x-3">
-                          <div className={`w-12 h-12 rounded-xl overflow-hidden flex items-center justify-center text-white font-bold shadow-lg ${
-                            user.role === 'super_admin' 
-                              ? 'bg-gradient-to-r from-purple-600 to-orange-600' 
-                              : user.role === 'admin' 
-                              ? 'bg-gradient-to-r from-blue-600 to-orange-600'
-                              : 'bg-gradient-to-r from-orange-600 to-orange-700'
-                          }`}>
-                            {user.avatar ? (
-                              <Image
-                                src={user.avatar}
-                                alt={user.name}
-                                width={48}
-                                height={48}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <span>{user.name.charAt(0).toUpperCase()}</span>
-                            )}
+                          <div className="relative">
+                            <div
+                              className={`w-14 h-14 rounded-2xl overflow-hidden flex items-center justify-center text-white font-bold shadow-xl ${
+                                user.role === "super_admin"
+                                  ? "bg-gradient-to-br from-purple-600 via-pink-600 to-orange-600"
+                                  : user.role === "admin"
+                                    ? "bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600"
+                                    : "bg-gradient-to-br from-orange-600 to-pink-600"
+                              }`}
+                            >
+                              {user.avatar ? (
+                                <Image
+                                  src={user.avatar}
+                                  alt={user.name}
+                                  width={56}
+                                  height={56}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <span className="text-xl">
+                                  {user.name.charAt(0).toUpperCase()}
+                                </span>
+                              )}
+                            </div>
+                            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white shadow-sm"></div>
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-gray-900 truncate">{user.name.split(' ')[0]}</h3>
-                            <p className="text-sm text-gray-500 truncate">{user.email}</p>
-                            <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full mt-1 ${
-                              user.role === 'super_admin' 
-                                ? 'bg-purple-100 text-purple-800' 
-                                : user.role === 'admin' 
-                                ? 'bg-blue-100 text-blue-800'
-                                : 'bg-gray-100 text-gray-800'
-                            }`}>
-                              {user.role === 'super_admin' ? '👑 Super Admin' : 
-                               user.role === 'admin' ? '🛡️ Admin' : '👤 User'}
+                            <h3 className="font-bold text-gray-900 truncate text-base">
+                              {user.name}
+                            </h3>
+                            <p className="text-xs text-gray-600 truncate">
+                              {user.email}
+                            </p>
+                            <span
+                              className={`inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-lg mt-1.5 shadow-sm ${
+                                user.role === "super_admin"
+                                  ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white"
+                                  : user.role === "admin"
+                                    ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white"
+                                    : "bg-gray-200 text-gray-800"
+                              }`}
+                            >
+                              {user.role === "super_admin"
+                                ? "👑 Super Admin"
+                                : user.role === "admin"
+                                  ? "🛡️ Admin"
+                                  : "👤 Member"}
                             </span>
                           </div>
                         </div>
@@ -276,7 +350,9 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                           </div>
                           <div>
                             <p className="font-medium">Profile</p>
-                            <p className="text-xs text-gray-500">Manage your account</p>
+                            <p className="text-xs text-gray-500">
+                              Manage your account
+                            </p>
                           </div>
                         </Link>
 
@@ -290,7 +366,9 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                           </div>
                           <div>
                             <p className="font-medium">My Blogs</p>
-                            <p className="text-xs text-gray-500">View your articles</p>
+                            <p className="text-xs text-gray-500">
+                              View your articles
+                            </p>
                           </div>
                         </Link>
 
@@ -304,7 +382,9 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                           </div>
                           <div>
                             <p className="font-medium">My Bookmarks</p>
-                            <p className="text-xs text-gray-500">Saved articles</p>
+                            <p className="text-xs text-gray-500">
+                              Saved articles
+                            </p>
                           </div>
                         </Link>
 
@@ -318,12 +398,15 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                           </div>
                           <div>
                             <p className="font-medium">Write Blog</p>
-                            <p className="text-xs text-gray-500">Create new content</p>
+                            <p className="text-xs text-gray-500">
+                              Create new content
+                            </p>
                           </div>
                         </Link>
 
                         {/* Admin Links */}
-                        {(user.role === 'admin' || user.role === 'super_admin') && (
+                        {(user.role === "admin" ||
+                          user.role === "super_admin") && (
                           <>
                             <div className="border-t border-gray-100 my-2"></div>
                             <Link
@@ -336,7 +419,9 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                               </div>
                               <div>
                                 <p className="font-medium">Admin Dashboard</p>
-                                <p className="text-xs text-gray-500">Overview & analytics</p>
+                                <p className="text-xs text-gray-500">
+                                  Overview & analytics
+                                </p>
                               </div>
                             </Link>
                             <Link
@@ -349,13 +434,15 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                               </div>
                               <div>
                                 <p className="font-medium">Manage Users</p>
-                                <p className="text-xs text-gray-500">User management</p>
+                                <p className="text-xs text-gray-500">
+                                  User management
+                                </p>
                               </div>
                             </Link>
                           </>
                         )}
 
-                        {user.role === 'super_admin' && (
+                        {user.role === "super_admin" && (
                           <Link
                             href="/admin/settings"
                             className="group flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition-all duration-200"
@@ -366,7 +453,9 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                             </div>
                             <div>
                               <p className="font-medium">Site Settings</p>
-                              <p className="text-xs text-gray-500">Super admin only</p>
+                              <p className="text-xs text-gray-500">
+                                Super admin only
+                              </p>
                             </div>
                           </Link>
                         )}
@@ -386,7 +475,9 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                           </div>
                           <div className="text-left">
                             <p className="font-medium">Logout</p>
-                            <p className="text-xs text-gray-500">Sign out of your account</p>
+                            <p className="text-xs text-gray-500">
+                              Sign out of your account
+                            </p>
                           </div>
                         </button>
                       </div>
@@ -417,18 +508,25 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
               className="lg:hidden p-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 transition-all duration-300"
               aria-label="Toggle mobile menu"
             >
-              {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              {isOpen ? (
+                <X className="h-5 w-5" />
+              ) : (
+                <Menu className="h-5 w-5" />
+              )}
             </button>
           </div>
         </div>
 
         {/* Mobile Navigation */}
-        <div className={`lg:hidden transition-all duration-300 ease-in-out ${
-          isOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
-        }`}>
+        <div
+          className={`lg:hidden transition-all duration-300 ease-in-out ${
+            isOpen
+              ? "max-h-screen opacity-100"
+              : "max-h-0 opacity-0 overflow-hidden"
+          }`}
+        >
           <div className="py-4 border-t border-gray-200">
             <div className="flex flex-col space-y-2">
-              
               {/* Mobile Navigation Links */}
               {navLinks.map((link) => {
                 const IconComponent = link.icon;
@@ -468,27 +566,26 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                 )}
               </div>
 
-                            {/* Mobile Admin Section */}
-              {user && (user.role === 'admin' || user.role === 'super_admin') && (
-                <div className="pt-4 border-t border-gray-200">
-                  <div className="space-y-1">
-                    <Link
-                      href="/admin/users"
-                      className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-xl transition-colors"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      <Users className="h-5 w-5" />
-                      <span>Manage Users</span>
-                    </Link>
+              {/* Mobile Admin Section */}
+              {user &&
+                (user.role === "admin" || user.role === "super_admin") && (
+                  <div className="pt-4 border-t border-gray-200">
+                    <div className="space-y-1">
+                      <Link
+                        href="/admin/users"
+                        className="flex items-center space-x-3 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-xl transition-colors"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        <Users className="h-5 w-5" />
+                        <span>Manage Users</span>
+                      </Link>
+                    </div>
                   </div>
-                </div>
-              )}
-
-
+                )}
             </div>
           </div>
         </div>
       </div>
     </nav>
   );
-} 
+}
