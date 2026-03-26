@@ -13,7 +13,7 @@
     "debug": "node scripts/debug-my-blogs.js"
   },
   "dependencies": {
-    "@next/third-parties": "^15.4.5",
+    "@next/third-parties": "^16.1.7",
     "@tailwindcss/line-clamp": "^0.4.4",
     "@tailwindcss/typography": "^0.5.16",
     "@types/nodemailer": "^6.4.17",
@@ -24,7 +24,7 @@
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.525.0",
     "mongoose": "^8.0.0",
-    "next": "15.3.4",
+    "next": "^16.1.7",
     "next-auth": "^4.24.5",
     "nodemailer": "^6.10.1",
     "react": "^19.0.0",
@@ -44,7 +44,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "15.3.4",
+    "eslint-config-next": "^16.1.7",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

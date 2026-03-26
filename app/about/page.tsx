@@ -1,4 +1,17 @@
-import { Shield, Users, BookOpen, Heart, Target, Award } from 'lucide-react';
+import {
+  Shield,
+  Users,
+  BookOpen,
+  Heart,
+  Target,
+  Award,
+  Lock,
+  FileText,
+  Image,
+  TrendingUp,
+  UserCog,
+  Smartphone,
+} from "lucide-react";
 
 export default function AboutPage() {
   return (
@@ -7,12 +20,13 @@ export default function AboutPage() {
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
-            About 
+            About
             <span className="text-orange-600"> Sanatan Blogs</span>
           </h1>
           <p className="text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto">
-            A platform dedicated to authentic storytelling, meaningful conversations, 
-            and building a community of thoughtful writers and readers.
+            A platform dedicated to authentic storytelling, meaningful
+            conversations, and building a community of thoughtful writers and
+            readers.
           </p>
         </div>
       </section>
@@ -26,13 +40,14 @@ export default function AboutPage() {
                 Our Mission
               </h2>
               <p className="text-lg text-gray-600 mb-6">
-                At Sanatan Blogs, we believe in the power of authentic storytelling. 
-                Our mission is to create a secure, welcoming space where writers can 
-                share their thoughts, experiences, and knowledge with a global community.
+                At Sanatan Blogs, we believe in the power of authentic
+                storytelling. Our mission is to create a secure, welcoming space
+                where writers can share their thoughts, experiences, and
+                knowledge with a global community.
               </p>
               <p className="text-lg text-gray-600 mb-6">
-                We are committed to maintaining high-quality content through our 
-                thoughtful approval process while ensuring every voice has the 
+                We are committed to maintaining high-quality content through our
+                thoughtful approval process while ensuring every voice has the
                 opportunity to be heard.
               </p>
               <div className="flex items-center space-x-4">
@@ -41,11 +56,13 @@ export default function AboutPage() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900">Quality First</h3>
-                  <p className="text-gray-600">Every post is carefully reviewed to maintain our standards</p>
+                  <p className="text-gray-600">
+                    Every post is carefully reviewed to maintain our standards
+                  </p>
                 </div>
               </div>
             </div>
-            
+
             <div className="relative">
               <div className="aspect-square bg-gradient-to-br from-orange-200 to-yellow-200 rounded-2xl flex items-center justify-center">
                 <div className="text-center">
@@ -80,8 +97,8 @@ export default function AboutPage() {
                 Security & Trust
               </h3>
               <p className="text-gray-600">
-                We prioritize user safety with robust security measures, 
-                admin approval systems, and transparent moderation policies.
+                We prioritize user safety with robust security measures, admin
+                approval systems, and transparent moderation policies.
               </p>
             </div>
 
@@ -93,8 +110,9 @@ export default function AboutPage() {
                 Community First
               </h3>
               <p className="text-gray-600">
-                Our community is at the heart of everything. We foster 
-                meaningful connections and respectful dialogue among all members.
+                Our community is at the heart of everything. We foster
+                meaningful connections and respectful dialogue among all
+                members.
               </p>
             </div>
 
@@ -106,7 +124,7 @@ export default function AboutPage() {
                 Excellence
               </h3>
               <p className="text-gray-600">
-                We strive for excellence in content quality, user experience, 
+                We strive for excellence in content quality, user experience,
                 and platform reliability to serve our community better.
               </p>
             </div>
@@ -135,7 +153,8 @@ export default function AboutPage() {
                 Register
               </h3>
               <p className="text-gray-600">
-                Create your account with your basic information and tell us about yourself
+                Create your account with your basic information and tell us
+                about yourself
               </p>
             </div>
 
@@ -147,7 +166,8 @@ export default function AboutPage() {
                 Admin Review
               </h3>
               <p className="text-gray-600">
-                Our admin team reviews your application to ensure community standards
+                Our admin team reviews your application to ensure community
+                standards
               </p>
             </div>
 
@@ -159,7 +179,8 @@ export default function AboutPage() {
                 Start Writing
               </h3>
               <p className="text-gray-600">
-                Once approved, unleash your creativity and start sharing your stories
+                Once approved, unleash your creativity and start sharing your
+                stories
               </p>
             </div>
 
@@ -189,54 +210,76 @@ export default function AboutPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <div className="bg-white p-6 rounded-xl shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                🔒 Secure Authentication
-              </h3>
+              <div className="flex items-center gap-3 mb-2">
+                <Lock className="h-5 w-5 text-orange-600" />
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Secure Authentication
+                </h3>
+              </div>
               <p className="text-gray-600">
-                JWT-based authentication with secure password hashing and session management
+                JWT-based authentication with secure password hashing and
+                session management
               </p>
             </div>
 
             <div className="bg-white p-6 rounded-xl shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                📝 Rich Text Editor
-              </h3>
+              <div className="flex items-center gap-3 mb-2">
+                <FileText className="h-5 w-5 text-orange-600" />
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Rich Text Editor
+                </h3>
+              </div>
               <p className="text-gray-600">
-                Create beautiful content with our advanced editor supporting images and formatting
+                Create beautiful content with our advanced editor supporting
+                images and formatting
               </p>
             </div>
 
             <div className="bg-white p-6 rounded-xl shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                🖼️ Image Management
-              </h3>
+              <div className="flex items-center gap-3 mb-2">
+                <Image className="h-5 w-5 text-orange-600" />
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Image Management
+                </h3>
+              </div>
               <p className="text-gray-600">
-                Upload and manage images with Cloudinary integration for optimal performance
+                Upload and manage images with Cloudinary integration for optimal
+                performance
               </p>
             </div>
 
             <div className="bg-white p-6 rounded-xl shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                📊 SEO Optimization
-              </h3>
+              <div className="flex items-center gap-3 mb-2">
+                <TrendingUp className="h-5 w-5 text-orange-600" />
+                <h3 className="text-lg font-semibold text-gray-900">
+                  SEO Optimization
+                </h3>
+              </div>
               <p className="text-gray-600">
                 Built-in SEO tools to help your content reach a wider audience
               </p>
             </div>
 
             <div className="bg-white p-6 rounded-xl shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                👥 User Management
-              </h3>
+              <div className="flex items-center gap-3 mb-2">
+                <UserCog className="h-5 w-5 text-orange-600" />
+                <h3 className="text-lg font-semibold text-gray-900">
+                  User Management
+                </h3>
+              </div>
               <p className="text-gray-600">
-                Comprehensive user roles and permissions with admin approval workflow
+                Comprehensive user roles and permissions with admin approval
+                workflow
               </p>
             </div>
 
             <div className="bg-white p-6 rounded-xl shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                📱 Mobile Responsive
-              </h3>
+              <div className="flex items-center gap-3 mb-2">
+                <Smartphone className="h-5 w-5 text-orange-600" />
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Mobile Responsive
+                </h3>
+              </div>
               <p className="text-gray-600">
                 Fully responsive design that works perfectly on all devices
               </p>
@@ -251,12 +294,11 @@ export default function AboutPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 rounded-lg mb-6">
             <Heart className="h-8 w-8" />
           </div>
-          <h2 className="text-4xl font-bold mb-6">
-            Join Our Community
-          </h2>
+          <h2 className="text-4xl font-bold mb-6">Join Our Community</h2>
           <p className="text-xl text-orange-100 mb-8">
-            Ready to share your voice with the world? Join thousands of writers 
-            who trust Sanatan Blogs to share their stories and connect with readers.
+            Ready to share your voice with the world? Join thousands of writers
+            who trust Sanatan Blogs to share their stories and connect with
+            readers.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
@@ -276,4 +318,4 @@ export default function AboutPage() {
       </section>
     </div>
   );
-} 
+}

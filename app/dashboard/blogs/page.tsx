@@ -1,10 +1,24 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import Link from 'next/link';
-import { PenTool, Eye, Edit, Trash2, Plus, Loader2, Calendar, Tag, Search, Filter, RefreshCw } from 'lucide-react';
-import Image from 'next/image';
+import { useState, useEffect, useCallback } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import Link from "next/link";
+import {
+  PenTool,
+  Eye,
+  Edit,
+  Trash2,
+  Plus,
+  Loader2,
+  Calendar,
+  Tag,
+  Search,
+  Filter,
+  RefreshCw,
+  BookOpen,
+  AlertTriangle,
+} from "lucide-react";
+import Image from "next/image";
 
 interface Blog {
   _id: string;
@@ -12,7 +26,7 @@ interface Blog {
   slug: string;
   excerpt: string;
   featuredImage?: string;
-  status: 'draft' | 'published' | 'archived';
+  status: "draft" | "published" | "archived";
   isPublished: boolean;
   publishedAt?: string;
   views: number;
@@ -41,14 +55,14 @@ export default function MyBlogs() {
   const [filteredBlogs, setFilteredBlogs] = useState<Blog[]>([]);
   const [loadingBlogs, setLoadingBlogs] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [stats, setStats] = useState<BlogStats>({
     totalBlogs: 0,
     totalViews: 0,
     publishedBlogs: 0,
-    draftBlogs: 0
+    draftBlogs: 0,
   });
 
   const fetchUserBlogs = useCallback(async (showRefreshIndicator = false) => {
@@ -61,55 +75,60 @@ export default function MyBlogs() {
       setError(null);
 
       // Get the access token
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem("accessToken");
       if (!token) {
-        setError('Please log in to view your blogs');
+        setError("Please log in to view your blogs");
         setLoadingBlogs(false);
         return;
       }
 
-      console.log('Fetching user blogs with token...');
-      
+      console.log("Fetching user blogs with token...");
+
       // Fetch user's blogs using the dedicated endpoint
-      const response = await fetch('/api/blogs/my-blogs', {
+      const response = await fetch("/api/blogs/my-blogs", {
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        const errorMessage = errorData.error || `HTTP ${response.status}: ${response.statusText}`;
+        const errorMessage =
+          errorData.error || `HTTP ${response.status}: ${response.statusText}`;
         throw new Error(errorMessage);
       }
 
       const data = await response.json();
-      
+
       if (!data.blogs || !Array.isArray(data.blogs)) {
-        throw new Error('Invalid response format from server');
+        throw new Error("Invalid response format from server");
       }
-      
-      console.log('Received user blogs:', data.blogs.length);
+
+      console.log("Received user blogs:", data.blogs.length);
       setBlogs(data.blogs);
       setFilteredBlogs(data.blogs);
       setStats(data.stats);
-
     } catch (err) {
-      console.error('Error fetching user blogs:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load blogs';
+      console.error("Error fetching user blogs:", err);
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to load blogs";
       setError(errorMessage);
-      
+
       // Show more specific error messages to user
-      if (errorMessage.includes('User not authenticated')) {
-        setError('Please log in to view your blogs');
-      } else if (errorMessage.includes('Database connection failed')) {
-        setError('Unable to connect to the database. Please try again in a few moments.');
-      } else if (errorMessage.includes('Database configuration error')) {
-        setError('System configuration issue. Please contact support.');
-      } else if (errorMessage.includes('timeout')) {
-        setError('Request timed out. Please check your internet connection and try again.');
+      if (errorMessage.includes("User not authenticated")) {
+        setError("Please log in to view your blogs");
+      } else if (errorMessage.includes("Database connection failed")) {
+        setError(
+          "Unable to connect to the database. Please try again in a few moments.",
+        );
+      } else if (errorMessage.includes("Database configuration error")) {
+        setError("System configuration issue. Please contact support.");
+      } else if (errorMessage.includes("timeout")) {
+        setError(
+          "Request timed out. Please check your internet connection and try again.",
+        );
       } else {
-        setError('Unable to load your blogs. Please try again later.');
+        setError("Unable to load your blogs. Please try again later.");
       }
     } finally {
       setLoadingBlogs(false);
@@ -138,12 +157,12 @@ export default function MyBlogs() {
       }
     };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", handleFocus);
 
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleFocus);
     };
   }, [user, fetchUserBlogs]);
 
@@ -166,85 +185,103 @@ export default function MyBlogs() {
     let filtered = blogs;
 
     if (searchTerm) {
-      filtered = filtered.filter(blog =>
-        blog.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        blog.excerpt.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        blog.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+      filtered = filtered.filter(
+        (blog) =>
+          blog.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          blog.excerpt.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          blog.tags.some((tag) =>
+            tag.toLowerCase().includes(searchTerm.toLowerCase()),
+          ),
       );
     }
 
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(blog => blog.status === statusFilter);
+    if (statusFilter !== "all") {
+      filtered = filtered.filter((blog) => blog.status === statusFilter);
     }
 
     setFilteredBlogs(filtered);
   }, [searchTerm, statusFilter, blogs]);
 
   const formatDate = (dateString?: string) => {
-    if (!dateString) return 'Not published';
+    if (!dateString) return "Not published";
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'published':
-        return <span className="px-2 py-1 bg-green-900/30 text-green-300 rounded-full text-xs font-medium">Published</span>;
-      case 'draft':
-        return <span className="px-2 py-1 bg-yellow-900/30 text-yellow-300 rounded-full text-xs font-medium">Draft</span>;
-      case 'archived':
-        return <span className="px-2 py-1 bg-gray-900/30 text-gray-300 rounded-full text-xs font-medium">Archived</span>;
+      case "published":
+        return (
+          <span className="px-2 py-1 bg-green-900/30 text-green-300 rounded-full text-xs font-medium">
+            Published
+          </span>
+        );
+      case "draft":
+        return (
+          <span className="px-2 py-1 bg-yellow-900/30 text-yellow-300 rounded-full text-xs font-medium">
+            Draft
+          </span>
+        );
+      case "archived":
+        return (
+          <span className="px-2 py-1 bg-gray-900/30 text-gray-300 rounded-full text-xs font-medium">
+            Archived
+          </span>
+        );
       default:
-        return <span className="px-2 py-1 bg-gray-900/30 text-gray-300 rounded-full text-xs font-medium">{status}</span>;
+        return (
+          <span className="px-2 py-1 bg-gray-900/30 text-gray-300 rounded-full text-xs font-medium">
+            {status}
+          </span>
+        );
     }
   };
 
   const handleDeleteBlog = async (blogId: string) => {
-    if (!confirm('Are you sure you want to delete this blog?')) return;
+    if (!confirm("Are you sure you want to delete this blog?")) return;
 
     try {
       // Get the access token
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem("accessToken");
       if (!token) {
-        alert('Please log in to delete blogs');
+        alert("Please log in to delete blogs");
         return;
       }
 
       const response = await fetch(`/api/blogs/${blogId}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         if (response.status === 401) {
-          alert('Please log in to delete blogs');
+          alert("Please log in to delete blogs");
         } else if (response.status === 403) {
-          alert('You can only delete your own blogs');
+          alert("You can only delete your own blogs");
         } else if (response.status === 404) {
-          alert('Blog not found');
+          alert("Blog not found");
         } else {
-          alert(errorData.error || 'Failed to delete blog');
+          alert(errorData.error || "Failed to delete blog");
         }
         return;
       }
 
       // Remove from local state
-      setBlogs(blogs.filter(blog => blog._id !== blogId));
-      setFilteredBlogs(filteredBlogs.filter(blog => blog._id !== blogId));
-      
+      setBlogs(blogs.filter((blog) => blog._id !== blogId));
+      setFilteredBlogs(filteredBlogs.filter((blog) => blog._id !== blogId));
+
       // Show success message
-      alert('Blog deleted successfully');
-      
+      alert("Blog deleted successfully");
     } catch (err) {
-      console.error('Error deleting blog:', err);
-      alert('Failed to delete blog. Please try again.');
+      console.error("Error deleting blog:", err);
+      alert("Failed to delete blog. Please try again.");
     }
   };
 
@@ -263,9 +300,16 @@ export default function MyBlogs() {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center px-4">
         <div className="text-center max-w-md mx-auto">
-          <h1 className="text-xl sm:text-2xl font-bold text-white mb-4">Access Denied</h1>
-          <p className="text-gray-300 text-sm sm:text-base mb-6">Please log in to access your blogs.</p>
-          <Link href="/login" className="inline-block bg-orange-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg hover:bg-orange-700 transition-colors text-sm sm:text-base">
+          <h1 className="text-xl sm:text-2xl font-bold text-white mb-4">
+            Access Denied
+          </h1>
+          <p className="text-gray-300 text-sm sm:text-base mb-6">
+            Please log in to access your blogs.
+          </p>
+          <Link
+            href="/login"
+            className="inline-block bg-orange-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg hover:bg-orange-700 transition-colors text-sm sm:text-base"
+          >
             Login
           </Link>
         </div>
@@ -280,8 +324,15 @@ export default function MyBlogs() {
         <div className="bg-gray-800 rounded-2xl shadow-xl border border-gray-700 mb-6 p-4 sm:p-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-white">📚 My Blogs</h1>
-              <p className="text-gray-400 mt-1 sm:mt-2 text-sm sm:text-base">Manage your blog posts</p>
+              <div className="flex items-center gap-3">
+                <BookOpen className="h-6 w-6 sm:h-7 sm:w-7 text-orange-500" />
+                <h1 className="text-2xl sm:text-3xl font-bold text-white">
+                  My Blogs
+                </h1>
+              </div>
+              <p className="text-gray-400 mt-1 sm:mt-2 text-sm sm:text-base">
+                Manage your blog posts
+              </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <button
@@ -290,7 +341,9 @@ export default function MyBlogs() {
                 className="flex items-center justify-center space-x-2 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 text-white px-4 py-2 sm:py-3 rounded-xl transition-all shadow-lg hover:shadow-xl text-sm sm:text-base disabled:cursor-not-allowed disabled:opacity-50"
                 title="Refresh blog list"
               >
-                <RefreshCw className={`h-4 w-4 sm:h-5 sm:w-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <RefreshCw
+                  className={`h-4 w-4 sm:h-5 sm:w-5 ${isRefreshing ? "animate-spin" : ""}`}
+                />
                 <span className="hidden sm:inline">Refresh</span>
               </button>
               <Link
@@ -341,8 +394,12 @@ export default function MyBlogs() {
                 <PenTool className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-blue-400" />
               </div>
               <div className="ml-2 sm:ml-3 lg:ml-4">
-                <p className="text-xs sm:text-sm font-medium text-gray-400">Total Blogs</p>
-                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-white">{stats.totalBlogs}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-400">
+                  Total Blogs
+                </p>
+                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-white">
+                  {stats.totalBlogs}
+                </p>
               </div>
             </div>
           </div>
@@ -353,8 +410,12 @@ export default function MyBlogs() {
                 <Eye className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-green-400" />
               </div>
               <div className="ml-2 sm:ml-3 lg:ml-4">
-                <p className="text-xs sm:text-sm font-medium text-gray-400">Total Views</p>
-                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-white">{stats.totalViews.toLocaleString()}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-400">
+                  Total Views
+                </p>
+                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-white">
+                  {stats.totalViews.toLocaleString()}
+                </p>
               </div>
             </div>
           </div>
@@ -365,8 +426,12 @@ export default function MyBlogs() {
                 <Edit className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-purple-400" />
               </div>
               <div className="ml-2 sm:ml-3 lg:ml-4">
-                <p className="text-xs sm:text-sm font-medium text-gray-400">Published</p>
-                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-white">{stats.publishedBlogs}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-400">
+                  Published
+                </p>
+                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-white">
+                  {stats.publishedBlogs}
+                </p>
               </div>
             </div>
           </div>
@@ -377,8 +442,12 @@ export default function MyBlogs() {
                 <PenTool className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-yellow-400" />
               </div>
               <div className="ml-2 sm:ml-3 lg:ml-4">
-                <p className="text-xs sm:text-sm font-medium text-gray-400">Drafts</p>
-                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-white">{stats.draftBlogs}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-400">
+                  Drafts
+                </p>
+                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-white">
+                  {stats.draftBlogs}
+                </p>
               </div>
             </div>
           </div>
@@ -389,15 +458,22 @@ export default function MyBlogs() {
           {loadingBlogs ? (
             <div className="text-center py-8 sm:py-12">
               <Loader2 className="animate-spin h-6 w-6 sm:h-8 sm:w-8 text-orange-500 mx-auto"></Loader2>
-              <p className="mt-4 text-gray-400 text-sm sm:text-base">Loading your blogs...</p>
+              <p className="mt-4 text-gray-400 text-sm sm:text-base">
+                Loading your blogs...
+              </p>
             </div>
           ) : error ? (
             <div className="text-center py-8 sm:py-12">
-              <div className="text-4xl sm:text-6xl mb-4">⚠️</div>
-              <h3 className="text-lg sm:text-xl font-semibold text-white mb-2">Error Loading Blogs</h3>
-              <p className="text-gray-400 text-sm sm:text-base max-w-md mx-auto">{error}</p>
+              <AlertTriangle className="h-12 w-12 sm:h-16 sm:w-16 text-yellow-500 mx-auto mb-4" />
+              <h3 className="text-lg sm:text-xl font-semibold text-white mb-2">
+                Error Loading Blogs
+              </h3>
+              <p className="text-gray-400 text-sm sm:text-base max-w-md mx-auto">
+                {error}
+              </p>
               <div className="text-xs sm:text-sm text-gray-500 mb-6">
-                If this problem persists, please check your login status or try again later.
+                If this problem persists, please check your login status or try
+                again later.
               </div>
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
                 <button
@@ -405,10 +481,12 @@ export default function MyBlogs() {
                   disabled={loadingBlogs || isRefreshing}
                   className="inline-flex items-center justify-center space-x-2 bg-gradient-to-r from-orange-600 to-pink-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl hover:from-orange-700 hover:to-pink-700 transition-all text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <RefreshCw className={`h-4 w-4 sm:h-5 sm:w-5 ${loadingBlogs || isRefreshing ? 'animate-spin' : ''}`} />
+                  <RefreshCw
+                    className={`h-4 w-4 sm:h-5 sm:w-5 ${loadingBlogs || isRefreshing ? "animate-spin" : ""}`}
+                  />
                   <span>Try Again</span>
                 </button>
-                {error.includes('log in') && (
+                {error.includes("log in") && (
                   <Link
                     href="/login"
                     className="inline-flex items-center justify-center space-x-2 bg-blue-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl hover:bg-blue-700 transition-all text-sm sm:text-base"
@@ -421,12 +499,13 @@ export default function MyBlogs() {
           ) : filteredBlogs.length === 0 ? (
             <div className="text-center py-8 sm:py-12">
               <PenTool className="h-12 w-12 sm:h-16 sm:w-16 text-gray-500 mx-auto mb-4" />
-              <h3 className="text-lg sm:text-xl font-semibold text-white mb-2">No blogs found</h3>
+              <h3 className="text-lg sm:text-xl font-semibold text-white mb-2">
+                No blogs found
+              </h3>
               <p className="text-gray-400 text-sm sm:text-base">
-                {blogs.length === 0 
+                {blogs.length === 0
                   ? "Start sharing your thoughts with the world by writing your first blog post!"
-                  : "No blogs match your current search or filter criteria."
-                }
+                  : "No blogs match your current search or filter criteria."}
               </p>
               <Link
                 href="/write-blog"
@@ -439,7 +518,10 @@ export default function MyBlogs() {
           ) : (
             <div className="space-y-3 sm:space-y-4">
               {filteredBlogs.map((blog) => (
-                <div key={blog._id} className="border border-gray-700 rounded-xl p-4 sm:p-6 hover:shadow-xl transition-all bg-gray-700/50">
+                <div
+                  key={blog._id}
+                  className="border border-gray-700 rounded-xl p-4 sm:p-6 hover:shadow-xl transition-all bg-gray-700/50"
+                >
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
                     {/* Featured Image */}
                     {blog.featuredImage && (
@@ -453,15 +535,19 @@ export default function MyBlogs() {
                         />
                       </div>
                     )}
-                    
+
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                        <h3 className="text-base sm:text-lg font-semibold text-white break-words">{blog.title}</h3>
+                        <h3 className="text-base sm:text-lg font-semibold text-white break-words">
+                          {blog.title}
+                        </h3>
                         {getStatusBadge(blog.status)}
                       </div>
-                      
-                      <p className="text-gray-300 mb-3 line-clamp-2 text-sm sm:text-base">{blog.excerpt}</p>
-                      
+
+                      <p className="text-gray-300 mb-3 line-clamp-2 text-sm sm:text-base">
+                        {blog.excerpt}
+                      </p>
+
                       <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-400 mb-3">
                         <span className="flex items-center">
                           <Calendar className="h-3 sm:h-4 w-4" />
@@ -476,7 +562,7 @@ export default function MyBlogs() {
                           {blog.category}
                         </span>
                       </div>
-                      
+
                       <div className="flex flex-wrap gap-1">
                         {(blog.tags || []).slice(0, 3).map((tag) => (
                           <span
@@ -487,11 +573,13 @@ export default function MyBlogs() {
                           </span>
                         ))}
                         {(blog.tags || []).length > 3 && (
-                          <span className="text-gray-500 text-xs">+{(blog.tags || []).length - 3} more</span>
+                          <span className="text-gray-500 text-xs">
+                            +{(blog.tags || []).length - 3} more
+                          </span>
                         )}
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center justify-center sm:justify-end space-x-1 sm:space-x-2 sm:ml-4">
                       <Link
                         href={`/blogs/${blog._id}`}
@@ -524,4 +612,4 @@ export default function MyBlogs() {
       </div>
     </div>
   );
-} 
+}
