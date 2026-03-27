@@ -276,7 +276,7 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                   {/* Profile Dropdown */}
                   {showProfileMenu && (
                     <div
-                      className="absolute right-0 mt-3 w-72 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 z-50 transform opacity-0 scale-95 animate-in fade-in slide-in-from-top-2 duration-200"
+                      className="absolute right-0 mt-3 w-72 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 z-[60] transform opacity-0 scale-95 animate-in fade-in slide-in-from-top-2 duration-200"
                       style={{
                         opacity: 1,
                         transform: "scale(1) translateY(0)",

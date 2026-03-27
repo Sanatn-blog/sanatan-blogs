@@ -383,80 +383,26 @@ export default function WriteBlog() {
           const isUpdate = !!formData._id;
 
           if (status === "published") {
-            toast.custom(
-              (t) => (
-                <div
-                  className={`${
-                    t.visible ? "animate-enter" : "animate-leave"
-                  } relative max-w-lg w-full mx-auto pointer-events-auto overflow-hidden rounded-2xl`}
-                >
-                  {/* Background with gradient and glass effect */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 via-teal-600 to-green-600 opacity-95"></div>
-                  <div className="absolute inset-0 bg-white/10 backdrop-blur-xl"></div>
+            const publishMessage = isUpdate
+              ? "Blog Updated & Published!"
+              : "Blog Published Successfully!";
+            const publishDescription = isUpdate
+              ? "Your updated content is now live with all the latest improvements."
+              : "Your content is now live and ready to inspire readers.";
 
-                  {/* Animated background particles */}
-                  <div className="absolute inset-0 overflow-hidden">
-                    <div className="absolute top-2 left-4 w-2 h-2 bg-yellow-300 rounded-full animate-ping opacity-60"></div>
-                    <div className="absolute top-8 right-8 w-1 h-1 bg-white rounded-full animate-pulse opacity-40"></div>
-                    <div className="absolute bottom-4 left-8 w-1.5 h-1.5 bg-yellow-200 rounded-full animate-bounce opacity-50"></div>
-                  </div>
-
-                  {/* Content */}
-                  <div className="relative p-6">
-                    <div className="flex items-start space-x-4">
-                      <div className="flex-shrink-0">
-                        <div className="relative">
-                          <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30">
-                            <PartyPopper className="h-7 w-7 text-white animate-bounce" />
-                          </div>
-                          <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full animate-ping"></div>
-                        </div>
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <CheckCircle className="h-5 w-5 text-white" />
-                          <h3 className="text-lg font-bold text-white tracking-wide flex items-center gap-2">
-                            <PartyPopper className="h-5 w-5" /> Blog{" "}
-                            {isUpdate
-                              ? "Updated & Published!"
-                              : "Published Successfully!"}
-                          </h3>
-                        </div>
-
-                        <p className="text-sm text-emerald-50 mb-3 leading-relaxed">
-                          {isUpdate
-                            ? "Your updated content is now live with all the latest improvements!"
-                            : "Your amazing content is now live and ready to inspire readers around the world!"}
-                        </p>
-
-                        <div className="flex items-center space-x-2">
-                          <Sparkles className="h-4 w-4 text-yellow-200 animate-pulse" />
-                          <span className="text-xs font-medium text-emerald-100 opacity-90 flex items-center gap-1">
-                            {isUpdate
-                              ? "Fresh content ready to share!"
-                              : "Time to share your masterpiece"}
-                            <Sparkles className="h-3 w-3" />
-                          </span>
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={() => toast.dismiss(t.id)}
-                        className="flex-shrink-0 w-8 h-8 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all duration-200 backdrop-blur-sm border border-white/20 hover:border-white/40"
-                      >
-                        <X className="h-4 w-4 text-white" />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Bottom shine effect */}
-                  <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/50 to-transparent"></div>
+            toast.success(
+              <div className="flex flex-col">
+                <div className="font-semibold text-base mb-1">
+                  {publishMessage}
                 </div>
-              ),
+                <div className="text-sm opacity-90">{publishDescription}</div>
+              </div>,
               {
-                duration: 6000,
-                position: "top-center",
+                duration: 5000,
+                iconTheme: {
+                  primary: "#10b981",
+                  secondary: "#ffffff",
+                },
               },
             );
           } else {
@@ -784,7 +730,7 @@ export default function WriteBlog() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 text-gray-100">
       {/* Enhanced Header with Glassmorphism */}
-      <div className="bg-gray-800/80 backdrop-blur-xl border-b border-gray-700/50 sticky top-0 z-50 shadow-2xl">
+      <div className="bg-gray-800/80 backdrop-blur-xl border-b border-gray-700/50 sticky top-0 z-20 shadow-2xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">

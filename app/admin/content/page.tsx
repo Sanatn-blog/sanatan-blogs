@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import toast from 'react-hot-toast';
-import { 
-  FileText, 
-  Eye, 
-  Plus, 
-  Loader2, 
-  Search, 
-  Edit, 
+import { useState, useEffect, useCallback } from "react";
+import toast from "react-hot-toast";
+import {
+  FileText,
+  Eye,
+  Plus,
+  Loader2,
+  Search,
+  Edit,
   Eye as ViewIcon,
   Calendar,
   Clock,
@@ -21,10 +21,10 @@ import {
   User,
   Tag,
   PartyPopper,
-  Sparkles
-} from 'lucide-react';
-import Link from 'next/link';
-import Image from 'next/image';
+  Sparkles,
+} from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
 
 // TypeScript interfaces
 interface Author {
@@ -43,7 +43,7 @@ interface Blog {
   author: Author;
   category: string;
   tags: string[];
-  status: 'draft' | 'published' | 'archived' | 'banned';
+  status: "draft" | "published" | "archived" | "banned";
   views: number;
   likes: string[];
   comments: string[];
@@ -70,55 +70,57 @@ export default function ContentManagement() {
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [categories, setCategories] = useState<string[]>([]);
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
     totalBlogs: 0,
     hasNext: false,
-    hasPrev: false
+    hasPrev: false,
   });
   const [selectedBlogs, setSelectedBlogs] = useState<string[]>([]);
-  const [bulkAction, setBulkAction] = useState('');
+  const [bulkAction, setBulkAction] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
   const [selectedBlog, setSelectedBlog] = useState<Blog | null>(null);
   const [showBlogDetail, setShowBlogDetail] = useState(false);
 
   // Fetch blogs
-  const fetchBlogs = useCallback(async (page = 1) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: '20',
-        status: statusFilter,
-        ...(categoryFilter !== 'all' && { category: categoryFilter }),
-        ...(searchTerm && { search: searchTerm })
-      });
+  const fetchBlogs = useCallback(
+    async (page = 1) => {
+      try {
+        setLoading(true);
+        setError(null);
 
-      const response = await fetch(`/api/blogs?${params}`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        const params = new URLSearchParams({
+          page: page.toString(),
+          limit: "20",
+          status: statusFilter,
+          ...(categoryFilter !== "all" && { category: categoryFilter }),
+          ...(searchTerm && { search: searchTerm }),
+        });
+
+        const response = await fetch(`/api/blogs?${params}`);
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data: BlogResponse = await response.json();
+        setBlogs(data.blogs);
+        setPagination(data.pagination);
+        setCategories(data.categories);
+      } catch (err) {
+        console.error("Error fetching blogs:", err);
+        setError(err instanceof Error ? err.message : "Failed to fetch blogs");
+      } finally {
+        setLoading(false);
       }
-
-      const data: BlogResponse = await response.json();
-      setBlogs(data.blogs);
-      setPagination(data.pagination);
-      setCategories(data.categories);
-      
-    } catch (err) {
-      console.error('Error fetching blogs:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch blogs');
-    } finally {
-      setLoading(false);
-    }
-  }, [statusFilter, categoryFilter, searchTerm]);
+    },
+    [statusFilter, categoryFilter, searchTerm],
+  );
 
   // Load blogs on component mount and filter changes
   useEffect(() => {
@@ -140,130 +142,144 @@ export default function ContentManagement() {
 
     try {
       setActionLoading(true);
-      
+
       // Get the access token
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem("accessToken");
       if (!token) {
-        setError('Please log in to perform this action');
+        setError("Please log in to perform this action");
         setActionLoading(false);
         return;
       }
-      
+
       // Check if token is valid format
-      if (!token.includes('.') || token.split('.').length !== 3) {
-        setError('Authentication token is corrupted. Please log out and log in again.');
+      if (!token.includes(".") || token.split(".").length !== 3) {
+        setError(
+          "Authentication token is corrupted. Please log out and log in again.",
+        );
         setActionLoading(false);
         return;
       }
-      
-      const response = await fetch('/api/admin/blogs/bulk-action', {
-        method: 'POST',
+
+      const response = await fetch("/api/admin/blogs/bulk-action", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           action: bulkAction,
-          blogIds: selectedBlogs
-        })
+          blogIds: selectedBlogs,
+        }),
       });
 
       if (!response.ok) {
-        let errorMessage = 'Failed to perform bulk action';
+        let errorMessage = "Failed to perform bulk action";
         try {
           const errorData = await response.json();
           errorMessage = errorData.error || errorMessage;
         } catch (parseError) {
-          console.error('Failed to parse error response:', parseError);
+          console.error("Failed to parse error response:", parseError);
           errorMessage = `HTTP ${response.status}: ${response.statusText}`;
         }
         throw new Error(errorMessage);
       }
 
       // Show success message for publish actions
-      if (bulkAction === 'publish') {
+      if (bulkAction === "publish") {
         const blogCount = selectedBlogs.length;
-        toast.custom((t) => (
-          <div className={`${
-            t.visible ? 'animate-enter' : 'animate-leave'
-          } relative max-w-lg w-full mx-auto pointer-events-auto overflow-hidden rounded-2xl`}>
-            {/* Background with gradient and glass effect */}
-            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 via-teal-600 to-green-600 opacity-95"></div>
-            <div className="absolute inset-0 bg-white/10 backdrop-blur-xl"></div>
-            
-            {/* Animated background particles */}
-            <div className="absolute inset-0 overflow-hidden">
-              <div className="absolute top-2 left-4 w-2 h-2 bg-yellow-300 rounded-full animate-ping opacity-60"></div>
-              <div className="absolute top-8 right-8 w-1 h-1 bg-white rounded-full animate-pulse opacity-40"></div>
-              <div className="absolute bottom-4 left-8 w-1.5 h-1.5 bg-yellow-200 rounded-full animate-bounce opacity-50"></div>
-            </div>
-            
-            {/* Content */}
-            <div className="relative p-6">
-              <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0">
-                  <div className="relative">
-                    <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30">
-                      <PartyPopper className="h-7 w-7 text-white animate-bounce" />
-                    </div>
-                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full animate-ping"></div>
-                  </div>
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <CheckCircle className="h-5 w-5 text-white" />
-                    <h3 className="text-lg font-bold text-white tracking-wide">
-                      🎉 {blogCount} Blog{blogCount > 1 ? 's' : ''} Published!
-                    </h3>
-                  </div>
-                  
-                  <p className="text-sm text-emerald-50 mb-3 leading-relaxed">
-                    {blogCount > 1 ? 'These amazing posts are' : 'This amazing post is'} now live and ready to inspire readers!
-                  </p>
-                  
-                  <div className="flex items-center space-x-2">
-                    <Sparkles className="h-4 w-4 text-yellow-200 animate-pulse" />
-                    <span className="text-xs font-medium text-emerald-100 opacity-90">
-                      Bulk action completed successfully ✨
-                    </span>
-                  </div>
-                </div>
-                
-                <button
-                  onClick={() => toast.dismiss(t.id)}
-                  className="flex-shrink-0 w-8 h-8 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all duration-200 backdrop-blur-sm border border-white/20 hover:border-white/40"
-                >
-                  <X className="h-4 w-4 text-white" />
-                </button>
+        toast.custom(
+          (t) => (
+            <div
+              className={`${
+                t.visible ? "animate-enter" : "animate-leave"
+              } relative max-w-lg w-full mx-auto pointer-events-auto overflow-hidden rounded-2xl`}
+            >
+              {/* Background with gradient and glass effect */}
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 via-teal-600 to-green-600 opacity-95"></div>
+              <div className="absolute inset-0 bg-white/10 backdrop-blur-xl"></div>
+
+              {/* Animated background particles */}
+              <div className="absolute inset-0 overflow-hidden">
+                <div className="absolute top-2 left-4 w-2 h-2 bg-yellow-300 rounded-full animate-ping opacity-60"></div>
+                <div className="absolute top-8 right-8 w-1 h-1 bg-white rounded-full animate-pulse opacity-40"></div>
+                <div className="absolute bottom-4 left-8 w-1.5 h-1.5 bg-yellow-200 rounded-full animate-bounce opacity-50"></div>
               </div>
+
+              {/* Content */}
+              <div className="relative p-6">
+                <div className="flex items-start space-x-4">
+                  <div className="flex-shrink-0">
+                    <div className="relative">
+                      <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30">
+                        <PartyPopper className="h-7 w-7 text-white animate-bounce" />
+                      </div>
+                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full animate-ping"></div>
+                    </div>
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <CheckCircle className="h-5 w-5 text-white" />
+                      <h3 className="text-lg font-bold text-white tracking-wide">
+                        🎉 {blogCount} Blog{blogCount > 1 ? "s" : ""} Published!
+                      </h3>
+                    </div>
+
+                    <p className="text-sm text-emerald-50 mb-3 leading-relaxed">
+                      {blogCount > 1
+                        ? "These amazing posts are"
+                        : "This amazing post is"}{" "}
+                      now live and ready to inspire readers!
+                    </p>
+
+                    <div className="flex items-center space-x-2">
+                      <Sparkles className="h-4 w-4 text-yellow-200 animate-pulse" />
+                      <span className="text-xs font-medium text-emerald-100 opacity-90">
+                        Bulk action completed successfully ✨
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => toast.dismiss(t.id)}
+                    className="flex-shrink-0 w-8 h-8 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all duration-200 backdrop-blur-sm border border-white/20 hover:border-white/40"
+                  >
+                    <X className="h-4 w-4 text-white" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Bottom shine effect */}
+              <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/50 to-transparent"></div>
             </div>
-            
-            {/* Bottom shine effect */}
-            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/50 to-transparent"></div>
-          </div>
-        ), {
-          duration: 6000,
-          position: 'top-center',
-        });
-      } else if (bulkAction === 'unpublish') {
-        toast.success(`📝 ${selectedBlogs.length} blog${selectedBlogs.length > 1 ? 's' : ''} unpublished successfully!`, {
-          duration: 4000,
-          iconTheme: {
-            primary: '#6366f1',
-            secondary: '#ffffff',
+          ),
+          {
+            duration: 6000,
+            position: "top-center",
           },
-        });
+        );
+      } else if (bulkAction === "unpublish") {
+        toast.success(
+          `${selectedBlogs.length} blog${selectedBlogs.length > 1 ? "s" : ""} unpublished successfully!`,
+          {
+            duration: 4000,
+            iconTheme: {
+              primary: "#6366f1",
+              secondary: "#ffffff",
+            },
+          },
+        );
       }
-      
+
       // Refresh blogs and clear selection
       await fetchBlogs(pagination.currentPage);
       setSelectedBlogs([]);
-      setBulkAction('');
-      
+      setBulkAction("");
     } catch (err) {
-      console.error('Bulk action error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to perform bulk action');
+      console.error("Bulk action error:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to perform bulk action",
+      );
     } finally {
       setActionLoading(false);
     }
@@ -273,123 +289,78 @@ export default function ContentManagement() {
   const handleBlogAction = async (blogId: string, action: string) => {
     try {
       setActionLoading(true);
-      
+
       // Get the access token
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem("accessToken");
       if (!token) {
-        setError('Please log in to perform this action');
+        setError("Please log in to perform this action");
         setActionLoading(false);
         return;
       }
-      
+
       // Check if token is valid format
-      if (!token.includes('.') || token.split('.').length !== 3) {
-        setError('Authentication token is corrupted. Please log out and log in again.');
+      if (!token.includes(".") || token.split(".").length !== 3) {
+        setError(
+          "Authentication token is corrupted. Please log out and log in again.",
+        );
         setActionLoading(false);
         return;
       }
-      
+
       const response = await fetch(`/api/admin/blogs/${blogId}/${action}`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       if (!response.ok) {
-        let errorMessage = 'Failed to perform action';
+        let errorMessage = "Failed to perform action";
         try {
           const errorData = await response.json();
           errorMessage = errorData.error || errorMessage;
         } catch (parseError) {
-          console.error('Failed to parse error response:', parseError);
+          console.error("Failed to parse error response:", parseError);
           errorMessage = `HTTP ${response.status}: ${response.statusText}`;
         }
         throw new Error(errorMessage);
       }
 
       // Show success message for publish actions
-      if (action === 'publish') {
-        toast.custom((t) => (
-          <div className={`${
-            t.visible ? 'animate-enter' : 'animate-leave'
-          } relative max-w-lg w-full mx-auto pointer-events-auto overflow-hidden rounded-2xl`}>
-            {/* Background with gradient and glass effect */}
-            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 via-teal-600 to-green-600 opacity-95"></div>
-            <div className="absolute inset-0 bg-white/10 backdrop-blur-xl"></div>
-            
-            {/* Animated background particles */}
-            <div className="absolute inset-0 overflow-hidden">
-              <div className="absolute top-2 left-4 w-2 h-2 bg-yellow-300 rounded-full animate-ping opacity-60"></div>
-              <div className="absolute top-8 right-8 w-1 h-1 bg-white rounded-full animate-pulse opacity-40"></div>
-              <div className="absolute bottom-4 left-8 w-1.5 h-1.5 bg-yellow-200 rounded-full animate-bounce opacity-50"></div>
+      if (action === "publish") {
+        toast.success(
+          <div className="flex flex-col">
+            <div className="font-semibold text-base mb-1">
+              Blog Published Successfully!
             </div>
-            
-            {/* Content */}
-            <div className="relative p-6">
-              <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0">
-                  <div className="relative">
-                    <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30">
-                      <PartyPopper className="h-7 w-7 text-white animate-bounce" />
-                    </div>
-                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full animate-ping"></div>
-                  </div>
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <CheckCircle className="h-5 w-5 text-white" />
-                    <h3 className="text-lg font-bold text-white tracking-wide">
-                      🎉 Blog Published Successfully!
-                    </h3>
-                  </div>
-                  
-                  <p className="text-sm text-emerald-50 mb-3 leading-relaxed">
-                    This amazing post is now live and ready to inspire readers around the world!
-                  </p>
-                  
-                  <div className="flex items-center space-x-2">
-                    <Sparkles className="h-4 w-4 text-yellow-200 animate-pulse" />
-                    <span className="text-xs font-medium text-emerald-100 opacity-90">
-                      Admin action completed successfully ✨
-                    </span>
-                  </div>
-                </div>
-                
-                <button
-                  onClick={() => toast.dismiss(t.id)}
-                  className="flex-shrink-0 w-8 h-8 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all duration-200 backdrop-blur-sm border border-white/20 hover:border-white/40"
-                >
-                  <X className="h-4 w-4 text-white" />
-                </button>
-              </div>
+            <div className="text-sm opacity-90">
+              This post is now live and ready to inspire readers.
             </div>
-            
-            {/* Bottom shine effect */}
-            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/50 to-transparent"></div>
-          </div>
-        ), {
-          duration: 6000,
-          position: 'top-center',
-        });
-      } else if (action === 'unpublish') {
-        toast.success('📝 Blog unpublished successfully!', {
+          </div>,
+          {
+            duration: 5000,
+            iconTheme: {
+              primary: "#10b981",
+              secondary: "#ffffff",
+            },
+          },
+        );
+      } else if (action === "unpublish") {
+        toast.success("Blog unpublished successfully!", {
           duration: 4000,
           iconTheme: {
-            primary: '#6366f1',
-            secondary: '#ffffff',
+            primary: "#6366f1",
+            secondary: "#ffffff",
           },
         });
       }
-      
+
       // Refresh blogs
       await fetchBlogs(pagination.currentPage);
-      
     } catch (err) {
-      console.error('Blog action error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to perform action');
+      console.error("Blog action error:", err);
+      setError(err instanceof Error ? err.message : "Failed to perform action");
     } finally {
       setActionLoading(false);
     }
@@ -397,10 +368,10 @@ export default function ContentManagement() {
 
   // Toggle blog selection
   const toggleBlogSelection = (blogId: string) => {
-    setSelectedBlogs(prev => 
-      prev.includes(blogId) 
-        ? prev.filter(id => id !== blogId)
-        : [...prev, blogId]
+    setSelectedBlogs((prev) =>
+      prev.includes(blogId)
+        ? prev.filter((id) => id !== blogId)
+        : [...prev, blogId],
     );
   };
 
@@ -409,7 +380,7 @@ export default function ContentManagement() {
     if (selectedBlogs.length === blogs.length) {
       setSelectedBlogs([]);
     } else {
-      setSelectedBlogs(blogs.map(blog => blog._id));
+      setSelectedBlogs(blogs.map((blog) => blog._id));
     }
   };
 
@@ -427,43 +398,43 @@ export default function ContentManagement() {
 
   // Format date
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
   // Get status badge color
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'published':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'draft':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'archived':
-        return 'bg-gray-100 text-gray-800 border-gray-200';
-      case 'banned':
-        return 'bg-red-100 text-red-800 border-red-200';
+      case "published":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "draft":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case "archived":
+        return "bg-gray-100 text-gray-800 border-gray-200";
+      case "banned":
+        return "bg-red-100 text-red-800 border-red-200";
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
   // Truncate text helper
   const truncateText = (text: string, maxLength: number) => {
     if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + '...';
+    return text.substring(0, maxLength) + "...";
   };
 
   // Calculate stats
   const stats = {
     total: pagination.totalBlogs,
-    published: blogs.filter(blog => blog.status === 'published').length,
-    draft: blogs.filter(blog => blog.status === 'draft').length,
-    archived: blogs.filter(blog => blog.status === 'archived').length,
-    banned: blogs.filter(blog => blog.status === 'banned').length,
-    totalViews: blogs.reduce((sum, blog) => sum + blog.views, 0)
+    published: blogs.filter((blog) => blog.status === "published").length,
+    draft: blogs.filter((blog) => blog.status === "draft").length,
+    archived: blogs.filter((blog) => blog.status === "archived").length,
+    banned: blogs.filter((blog) => blog.status === "banned").length,
+    totalViews: blogs.reduce((sum, blog) => sum + blog.views, 0),
   };
 
   if (loading && blogs.length === 0) {
@@ -484,19 +455,28 @@ export default function ContentManagement() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-white">📝 Content Management</h1>
-              <p className="text-gray-300 mt-2">Manage all blogs, categories, and content</p>
+              <h1 className="text-3xl font-bold text-white">
+                📝 Content Management
+              </h1>
+              <p className="text-gray-300 mt-2">
+                Manage all blogs, categories, and content
+              </p>
             </div>
             <div className="flex items-center space-x-3">
-              <button 
+              <button
                 onClick={() => fetchBlogs(pagination.currentPage)}
                 disabled={loading}
                 className="flex items-center space-x-2 bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50"
               >
-                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                <RefreshCw
+                  className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
+                />
                 <span>Refresh</span>
               </button>
-              <Link href="/write-blog" className="flex items-center space-x-2 bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors">
+              <Link
+                href="/write-blog"
+                className="flex items-center space-x-2 bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors"
+              >
                 <Plus className="h-4 w-4" />
                 <span>New Blog</span>
               </Link>
@@ -527,7 +507,9 @@ export default function ContentManagement() {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-300">Total Views</p>
-                <p className="text-2xl font-bold text-white">{stats.totalViews.toLocaleString()}</p>
+                <p className="text-2xl font-bold text-white">
+                  {stats.totalViews.toLocaleString()}
+                </p>
               </div>
             </div>
           </div>
@@ -539,7 +521,9 @@ export default function ContentManagement() {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-300">Published</p>
-                <p className="text-2xl font-bold text-white">{stats.published}</p>
+                <p className="text-2xl font-bold text-white">
+                  {stats.published}
+                </p>
               </div>
             </div>
           </div>
@@ -563,7 +547,9 @@ export default function ContentManagement() {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-300">Archived</p>
-                <p className="text-2xl font-bold text-white">{stats.archived}</p>
+                <p className="text-2xl font-bold text-white">
+                  {stats.archived}
+                </p>
               </div>
             </div>
           </div>
@@ -594,8 +580,8 @@ export default function ContentManagement() {
                 className="w-full pl-10 pr-4 py-2 border border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-700 text-white placeholder-gray-400"
               />
             </div>
-            
-            <select 
+
+            <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               className="px-3 py-2 border border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-700 text-white"
@@ -607,14 +593,16 @@ export default function ContentManagement() {
               <option value="banned">Banned</option>
             </select>
 
-            <select 
+            <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
               className="px-3 py-2 border border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-700 text-white"
             >
               <option value="all">All Categories</option>
               {categories.map((category) => (
-                <option key={category} value={category}>{category}</option>
+                <option key={category} value={category}>
+                  {category}
+                </option>
               ))}
             </select>
 
@@ -635,7 +623,8 @@ export default function ContentManagement() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
               <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
                 <span className="text-white font-medium">
-                  {selectedBlogs.length} blog{selectedBlogs.length !== 1 ? 's' : ''} selected
+                  {selectedBlogs.length} blog
+                  {selectedBlogs.length !== 1 ? "s" : ""} selected
                 </span>
                 <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                   <select
@@ -656,7 +645,11 @@ export default function ContentManagement() {
                     disabled={!bulkAction || actionLoading}
                     className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
                   >
-                    {actionLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Apply'}
+                    {actionLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      "Apply"
+                    )}
                   </button>
                 </div>
               </div>
@@ -682,14 +675,20 @@ export default function ContentManagement() {
           {blogs.length === 0 ? (
             <div className="p-6 text-center">
               <FileText className="h-16 w-16 text-gray-500 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-white mb-2">No blogs found</h3>
+              <h3 className="text-xl font-semibold text-white mb-2">
+                No blogs found
+              </h3>
               <p className="text-gray-300 mb-6">
-                {searchTerm || statusFilter !== 'all' || categoryFilter !== 'all' 
-                  ? 'Try adjusting your search or filters.'
-                  : 'Start by creating your first blog post or import existing content.'
-                }
+                {searchTerm ||
+                statusFilter !== "all" ||
+                categoryFilter !== "all"
+                  ? "Try adjusting your search or filters."
+                  : "Start by creating your first blog post or import existing content."}
               </p>
-              <Link href="/write-blog" className="inline-flex items-center space-x-2 bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition-colors">
+              <Link
+                href="/write-blog"
+                className="inline-flex items-center space-x-2 bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition-colors"
+              >
                 <Plus className="h-5 w-5" />
                 <span>Create First Blog</span>
               </Link>
@@ -704,7 +703,10 @@ export default function ContentManagement() {
                       <th className="w-12 px-4 py-3 text-left">
                         <input
                           type="checkbox"
-                          checked={selectedBlogs.length === blogs.length && blogs.length > 0}
+                          checked={
+                            selectedBlogs.length === blogs.length &&
+                            blogs.length > 0
+                          }
                           onChange={toggleAllBlogs}
                           className="rounded border-gray-600 bg-gray-700 text-orange-600 focus:ring-orange-500"
                         />
@@ -731,12 +733,15 @@ export default function ContentManagement() {
                   </thead>
                   <tbody className="bg-gray-800">
                     {blogs.map((blog) => (
-                      <tr 
-                        key={blog._id} 
+                      <tr
+                        key={blog._id}
                         className="hover:bg-gray-750 cursor-pointer transition-colors duration-200 blog-card"
                         onClick={() => handleBlogClick(blog)}
                       >
-                        <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}>
+                        <td
+                          className="px-4 py-4"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <input
                             type="checkbox"
                             checked={selectedBlogs.includes(blog._id)}
@@ -771,15 +776,15 @@ export default function ContentManagement() {
                         <td className="px-4 py-4">
                           <div className="flex items-center space-x-2">
                             <div className="flex-shrink-0 h-8 w-8">
-                                                          {blog.author.avatar ? (
-                              <Image
-                                src={blog.author.avatar}
-                                alt={blog.author.name}
-                                width={32}
-                                height={32}
-                                className="h-8 w-8 rounded-full object-cover"
-                              />
-                            ) : (
+                              {blog.author.avatar ? (
+                                <Image
+                                  src={blog.author.avatar}
+                                  alt={blog.author.name}
+                                  width={32}
+                                  height={32}
+                                  className="h-8 w-8 rounded-full object-cover"
+                                />
+                              ) : (
                                 <div className="h-8 w-8 bg-orange-600 rounded-full flex items-center justify-center">
                                   <span className="text-xs font-bold text-white">
                                     {blog.author.name.charAt(0)}
@@ -788,8 +793,12 @@ export default function ContentManagement() {
                               )}
                             </div>
                             <div className="min-w-0 flex-1">
-                              <div className="text-sm text-white truncate">{blog.author.name}</div>
-                              <div className="text-xs text-gray-400 truncate">{blog.author.email}</div>
+                              <div className="text-sm text-white truncate">
+                                {blog.author.name}
+                              </div>
+                              <div className="text-xs text-gray-400 truncate">
+                                {blog.author.email}
+                              </div>
                             </div>
                           </div>
                         </td>
@@ -799,23 +808,33 @@ export default function ContentManagement() {
                           </span>
                         </td>
                         <td className="px-4 py-4">
-                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getStatusBadge(blog.status)}`}>
-                            {blog.status.charAt(0).toUpperCase() + blog.status.slice(1)}
+                          <span
+                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getStatusBadge(blog.status)}`}
+                          >
+                            {blog.status.charAt(0).toUpperCase() +
+                              blog.status.slice(1)}
                           </span>
                         </td>
                         <td className="px-4 py-4 text-sm text-gray-300">
                           <div className="space-y-1">
                             <div className="flex items-center">
                               <Eye className="h-3 w-3 mr-1 flex-shrink-0" />
-                              <span className="truncate">{blog.views.toLocaleString()}</span>
+                              <span className="truncate">
+                                {blog.views.toLocaleString()}
+                              </span>
                             </div>
                             <div className="flex items-center">
                               <FileText className="h-3 w-3 mr-1 flex-shrink-0" />
-                              <span className="truncate">{blog.comments.length}</span>
+                              <span className="truncate">
+                                {blog.comments.length}
+                              </span>
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-4 text-sm font-medium" onClick={(e) => e.stopPropagation()}>
+                        <td
+                          className="px-4 py-4 text-sm font-medium"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <div className="flex items-center space-x-2">
                             <Link
                               href={`/blogs/${blog.slug}`}
@@ -843,13 +862,16 @@ export default function ContentManagement() {
               <div className="lg:hidden">
                 <div className="p-4 space-y-4">
                   {blogs.map((blog) => (
-                    <div 
-                      key={blog._id} 
+                    <div
+                      key={blog._id}
                       className="bg-gray-750 rounded-lg p-4 border border-gray-700 cursor-pointer hover:bg-gray-700 transition-colors duration-200 blog-card"
                       onClick={() => handleBlogClick(blog)}
                     >
                       {/* Header with checkbox and actions */}
-                      <div className="flex items-center justify-between mb-4" onClick={(e) => e.stopPropagation()}>
+                      <div
+                        className="flex items-center justify-between mb-4"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <div className="flex items-center space-x-3">
                           <input
                             type="checkbox"
@@ -857,8 +879,11 @@ export default function ContentManagement() {
                             onChange={() => toggleBlogSelection(blog._id)}
                             className="rounded border-gray-600 bg-gray-700 text-orange-600 focus:ring-orange-500"
                           />
-                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getStatusBadge(blog.status)}`}>
-                            {blog.status.charAt(0).toUpperCase() + blog.status.slice(1)}
+                          <span
+                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getStatusBadge(blog.status)}`}
+                          >
+                            {blog.status.charAt(0).toUpperCase() +
+                              blog.status.slice(1)}
                           </span>
                         </div>
                         <div className="flex items-center space-x-2">
@@ -904,7 +929,8 @@ export default function ContentManagement() {
                             {truncateText(blog.excerpt, 150)}
                           </p>
                           <div className="text-xs text-gray-500">
-                            {blog.readingTime} min read • {formatDate(blog.createdAt)}
+                            {blog.readingTime} min read •{" "}
+                            {formatDate(blog.createdAt)}
                           </div>
                         </div>
                       </div>
@@ -929,7 +955,9 @@ export default function ContentManagement() {
                               </div>
                             )}
                           </div>
-                          <span className="text-white truncate max-w-24">{blog.author.name}</span>
+                          <span className="text-white truncate max-w-24">
+                            {blog.author.name}
+                          </span>
                         </div>
                         <div className="flex items-center space-x-3">
                           <div className="flex items-center">
@@ -1010,8 +1038,12 @@ export default function ContentManagement() {
 
                     {/* Title and Excerpt */}
                     <div>
-                      <h3 className="text-2xl font-bold text-white mb-3 break-words">{selectedBlog.title}</h3>
-                      <p className="text-gray-300 leading-relaxed break-words">{selectedBlog.excerpt}</p>
+                      <h3 className="text-2xl font-bold text-white mb-3 break-words">
+                        {selectedBlog.title}
+                      </h3>
+                      <p className="text-gray-300 leading-relaxed break-words">
+                        {selectedBlog.excerpt}
+                      </p>
                     </div>
 
                     {/* Meta Information */}
@@ -1023,20 +1055,26 @@ export default function ContentManagement() {
                         </div>
                         <div className="flex items-center">
                           <Calendar className="h-4 w-4 mr-2 flex-shrink-0" />
-                          <span>Created: {formatDate(selectedBlog.createdAt)}</span>
+                          <span>
+                            Created: {formatDate(selectedBlog.createdAt)}
+                          </span>
                         </div>
                       </div>
-                      
+
                       {selectedBlog.publishedAt && (
                         <div className="flex items-center text-sm text-gray-400">
                           <Calendar className="h-4 w-4 mr-2 flex-shrink-0" />
-                          <span>Published: {formatDate(selectedBlog.publishedAt)}</span>
+                          <span>
+                            Published: {formatDate(selectedBlog.publishedAt)}
+                          </span>
                         </div>
                       )}
-                      
+
                       <div className="flex items-center text-sm text-gray-400">
                         <Calendar className="h-4 w-4 mr-2 flex-shrink-0" />
-                        <span>Updated: {formatDate(selectedBlog.updatedAt)}</span>
+                        <span>
+                          Updated: {formatDate(selectedBlog.updatedAt)}
+                        </span>
                       </div>
                     </div>
 
@@ -1088,30 +1126,44 @@ export default function ContentManagement() {
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <div className="text-white font-medium truncate">{selectedBlog.author.name}</div>
-                          <div className="text-gray-400 text-sm truncate">{selectedBlog.author.email}</div>
+                          <div className="text-white font-medium truncate">
+                            {selectedBlog.author.name}
+                          </div>
+                          <div className="text-gray-400 text-sm truncate">
+                            {selectedBlog.author.email}
+                          </div>
                         </div>
                       </div>
                     </div>
 
                     {/* Blog Stats */}
                     <div className="bg-gray-750 rounded-lg p-4">
-                      <h4 className="text-sm font-medium text-gray-300 mb-3">Statistics</h4>
+                      <h4 className="text-sm font-medium text-gray-300 mb-3">
+                        Statistics
+                      </h4>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="text-center">
-                          <div className="text-2xl font-bold text-white">{selectedBlog.views.toLocaleString()}</div>
+                          <div className="text-2xl font-bold text-white">
+                            {selectedBlog.views.toLocaleString()}
+                          </div>
                           <div className="text-xs text-gray-400">Views</div>
                         </div>
                         <div className="text-center">
-                          <div className="text-2xl font-bold text-white">{selectedBlog.comments.length}</div>
+                          <div className="text-2xl font-bold text-white">
+                            {selectedBlog.comments.length}
+                          </div>
                           <div className="text-xs text-gray-400">Comments</div>
                         </div>
                         <div className="text-center">
-                          <div className="text-2xl font-bold text-white">{selectedBlog.likes.length}</div>
+                          <div className="text-2xl font-bold text-white">
+                            {selectedBlog.likes.length}
+                          </div>
                           <div className="text-xs text-gray-400">Likes</div>
                         </div>
                         <div className="text-center">
-                          <div className="text-2xl font-bold text-white">{selectedBlog.readingTime}</div>
+                          <div className="text-2xl font-bold text-white">
+                            {selectedBlog.readingTime}
+                          </div>
                           <div className="text-xs text-gray-400">Min Read</div>
                         </div>
                       </div>
@@ -1119,22 +1171,31 @@ export default function ContentManagement() {
 
                     {/* Blog Status */}
                     <div className="bg-gray-750 rounded-lg p-4">
-                      <h4 className="text-sm font-medium text-gray-300 mb-3">Status</h4>
+                      <h4 className="text-sm font-medium text-gray-300 mb-3">
+                        Status
+                      </h4>
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
                           <span className="text-gray-400">Status:</span>
-                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getStatusBadge(selectedBlog.status)}`}>
-                            {selectedBlog.status.charAt(0).toUpperCase() + selectedBlog.status.slice(1)}
+                          <span
+                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getStatusBadge(selectedBlog.status)}`}
+                          >
+                            {selectedBlog.status.charAt(0).toUpperCase() +
+                              selectedBlog.status.slice(1)}
                           </span>
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-gray-400">Category:</span>
-                          <span className="text-white truncate max-w-32">{selectedBlog.category}</span>
+                          <span className="text-white truncate max-w-32">
+                            {selectedBlog.category}
+                          </span>
                         </div>
                         {selectedBlog.featured && (
                           <div className="flex items-center justify-between">
                             <span className="text-gray-400">Featured:</span>
-                            <span className="text-orange-400 font-medium">Yes</span>
+                            <span className="text-orange-400 font-medium">
+                              Yes
+                            </span>
                           </div>
                         )}
                       </div>
@@ -1142,7 +1203,9 @@ export default function ContentManagement() {
 
                     {/* Actions */}
                     <div className="bg-gray-750 rounded-lg p-4">
-                      <h4 className="text-sm font-medium text-gray-300 mb-3">Actions</h4>
+                      <h4 className="text-sm font-medium text-gray-300 mb-3">
+                        Actions
+                      </h4>
                       <div className="flex flex-wrap gap-2">
                         <Link
                           href={`/blogs/${selectedBlog.slug}`}
@@ -1158,10 +1221,10 @@ export default function ContentManagement() {
                           <Edit className="h-4 w-4" />
                           <span>Edit</span>
                         </Link>
-                        {selectedBlog.status === 'banned' ? (
+                        {selectedBlog.status === "banned" ? (
                           <button
                             onClick={() => {
-                              handleBlogAction(selectedBlog._id, 'unban');
+                              handleBlogAction(selectedBlog._id, "unban");
                               closeBlogDetail();
                             }}
                             className="flex items-center space-x-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
@@ -1172,7 +1235,7 @@ export default function ContentManagement() {
                         ) : (
                           <button
                             onClick={() => {
-                              handleBlogAction(selectedBlog._id, 'ban');
+                              handleBlogAction(selectedBlog._id, "ban");
                               closeBlogDetail();
                             }}
                             className="flex items-center space-x-2 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
@@ -1192,4 +1255,4 @@ export default function ContentManagement() {
       </div>
     </div>
   );
-} 
+}

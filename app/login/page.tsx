@@ -1,35 +1,26 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { 
-  Eye, 
-  EyeOff, 
-  Mail, 
-  Lock, 
-  LogIn,
-  
-} from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
-import toast from 'react-hot-toast';
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Eye, EyeOff, Mail, Lock, LogIn } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import toast from "react-hot-toast";
 
 interface LoginFormData {
   emailOrUsername: string;
   password: string;
 }
 
-
-
 export default function LoginPage() {
   const [formData, setFormData] = useState<LoginFormData>({
-    emailOrUsername: '',
-    password: ''
+    emailOrUsername: "",
+    password: "",
   });
 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
@@ -38,21 +29,21 @@ export default function LoginPage() {
 
   const checkExistingAuth = useCallback(async () => {
     try {
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem("accessToken");
       if (token) {
-        const response = await fetch('/api/auth/me', {
+        const response = await fetch("/api/auth/me", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
 
         if (response.ok) {
-          router.push('/');
+          router.push("/");
           return;
         }
       }
     } catch (error) {
-      console.error('Auth check failed:', error);
+      console.error("Auth check failed:", error);
     } finally {
       setCheckingAuth(false);
     }
@@ -63,51 +54,53 @@ export default function LoginPage() {
     checkExistingAuth();
   }, [checkExistingAuth]);
 
-
-
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setError("");
 
-          if (!formData.emailOrUsername || !formData.password) {
-        toast.error('Please enter your email or username and password');
-        setLoading(false);
-        return;
-      }
+    if (!formData.emailOrUsername || !formData.password) {
+      toast.error("Please enter your email or username and password");
+      setLoading(false);
+      return;
+    }
 
     try {
       const result = await login(formData.emailOrUsername, formData.password);
-      
+
       if (result.success) {
-        const firstName = result.user?.name?.split(' ')[0] || 'User';
-        toast.success(`🎉 Welcome back, ${firstName}!`);
-        router.push('/');
+        const firstName = result.user?.name?.split(" ")[0] || "User";
+        toast.success(`Welcome back, ${firstName}!`);
+        router.push("/");
       } else {
         // Check if verification is required
         if (result.requiresVerification) {
-          toast.error('Please verify your email address first.');
-          router.push(`/verify-email?email=${encodeURIComponent(result.email || '')}`);
+          toast.error("Please verify your email address first.");
+          router.push(
+            `/verify-email?email=${encodeURIComponent(result.email || "")}`,
+          );
           return;
         }
-        
+
         // Show more specific error messages
-        if (result.error?.includes('not found')) {
-          toast.error('User not found. Please check your email or username.');
-        } else if (result.error?.includes('Invalid password')) {
-          toast.error('Incorrect password. Please try again.');
-        } else if (result.error?.includes('not approved')) {
-          toast.error('Your account is pending approval. Please wait for admin approval.');
-        } else if (result.error?.includes('rejected')) {
-          toast.error('Your account has been rejected. Please contact admin.');
-        } else if (result.error?.includes('suspended')) {
-          toast.error('Your account has been suspended. Please contact admin.');
+        if (result.error?.includes("not found")) {
+          toast.error("User not found. Please check your email or username.");
+        } else if (result.error?.includes("Invalid password")) {
+          toast.error("Incorrect password. Please try again.");
+        } else if (result.error?.includes("not approved")) {
+          toast.error(
+            "Your account is pending approval. Please wait for admin approval.",
+          );
+        } else if (result.error?.includes("rejected")) {
+          toast.error("Your account has been rejected. Please contact admin.");
+        } else if (result.error?.includes("suspended")) {
+          toast.error("Your account has been suspended. Please contact admin.");
         } else {
-          toast.error(result.error || 'Login failed');
+          toast.error(result.error || "Login failed");
         }
       }
     } catch {
-      toast.error('An error occurred during login');
+      toast.error("An error occurred during login");
     } finally {
       setLoading(false);
     }
@@ -264,7 +257,8 @@ export default function LoginPage() {
           </div>
           <h2 className="text-3xl font-bold text-gray-900">Welcome Back!</h2>
           <p className="mt-2 text-gray-600">
-            Sign in with your email or username to continue your spiritual journey
+            Sign in with your email or username to continue your spiritual
+            journey
           </p>
         </div>
 
@@ -315,7 +309,10 @@ export default function LoginPage() {
           {/* Email Login - Always show this now */}
           <form onSubmit={handleEmailLogin} className="space-y-6">
             <div>
-              <label htmlFor="emailOrUsername" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="emailOrUsername"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Email or Username
               </label>
               <div className="relative">
@@ -326,7 +323,12 @@ export default function LoginPage() {
                   type="text"
                   required
                   value={formData.emailOrUsername}
-                  onChange={(e) => setFormData({ ...formData, emailOrUsername: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      emailOrUsername: e.target.value,
+                    })
+                  }
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors text-gray-900"
                   placeholder="Enter your email or username"
                 />
@@ -334,7 +336,10 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Password
               </label>
               <div className="relative">
@@ -342,10 +347,12 @@ export default function LoginPage() {
                 <input
                   id="password"
                   name="password"
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   required
                   value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, password: e.target.value })
+                  }
                   className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors text-gray-900"
                   placeholder="Enter your password"
                 />
@@ -354,7 +361,11 @@ export default function LoginPage() {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                 >
-                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
                 </button>
               </div>
             </div>
@@ -367,7 +378,10 @@ export default function LoginPage() {
                   type="checkbox"
                   className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
                 />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
+                <label
+                  htmlFor="remember-me"
+                  className="ml-2 block text-sm text-gray-700"
+                >
                   Remember me
                 </label>
               </div>
@@ -548,7 +562,7 @@ export default function LoginPage() {
         {/* Sign Up Link */}
         <div className="text-center">
           <p className="text-gray-600">
-            Don&apos;t have an account?{' '}
+            Don&apos;t have an account?{" "}
             <Link
               href="/register"
               className="font-medium text-orange-600 hover:text-orange-500 transition-colors"
@@ -560,4 +574,4 @@ export default function LoginPage() {
       </div>
     </div>
   );
-} 
+}

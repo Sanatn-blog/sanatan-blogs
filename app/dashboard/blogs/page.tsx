@@ -19,6 +19,8 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import Image from "next/image";
+import ConfirmDialog from "@/components/ConfirmDialog";
+import Toast from "@/components/Toast";
 
 interface Blog {
   _id: string;
@@ -64,6 +66,32 @@ export default function MyBlogs() {
     publishedBlogs: 0,
     draftBlogs: 0,
   });
+  const [deleteDialog, setDeleteDialog] = useState<{
+    isOpen: boolean;
+    blogId: string | null;
+    blogTitle: string;
+  }>({
+    isOpen: false,
+    blogId: null,
+    blogTitle: "",
+  });
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [toast, setToast] = useState<{
+    isOpen: boolean;
+    message: string;
+    type: "success" | "error" | "warning" | "info";
+  }>({
+    isOpen: false,
+    message: "",
+    type: "info",
+  });
+
+  const showToast = (
+    message: string,
+    type: "success" | "error" | "warning" | "info" = "info",
+  ) => {
+    setToast({ isOpen: true, message, type });
+  };
 
   const fetchUserBlogs = useCallback(async (showRefreshIndicator = false) => {
     try {
@@ -251,18 +279,40 @@ export default function MyBlogs() {
     }
   };
 
-  const handleDeleteBlog = async (blogId: string) => {
-    if (!confirm("Are you sure you want to delete this blog?")) return;
+  const openDeleteDialog = (blogId: string, blogTitle: string) => {
+    setDeleteDialog({
+      isOpen: true,
+      blogId,
+      blogTitle,
+    });
+  };
+
+  const closeDeleteDialog = () => {
+    if (!isDeleting) {
+      setDeleteDialog({
+        isOpen: false,
+        blogId: null,
+        blogTitle: "",
+      });
+    }
+  };
+
+  const handleDeleteBlog = async () => {
+    if (!deleteDialog.blogId) return;
+
+    setIsDeleting(true);
 
     try {
       // Get the access token
       const token = localStorage.getItem("accessToken");
       if (!token) {
-        alert("Please log in to delete blogs");
+        showToast("Please log in to delete blogs", "error");
+        setIsDeleting(false);
+        closeDeleteDialog();
         return;
       }
 
-      const response = await fetch(`/api/blogs/${blogId}`, {
+      const response = await fetch(`/api/blogs/${deleteDialog.blogId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -272,26 +322,34 @@ export default function MyBlogs() {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         if (response.status === 401) {
-          alert("Please log in to delete blogs");
+          showToast("Please log in to delete blogs", "error");
         } else if (response.status === 403) {
-          alert("You can only delete your own blogs");
+          showToast("You can only delete your own blogs", "error");
         } else if (response.status === 404) {
-          alert("Blog not found");
+          showToast("Blog not found", "error");
         } else {
-          alert(errorData.error || "Failed to delete blog");
+          showToast(errorData.error || "Failed to delete blog", "error");
         }
+        setIsDeleting(false);
+        closeDeleteDialog();
         return;
       }
 
       // Remove from local state
-      setBlogs(blogs.filter((blog) => blog._id !== blogId));
-      setFilteredBlogs(filteredBlogs.filter((blog) => blog._id !== blogId));
+      setBlogs(blogs.filter((blog) => blog._id !== deleteDialog.blogId));
+      setFilteredBlogs(
+        filteredBlogs.filter((blog) => blog._id !== deleteDialog.blogId),
+      );
 
-      // Show success message
-      alert("Blog deleted successfully");
+      // Close dialog and show success
+      closeDeleteDialog();
+      showToast("Blog deleted successfully", "success");
     } catch (err) {
       console.error("Error deleting blog:", err);
-      alert("Failed to delete blog. Please try again.");
+      showToast("Failed to delete blog. Please try again.", "error");
+      closeDeleteDialog();
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -646,7 +704,7 @@ export default function MyBlogs() {
                         <Edit className="h-4 w-4 sm:h-5 sm:w-5" />
                       </Link>
                       <button
-                        onClick={() => handleDeleteBlog(blog._id)}
+                        onClick={() => openDeleteDialog(blog._id, blog.title)}
                         className="p-2 text-red-400 hover:bg-red-900/30 rounded-lg transition-colors"
                         title="Delete"
                       >
@@ -660,6 +718,27 @@ export default function MyBlogs() {
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={deleteDialog.isOpen}
+        onClose={closeDeleteDialog}
+        onConfirm={handleDeleteBlog}
+        title="Delete Blog Post?"
+        message={`Are you sure you want to delete "${deleteDialog.blogTitle}"? This action cannot be undone and all associated data will be permanently removed.`}
+        confirmText="Delete Blog"
+        cancelText="Keep Blog"
+        variant="danger"
+        isLoading={isDeleting}
+      />
+
+      {/* Toast Notification */}
+      <Toast
+        isOpen={toast.isOpen}
+        onClose={() => setToast({ ...toast, isOpen: false })}
+        message={toast.message}
+        type={toast.type}
+      />
     </div>
   );
 }
