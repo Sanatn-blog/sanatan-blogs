@@ -14,6 +14,7 @@ import {
   TrendingUp,
   Star,
   MessageCircle,
+  AlertTriangle,
 } from "lucide-react";
 
 interface Blog {
@@ -453,8 +454,8 @@ export default function BlogsPage() {
                       </div>
                     )}
                     <div className="absolute top-4 left-4">
-                      <span className="bg-yellow-400 text-gray-900 px-3 py-1 rounded-full text-xs font-bold shadow-lg">
-                        ⭐ Featured
+                      <span className="bg-yellow-400 text-gray-900 px-3 py-1 rounded-full text-xs font-bold shadow-lg inline-flex items-center gap-1">
+                        <Star className="h-3 w-3 fill-current" /> Featured
                       </span>
                     </div>
                     <div className="absolute bottom-4 left-4 right-4">
@@ -666,7 +667,9 @@ export default function BlogsPage() {
             </div>
           ) : error ? (
             <div className="text-center py-16">
-              <div className="text-6xl mb-4">⚠️</div>
+              <div className="mb-4 flex justify-center">
+                <AlertTriangle className="h-16 w-16 text-orange-500" />
+              </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">
                 Error Loading Articles
               </h3>
@@ -820,7 +823,9 @@ export default function BlogsPage() {
             </div>
           ) : (
             <div className="text-center py-16">
-              <div className="text-6xl mb-4">🔍</div>
+              <div className="mb-4 flex justify-center">
+                <Search className="h-16 w-16 text-gray-400" />
+              </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">
                 No Articles Found
               </h3>

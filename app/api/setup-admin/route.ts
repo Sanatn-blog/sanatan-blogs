@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     const adminUser = new User(adminData);
     await adminUser.save();
 
-    console.log("✅ Super Admin created successfully!");
+    console.log("[SUCCESS] Super Admin created successfully!");
 
     return NextResponse.json(
       {

@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState, useCallback } from 'react';
-import Image from 'next/image';
-import { useAuth } from '@/hooks/useAuth';
-import { 
-  User, 
-  Save, 
+import React, { useEffect, useState, useCallback } from "react";
+import Image from "next/image";
+import { useAuth } from "@/hooks/useAuth";
+import {
+  User,
+  Save,
   ArrowLeft,
   Mail,
   MapPin,
@@ -25,10 +25,10 @@ import {
   Upload,
   Lock,
   AtSign,
-  Shield
-} from 'lucide-react';
-import Link from 'next/link';
-import ImageCropper from '@/components/ImageCropper';
+  Shield,
+} from "lucide-react";
+import Link from "next/link";
+import ImageCropper from "@/components/ImageCropper";
 
 interface ProfileForm {
   name: string;
@@ -50,48 +50,57 @@ export default function SettingsPage() {
   const { user, loading, updateUser, refreshUserData } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  
+  const [message, setMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+
   const [form, setForm] = useState<ProfileForm>({
-    name: '',
-    bio: '',
-    location: '',
+    name: "",
+    bio: "",
+    location: "",
     expertise: [],
     achievements: [],
     socialLinks: {
-      twitter: '',
-      linkedin: '',
-      website: '',
-      instagram: '',
-      youtube: '',
-      facebook: ''
-    }
+      twitter: "",
+      linkedin: "",
+      website: "",
+      instagram: "",
+      youtube: "",
+      facebook: "",
+    },
   });
 
-  const [newExpertise, setNewExpertise] = useState('');
-  const [newAchievement, setNewAchievement] = useState('');
+  const [newExpertise, setNewExpertise] = useState("");
+  const [newAchievement, setNewAchievement] = useState("");
   const [showImageCropper, setShowImageCropper] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<string>('');
+  const [selectedImage, setSelectedImage] = useState<string>("");
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
-  const [avatarPreview, setAvatarPreview] = useState<string>('');
-  
+  const [avatarPreview, setAvatarPreview] = useState<string>("");
+
   // User ID (Username) change state
-  const [newUserId, setNewUserId] = useState('');
+  const [newUserId, setNewUserId] = useState("");
   const [changingUserId, setChangingUserId] = useState(false);
-  const [userIdMessage, setUserIdMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [userIdMessage, setUserIdMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
   const [checkingUserId, setCheckingUserId] = useState(false);
   const [userIdAvailable, setUserIdAvailable] = useState<boolean | null>(null);
   const [suggestedUserIds, setSuggestedUserIds] = useState<string[]>([]);
-  const [debouncedUserId, setDebouncedUserId] = useState('');
-  
+  const [debouncedUserId, setDebouncedUserId] = useState("");
+
   // Password change state
   const [passwordData, setPasswordData] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
   });
   const [changingPassword, setChangingPassword] = useState(false);
-  const [passwordMessage, setPasswordMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [passwordMessage, setPasswordMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -104,7 +113,7 @@ export default function SettingsPage() {
   useEffect(() => {
     setUserIdAvailable(null);
     setSuggestedUserIds([]);
-    setNewUserId('');
+    setNewUserId("");
   }, [user]);
 
   // Debounce User ID input for availability check
@@ -116,37 +125,35 @@ export default function SettingsPage() {
     return () => clearTimeout(timeoutId);
   }, [newUserId]);
 
-
-
   const loadProfile = async () => {
     try {
-      const token = localStorage.getItem('accessToken');
-      const response = await fetch('/api/profile', {
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch("/api/profile", {
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setForm({
-          name: data.user.name || '',
-          bio: data.user.bio || '',
-          location: data.user.location || '',
+          name: data.user.name || "",
+          bio: data.user.bio || "",
+          location: data.user.location || "",
           expertise: data.user.expertise || [],
           achievements: data.user.achievements || [],
           socialLinks: {
-            twitter: data.user.socialLinks?.twitter || '',
-            linkedin: data.user.socialLinks?.linkedin || '',
-            website: data.user.socialLinks?.website || '',
-            instagram: data.user.socialLinks?.instagram || '',
-            youtube: data.user.socialLinks?.youtube || '',
-            facebook: data.user.socialLinks?.facebook || ''
-          }
+            twitter: data.user.socialLinks?.twitter || "",
+            linkedin: data.user.socialLinks?.linkedin || "",
+            website: data.user.socialLinks?.website || "",
+            instagram: data.user.socialLinks?.instagram || "",
+            youtube: data.user.socialLinks?.youtube || "",
+            facebook: data.user.socialLinks?.facebook || "",
+          },
         });
       }
     } catch (error) {
-      console.error('Error loading profile:', error);
+      console.error("Error loading profile:", error);
     }
   };
 
@@ -154,20 +161,20 @@ export default function SettingsPage() {
     try {
       setSaving(true);
       setMessage(null);
-      
-      const token = localStorage.getItem('accessToken');
-      const response = await fetch('/api/profile', {
-        method: 'PUT',
+
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch("/api/profile", {
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(form)
+        body: JSON.stringify(form),
       });
-      
+
       if (response.ok) {
         const data = await response.json();
-        setMessage({ type: 'success', text: 'Profile updated successfully!' });
+        setMessage({ type: "success", text: "Profile updated successfully!" });
         // Update the user context with any changes
         if (data.user) {
           updateUser(data.user);
@@ -178,11 +185,14 @@ export default function SettingsPage() {
         setTimeout(() => setMessage(null), 3000);
       } else {
         const data = await response.json();
-        setMessage({ type: 'error', text: data.error || 'Failed to update profile' });
+        setMessage({
+          type: "error",
+          text: data.error || "Failed to update profile",
+        });
       }
     } catch (error) {
-      console.error('Error saving profile:', error);
-      setMessage({ type: 'error', text: 'Failed to update profile' });
+      console.error("Error saving profile:", error);
+      setMessage({ type: "error", text: "Failed to update profile" });
     } finally {
       setSaving(false);
     }
@@ -190,35 +200,38 @@ export default function SettingsPage() {
 
   const addExpertise = () => {
     if (newExpertise.trim() && !form.expertise.includes(newExpertise.trim())) {
-      setForm(prev => ({
+      setForm((prev) => ({
         ...prev,
-        expertise: [...prev.expertise, newExpertise.trim()]
+        expertise: [...prev.expertise, newExpertise.trim()],
       }));
-      setNewExpertise('');
+      setNewExpertise("");
     }
   };
 
   const removeExpertise = (index: number) => {
-    setForm(prev => ({
+    setForm((prev) => ({
       ...prev,
-      expertise: prev.expertise.filter((_, i) => i !== index)
+      expertise: prev.expertise.filter((_, i) => i !== index),
     }));
   };
 
   const addAchievement = () => {
-    if (newAchievement.trim() && !form.achievements.includes(newAchievement.trim())) {
-      setForm(prev => ({
+    if (
+      newAchievement.trim() &&
+      !form.achievements.includes(newAchievement.trim())
+    ) {
+      setForm((prev) => ({
         ...prev,
-        achievements: [...prev.achievements, newAchievement.trim()]
+        achievements: [...prev.achievements, newAchievement.trim()],
       }));
-      setNewAchievement('');
+      setNewAchievement("");
     }
   };
 
   const removeAchievement = (index: number) => {
-    setForm(prev => ({
+    setForm((prev) => ({
       ...prev,
-      achievements: prev.achievements.filter((_, i) => i !== index)
+      achievements: prev.achievements.filter((_, i) => i !== index),
     }));
   };
 
@@ -238,7 +251,7 @@ export default function SettingsPage() {
   const handleCropComplete = (croppedImageUrl: string) => {
     setAvatarPreview(croppedImageUrl);
     setShowImageCropper(false);
-    setSelectedImage('');
+    setSelectedImage("");
   };
 
   const handleAvatarUpload = async () => {
@@ -246,28 +259,31 @@ export default function SettingsPage() {
 
     try {
       setUploadingAvatar(true);
-      
+
       // Convert data URL to blob
       const response = await fetch(avatarPreview);
       const blob = await response.blob();
-      
+
       // Create FormData
       const formData = new FormData();
-      formData.append('avatar', blob, 'avatar.jpg');
+      formData.append("avatar", blob, "avatar.jpg");
 
-      const token = localStorage.getItem('accessToken');
-      const uploadResponse = await fetch('/api/profile/avatar', {
-        method: 'POST',
+      const token = localStorage.getItem("accessToken");
+      const uploadResponse = await fetch("/api/profile/avatar", {
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
-        body: formData
+        body: formData,
       });
 
       if (uploadResponse.ok) {
         const data = await uploadResponse.json();
-        setMessage({ type: 'success', text: 'Profile picture updated successfully!' });
-        setAvatarPreview('');
+        setMessage({
+          type: "success",
+          text: "Profile picture updated successfully!",
+        });
+        setAvatarPreview("");
         // Update the user context with new avatar
         if (data.avatar) {
           updateUser({ avatar: data.avatar });
@@ -280,11 +296,14 @@ export default function SettingsPage() {
         setTimeout(() => setMessage(null), 3000);
       } else {
         const errorData = await uploadResponse.json();
-        setMessage({ type: 'error', text: errorData.error || 'Failed to upload profile picture' });
+        setMessage({
+          type: "error",
+          text: errorData.error || "Failed to upload profile picture",
+        });
       }
     } catch (error) {
-      console.error('Error uploading avatar:', error);
-      setMessage({ type: 'error', text: 'Failed to upload profile picture' });
+      console.error("Error uploading avatar:", error);
+      setMessage({ type: "error", text: "Failed to upload profile picture" });
     } finally {
       setUploadingAvatar(false);
     }
@@ -300,12 +319,14 @@ export default function SettingsPage() {
 
     try {
       setCheckingUserId(true);
-      const response = await fetch(`/api/auth/check-exists?username=${encodeURIComponent(userId.trim())}`);
+      const response = await fetch(
+        `/api/auth/check-exists?username=${encodeURIComponent(userId.trim())}`,
+      );
       if (response.ok) {
         const data = await response.json();
         const isAvailable = !data.username;
         setUserIdAvailable(isAvailable);
-        
+
         // If not available, generate suggestions
         if (!isAvailable) {
           const suggestions = generateUserIdSuggestions(userId.trim());
@@ -315,7 +336,7 @@ export default function SettingsPage() {
         }
       }
     } catch (error) {
-      console.error('Error checking User ID availability:', error);
+      console.error("Error checking User ID availability:", error);
       setUserIdAvailable(null);
     } finally {
       setCheckingUserId(false);
@@ -335,64 +356,73 @@ export default function SettingsPage() {
   // Generate User ID suggestions
   const generateUserIdSuggestions = (baseUserId: string): string[] => {
     const suggestions: string[] = [];
-    const cleanBase = baseUserId.replace(/[^a-zA-Z0-9_-]/g, '').toLowerCase();
-    
+    const cleanBase = baseUserId.replace(/[^a-zA-Z0-9_-]/g, "").toLowerCase();
+
     // Add numbers
     for (let i = 1; i <= 5; i++) {
       suggestions.push(`${cleanBase}${i}`);
     }
-    
+
     // Add random numbers
     for (let i = 0; i < 3; i++) {
       const randomNum = Math.floor(Math.random() * 999) + 1;
       suggestions.push(`${cleanBase}${randomNum}`);
     }
-    
+
     // Add underscore and hyphen variations
     suggestions.push(`${cleanBase}_user`);
     suggestions.push(`user_${cleanBase}`);
     suggestions.push(`${cleanBase}-user`);
     suggestions.push(`user-${cleanBase}`);
-    
+
     return suggestions.slice(0, 5); // Return max 5 suggestions
   };
 
   const handleUserIdChange = async () => {
     if (!newUserId.trim()) {
-      setUserIdMessage({ type: 'error', text: 'Please enter a new User ID' });
+      setUserIdMessage({ type: "error", text: "Please enter a new User ID" });
       return;
     }
 
     if (newUserId.trim().length < 3) {
-      setUserIdMessage({ type: 'error', text: 'User ID must be at least 3 characters long' });
+      setUserIdMessage({
+        type: "error",
+        text: "User ID must be at least 3 characters long",
+      });
       return;
     }
 
     // Validate User ID format
     const userIdRegex = /^[a-zA-Z0-9_-]+$/;
     if (!userIdRegex.test(newUserId.trim())) {
-      setUserIdMessage({ type: 'error', text: 'User ID can only contain letters, numbers, hyphens, and underscores' });
+      setUserIdMessage({
+        type: "error",
+        text: "User ID can only contain letters, numbers, hyphens, and underscores",
+      });
       return;
     }
 
     try {
       setChangingUserId(true);
       setUserIdMessage(null);
-      
-      const token = localStorage.getItem('accessToken');
-      const response = await fetch('/api/profile/change-username', {
-        method: 'POST',
+
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch("/api/profile/change-username", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ newUsername: newUserId.trim() })
+        body: JSON.stringify({ newUsername: newUserId.trim() }),
       });
-      
+
       if (response.ok) {
         const data = await response.json();
-        setUserIdMessage({ type: 'success', text: 'User ID changed successfully!' });
-        setNewUserId('');
+        setUserIdMessage({
+          type: "success",
+          text: "User ID changed successfully!",
+        });
+        setNewUserId("");
         setUserIdAvailable(null);
         setSuggestedUserIds([]);
         // Update the user context with new username
@@ -407,11 +437,14 @@ export default function SettingsPage() {
         setTimeout(() => setUserIdMessage(null), 3000);
       } else {
         const data = await response.json();
-        setUserIdMessage({ type: 'error', text: data.error || 'Failed to change User ID' });
+        setUserIdMessage({
+          type: "error",
+          text: data.error || "Failed to change User ID",
+        });
       }
     } catch (error) {
-      console.error('Error changing User ID:', error);
-      setUserIdMessage({ type: 'error', text: 'Failed to change User ID' });
+      console.error("Error changing User ID:", error);
+      setUserIdMessage({ type: "error", text: "Failed to change User ID" });
     } finally {
       setChangingUserId(false);
     }
@@ -419,47 +452,56 @@ export default function SettingsPage() {
 
   const handlePasswordChange = async () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setPasswordMessage({ type: 'error', text: 'New passwords do not match' });
+      setPasswordMessage({ type: "error", text: "New passwords do not match" });
       return;
     }
 
     if (passwordData.newPassword.length < 6) {
-      setPasswordMessage({ type: 'error', text: 'New password must be at least 6 characters long' });
+      setPasswordMessage({
+        type: "error",
+        text: "New password must be at least 6 characters long",
+      });
       return;
     }
 
     try {
       setChangingPassword(true);
       setPasswordMessage(null);
-      
-      const token = localStorage.getItem('accessToken');
-      const response = await fetch('/api/profile/change-password', {
-        method: 'POST',
+
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch("/api/profile/change-password", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           currentPassword: passwordData.currentPassword,
-          newPassword: passwordData.newPassword
-        })
+          newPassword: passwordData.newPassword,
+        }),
       });
-      
+
       if (response.ok) {
-        setPasswordMessage({ type: 'success', text: 'Password changed successfully!' });
+        setPasswordMessage({
+          type: "success",
+          text: "Password changed successfully!",
+        });
         setPasswordData({
-          currentPassword: '',
-          newPassword: '',
-          confirmPassword: ''
+          currentPassword: "",
+          newPassword: "",
+          confirmPassword: "",
         });
         setTimeout(() => setPasswordMessage(null), 3000);
       } else {
         const data = await response.json();
-        setPasswordMessage({ type: 'error', text: data.error || 'Failed to change password' });
+        setPasswordMessage({
+          type: "error",
+          text: data.error || "Failed to change password",
+        });
       }
     } catch (error) {
-      console.error('Error changing password:', error);
-      setPasswordMessage({ type: 'error', text: 'Failed to change password' });
+      console.error("Error changing password:", error);
+      setPasswordMessage({ type: "error", text: "Failed to change password" });
     } finally {
       setChangingPassword(false);
     }
@@ -484,8 +526,12 @@ export default function SettingsPage() {
             <div className="w-20 h-20 mx-auto bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center mb-4">
               <Shield className="w-10 h-10 text-white" />
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Access Restricted</h1>
-            <p className="text-slate-400">Please log in to access your settings</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">
+              Access Restricted
+            </h1>
+            <p className="text-slate-400">
+              Please log in to access your settings
+            </p>
           </div>
           <Link href="/login">
             <span className="inline-flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-medium shadow-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-300 transform hover:scale-105">
@@ -513,11 +559,11 @@ export default function SettingsPage() {
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">
                 Settings
               </h1>
-              <p className="text-slate-400 text-sm sm:text-base">Manage your spiritual profile and preferences</p>
+              <p className="text-slate-400 text-sm sm:text-base">
+                Manage your spiritual profile and preferences
+              </p>
             </div>
           </div>
-          
-
         </div>
 
         {/* Profile Image and Save Changes Section */}
@@ -531,7 +577,7 @@ export default function SettingsPage() {
                 </div>
                 <span>Profile Picture</span>
               </h2>
-              
+
               <div className="flex flex-col lg:flex-row items-center lg:items-start space-y-6 lg:space-y-0 lg:space-x-8">
                 {/* Current Avatar */}
                 <div className="relative">
@@ -548,7 +594,7 @@ export default function SettingsPage() {
                       <User className="w-12 h-12 sm:w-16 sm:h-16 text-slate-400" />
                     )}
                   </div>
-                  
+
                   {/* Avatar Preview */}
                   {avatarPreview && (
                     <div className="absolute inset-0 rounded-full overflow-hidden border-4 border-purple-500/50">
@@ -561,7 +607,7 @@ export default function SettingsPage() {
                       />
                     </div>
                   )}
-                  
+
                   {/* Upload indicator */}
                   {uploadingAvatar && (
                     <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center">
@@ -592,7 +638,7 @@ export default function SettingsPage() {
                           <Upload className="w-4 h-4" />
                           <span>Choose Image</span>
                         </label>
-                        
+
                         {avatarPreview && (
                           <button
                             onClick={handleAvatarUpload}
@@ -604,15 +650,18 @@ export default function SettingsPage() {
                             ) : (
                               <Upload className="w-4 h-4" />
                             )}
-                            <span>{uploadingAvatar ? 'Uploading...' : 'Upload'}</span>
+                            <span>
+                              {uploadingAvatar ? "Uploading..." : "Upload"}
+                            </span>
                           </button>
                         )}
                       </div>
                     </div>
-                    
+
                     <div className="bg-slate-700/30 rounded-lg p-3">
                       <p className="text-xs text-slate-400">
-                        <strong>Recommended:</strong> Square image, at least 200x200 pixels. JPG, PNG, or GIF up to 5MB.
+                        <strong>Recommended:</strong> Square image, at least
+                        200x200 pixels. JPG, PNG, or GIF up to 5MB.
                       </p>
                     </div>
                   </div>
@@ -638,7 +687,7 @@ export default function SettingsPage() {
                 ) : (
                   <Save className="w-5 h-5" />
                 )}
-                <span>{saving ? 'Saving Changes...' : 'Save All Changes'}</span>
+                <span>{saving ? "Saving Changes..." : "Save All Changes"}</span>
               </button>
               <p className="text-xs text-slate-400 mt-3 text-center">
                 Save your spiritual profile information and preferences
@@ -649,13 +698,15 @@ export default function SettingsPage() {
 
         {/* Message */}
         {message && (
-          <div className={`mb-6 p-4 rounded-xl border backdrop-blur-sm ${
-            message.type === 'success' 
-              ? 'bg-emerald-900/20 border-emerald-500/50 text-emerald-300 shadow-lg shadow-emerald-500/10' 
-              : 'bg-red-50 border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-500/50 dark:text-red-300 shadow-lg shadow-red-500/10'
-          }`}>
+          <div
+            className={`mb-6 p-4 rounded-xl border backdrop-blur-sm ${
+              message.type === "success"
+                ? "bg-emerald-900/20 border-emerald-500/50 text-emerald-300 shadow-lg shadow-emerald-500/10"
+                : "bg-red-50 border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-500/50 dark:text-red-300 shadow-lg shadow-red-500/10"
+            }`}
+          >
             <div className="flex items-center space-x-3">
-              {message.type === 'success' ? (
+              {message.type === "success" ? (
                 <div className="p-1 bg-emerald-500/20 rounded-full">
                   <CheckCircle className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                 </div>
@@ -680,44 +731,63 @@ export default function SettingsPage() {
                 </div>
                 <span>Basic Information</span>
               </h2>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-slate-300 mb-2">Full Name</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Full Name
+                  </label>
                   <input
                     type="text"
                     value={form.name}
-                    onChange={(e) => setForm(prev => ({ ...prev, name: e.target.value }))}
+                    onChange={(e) =>
+                      setForm((prev) => ({ ...prev, name: e.target.value }))
+                    }
                     className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500/50 transition-all duration-300 backdrop-blur-sm"
                     placeholder="Enter your full name (e.g., Krishna Das, Radha Rani)"
                   />
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-slate-300 mb-2">Bio</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Bio
+                  </label>
                   <textarea
                     value={form.bio}
-                    onChange={(e) => setForm(prev => ({ ...prev, bio: e.target.value }))}
+                    onChange={(e) =>
+                      setForm((prev) => ({ ...prev, bio: e.target.value }))
+                    }
                     rows={4}
                     className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500/50 transition-all duration-300 resize-none backdrop-blur-sm"
                     placeholder="Share your spiritual journey, knowledge of Sanatan Dharma, and what you write about..."
                   />
                   <div className="flex justify-between items-center mt-2">
-                    <p className="text-xs text-slate-500">Share your spiritual journey with the Sanatan community</p>
-                    <p className={`text-xs ${form.bio.length > 450 ? 'text-orange-600 dark:text-orange-400' : 'text-slate-500'}`}>
+                    <p className="text-xs text-slate-500">
+                      Share your spiritual journey with the Sanatan community
+                    </p>
+                    <p
+                      className={`text-xs ${form.bio.length > 450 ? "text-orange-600 dark:text-orange-400" : "text-slate-500"}`}
+                    >
                       {form.bio.length}/500 characters
                     </p>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">Location</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Location
+                  </label>
                   <div className="relative">
                     <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                       type="text"
                       value={form.location}
-                      onChange={(e) => setForm(prev => ({ ...prev, location: e.target.value }))}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          location: e.target.value,
+                        }))
+                      }
                       className="w-full pl-10 pr-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500/50 transition-all duration-300 backdrop-blur-sm"
                       placeholder="e.g., Varanasi, India or New York, USA"
                     />
@@ -734,14 +804,14 @@ export default function SettingsPage() {
                 </div>
                 <span>Expertise</span>
               </h2>
-              
+
               <div className="space-y-6">
                 <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
                   <input
                     type="text"
                     value={newExpertise}
                     onChange={(e) => setNewExpertise(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && addExpertise()}
+                    onKeyPress={(e) => e.key === "Enter" && addExpertise()}
                     className="flex-1 px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500/50 transition-all duration-300 backdrop-blur-sm"
                     placeholder="e.g., Vedic Studies, Sanskrit, Yoga, Meditation, Ayurveda, Philosophy"
                   />
@@ -753,10 +823,12 @@ export default function SettingsPage() {
                     Add Skill
                   </button>
                 </div>
-                
+
                 {form.expertise.length > 0 && (
                   <div className="bg-slate-700/20 rounded-xl p-4">
-                    <h3 className="text-sm font-medium text-slate-300 mb-3">Your Skills ({form.expertise.length})</h3>
+                    <h3 className="text-sm font-medium text-slate-300 mb-3">
+                      Your Skills ({form.expertise.length})
+                    </h3>
                     <div className="flex flex-wrap gap-3">
                       {form.expertise.map((item, index) => (
                         <span
@@ -786,14 +858,14 @@ export default function SettingsPage() {
                 </div>
                 <span>Achievements & Awards</span>
               </h2>
-              
+
               <div className="space-y-6">
                 <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
                   <input
                     type="text"
                     value={newAchievement}
                     onChange={(e) => setNewAchievement(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && addAchievement()}
+                    onKeyPress={(e) => e.key === "Enter" && addAchievement()}
                     className="flex-1 px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500/50 transition-all duration-300 backdrop-blur-sm"
                     placeholder="e.g., Sanskrit Scholar, Yoga Teacher Certification, Published Spiritual Book"
                   />
@@ -805,10 +877,12 @@ export default function SettingsPage() {
                     Add Achievement
                   </button>
                 </div>
-                
+
                 {form.achievements.length > 0 && (
                   <div className="bg-slate-700/20 rounded-xl p-4">
-                    <h3 className="text-sm font-medium text-slate-300 mb-3">Your Achievements ({form.achievements.length})</h3>
+                    <h3 className="text-sm font-medium text-slate-300 mb-3">
+                      Your Achievements ({form.achievements.length})
+                    </h3>
                     <div className="space-y-3">
                       {form.achievements.map((item, index) => (
                         <div
@@ -817,7 +891,9 @@ export default function SettingsPage() {
                         >
                           <div className="flex items-center space-x-3">
                             <Award className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
-                            <span className="text-yellow-800 dark:text-yellow-300 font-medium">{item}</span>
+                            <span className="text-yellow-800 dark:text-yellow-300 font-medium">
+                              {item}
+                            </span>
                           </div>
                           <button
                             onClick={() => removeAchievement(index)}
@@ -841,19 +917,26 @@ export default function SettingsPage() {
                 </div>
                 <span>Social Links</span>
               </h2>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">Twitter</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Twitter
+                  </label>
                   <div className="relative">
                     <Twitter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                       type="url"
                       value={form.socialLinks.twitter}
-                      onChange={(e) => setForm(prev => ({ 
-                        ...prev, 
-                        socialLinks: { ...prev.socialLinks, twitter: e.target.value }
-                      }))}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          socialLinks: {
+                            ...prev.socialLinks,
+                            twitter: e.target.value,
+                          },
+                        }))
+                      }
                       className="w-full pl-10 pr-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500/50 transition-all duration-300 backdrop-blur-sm"
                       placeholder="https://twitter.com/your_spiritual_handle"
                     />
@@ -861,16 +944,23 @@ export default function SettingsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">LinkedIn</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    LinkedIn
+                  </label>
                   <div className="relative">
                     <Linkedin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                       type="url"
                       value={form.socialLinks.linkedin}
-                      onChange={(e) => setForm(prev => ({ 
-                        ...prev, 
-                        socialLinks: { ...prev.socialLinks, linkedin: e.target.value }
-                      }))}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          socialLinks: {
+                            ...prev.socialLinks,
+                            linkedin: e.target.value,
+                          },
+                        }))
+                      }
                       className="w-full pl-10 pr-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500/50 transition-all duration-300 backdrop-blur-sm"
                       placeholder="https://linkedin.com/in/your_professional_profile"
                     />
@@ -878,16 +968,23 @@ export default function SettingsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">Facebook</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Facebook
+                  </label>
                   <div className="relative">
                     <Facebook className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                       type="url"
                       value={form.socialLinks.facebook}
-                      onChange={(e) => setForm(prev => ({ 
-                        ...prev, 
-                        socialLinks: { ...prev.socialLinks, facebook: e.target.value }
-                      }))}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          socialLinks: {
+                            ...prev.socialLinks,
+                            facebook: e.target.value,
+                          },
+                        }))
+                      }
                       className="w-full pl-10 pr-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500/50 transition-all duration-300 backdrop-blur-sm"
                       placeholder="https://facebook.com/your_spiritual_page"
                     />
@@ -895,16 +992,23 @@ export default function SettingsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">Website</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Website
+                  </label>
                   <div className="relative">
                     <ExternalLink className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                       type="url"
                       value={form.socialLinks.website}
-                      onChange={(e) => setForm(prev => ({ 
-                        ...prev, 
-                        socialLinks: { ...prev.socialLinks, website: e.target.value }
-                      }))}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          socialLinks: {
+                            ...prev.socialLinks,
+                            website: e.target.value,
+                          },
+                        }))
+                      }
                       className="w-full pl-10 pr-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500/50 transition-all duration-300 backdrop-blur-sm"
                       placeholder="https://your-spiritual-website.com"
                     />
@@ -912,16 +1016,23 @@ export default function SettingsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">Instagram</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Instagram
+                  </label>
                   <div className="relative">
                     <Instagram className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                       type="url"
                       value={form.socialLinks.instagram}
-                      onChange={(e) => setForm(prev => ({ 
-                        ...prev, 
-                        socialLinks: { ...prev.socialLinks, instagram: e.target.value }
-                      }))}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          socialLinks: {
+                            ...prev.socialLinks,
+                            instagram: e.target.value,
+                          },
+                        }))
+                      }
                       className="w-full pl-10 pr-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500/50 transition-all duration-300 backdrop-blur-sm"
                       placeholder="https://instagram.com/your_spiritual_journey"
                     />
@@ -929,16 +1040,23 @@ export default function SettingsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">YouTube</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    YouTube
+                  </label>
                   <div className="relative">
                     <Youtube className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                       type="url"
                       value={form.socialLinks.youtube}
-                      onChange={(e) => setForm(prev => ({ 
-                        ...prev, 
-                        socialLinks: { ...prev.socialLinks, youtube: e.target.value }
-                      }))}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          socialLinks: {
+                            ...prev.socialLinks,
+                            youtube: e.target.value,
+                          },
+                        }))
+                      }
                       className="w-full pl-10 pr-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500/50 transition-all duration-300 backdrop-blur-sm"
                       placeholder="https://youtube.com/@your_spiritual_channel"
                     />
@@ -955,15 +1073,17 @@ export default function SettingsPage() {
                 </div>
                 <span>User ID</span>
               </h2>
-              
+
               {userIdMessage && (
-                <div className={`mb-6 p-4 rounded-xl border backdrop-blur-sm ${
-                  userIdMessage.type === 'success' 
-                    ? 'bg-emerald-900/20 border-emerald-500/50 text-emerald-300 shadow-lg shadow-emerald-500/10' 
-                    : 'bg-red-50 border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-500/50 dark:text-red-300 shadow-lg shadow-red-500/10'
-                }`}>
+                <div
+                  className={`mb-6 p-4 rounded-xl border backdrop-blur-sm ${
+                    userIdMessage.type === "success"
+                      ? "bg-emerald-900/20 border-emerald-500/50 text-emerald-300 shadow-lg shadow-emerald-500/10"
+                      : "bg-red-50 border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-500/50 dark:text-red-300 shadow-lg shadow-red-500/10"
+                  }`}
+                >
                   <div className="flex items-center space-x-3">
-                    {userIdMessage.type === 'success' ? (
+                    {userIdMessage.type === "success" ? (
                       <div className="p-1 bg-emerald-500/20 rounded-full">
                         <CheckCircle className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                       </div>
@@ -976,42 +1096,50 @@ export default function SettingsPage() {
                   </div>
                 </div>
               )}
-              
+
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">Current User ID</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Current User ID
+                  </label>
                   <input
                     type="text"
-                    value={user.username || 'Loading...'}
+                    value={user.username || "Loading..."}
                     disabled
                     className={`w-full px-4 py-3 border rounded-xl cursor-not-allowed backdrop-blur-sm transition-all duration-300 ${
-                      userIdMessage?.type === 'success' 
-                        ? 'bg-emerald-900/20 border-emerald-500/50 text-emerald-300' 
-                        : 'bg-slate-700/30 border-slate-600/50 text-slate-400'
+                      userIdMessage?.type === "success"
+                        ? "bg-emerald-900/20 border-emerald-500/50 text-emerald-300"
+                        : "bg-slate-700/30 border-slate-600/50 text-slate-400"
                     }`}
                   />
-                  {userIdMessage?.type === 'success' && (
+                  {userIdMessage?.type === "success" && (
                     <div className="mt-2 p-2 bg-emerald-900/20 rounded-lg border border-emerald-500/30">
-                      <p className="text-xs text-emerald-700 dark:text-emerald-300 font-medium">
-                        ✓ User ID updated successfully to: <span className="font-bold">{user.username || 'Loading...'}</span>
+                      <p className="text-xs text-emerald-700 dark:text-emerald-300 font-medium flex items-center gap-1">
+                        <CheckCircle className="h-3 w-3" /> User ID updated
+                        successfully to:{" "}
+                        <span className="font-bold">
+                          {user.username || "Loading..."}
+                        </span>
                       </p>
                     </div>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">New User ID</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    New User ID
+                  </label>
                   <div className="relative">
                     <input
                       type="text"
                       value={newUserId}
                       onChange={(e) => setNewUserId(e.target.value)}
                       className={`w-full px-4 py-3 bg-slate-700/50 border rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 transition-all duration-300 backdrop-blur-sm ${
-                        userIdAvailable === true 
-                          ? 'border-emerald-300 focus:ring-emerald-500 focus:border-emerald-500/50' 
-                          : userIdAvailable === false 
-                          ? 'border-red-300 focus:ring-red-500 focus:border-red-500/50'
-                          : 'border-slate-600/50 focus:ring-purple-500 focus:border-purple-500/50'
+                        userIdAvailable === true
+                          ? "border-emerald-300 focus:ring-emerald-500 focus:border-emerald-500/50"
+                          : userIdAvailable === false
+                            ? "border-red-300 focus:ring-red-500 focus:border-red-500/50"
+                            : "border-slate-600/50 focus:ring-purple-500 focus:border-purple-500/50"
                       }`}
                       placeholder="Enter new unique User ID"
                     />
@@ -1031,24 +1159,27 @@ export default function SettingsPage() {
                       </div>
                     )}
                   </div>
-                  
+
                   {/* Availability Status */}
                   {userIdAvailable === true && (
                     <div className="mt-2 p-3 bg-emerald-900/20 rounded-lg border border-emerald-500/30">
-                      <p className="text-xs text-emerald-700 dark:text-emerald-300 font-medium">
-                        ✓ User ID is available
+                      <p className="text-xs text-emerald-700 dark:text-emerald-300 font-medium flex items-center gap-1">
+                        <CheckCircle className="h-3 w-3" /> User ID is available
                       </p>
                     </div>
                   )}
-                  
+
                   {userIdAvailable === false && (
                     <div className="mt-2 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-500/30">
-                      <p className="text-xs text-red-700 dark:text-red-300 font-medium mb-2">
-                        ✗ User ID is already taken
+                      <p className="text-xs text-red-700 dark:text-red-300 font-medium mb-2 flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" /> User ID is already
+                        taken
                       </p>
                       {suggestedUserIds.length > 0 && (
                         <div>
-                          <p className="text-xs text-red-600 dark:text-red-400 mb-2">Try these alternatives:</p>
+                          <p className="text-xs text-red-600 dark:text-red-400 mb-2">
+                            Try these alternatives:
+                          </p>
                           <div className="flex flex-wrap gap-2">
                             {suggestedUserIds.map((suggestion, index) => (
                               <button
@@ -1064,17 +1195,22 @@ export default function SettingsPage() {
                       )}
                     </div>
                   )}
-                  
+
                   <div className="mt-2 p-3 bg-slate-700/20 rounded-lg">
                     <p className="text-xs text-slate-400">
-                      <strong>Requirements:</strong> 3-30 characters, letters, numbers, hyphens, and underscores only
+                      <strong>Requirements:</strong> 3-30 characters, letters,
+                      numbers, hyphens, and underscores only
                     </p>
                   </div>
                 </div>
 
                 <button
                   onClick={handleUserIdChange}
-                  disabled={changingUserId || !newUserId.trim() || userIdAvailable !== true}
+                  disabled={
+                    changingUserId ||
+                    !newUserId.trim() ||
+                    userIdAvailable !== true
+                  }
                   className="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-gray-400 disabled:to-gray-400 dark:disabled:from-slate-600 dark:disabled:to-slate-600 text-white rounded-xl font-medium transition-all duration-300 disabled:cursor-not-allowed shadow-lg"
                 >
                   {changingUserId ? (
@@ -1082,7 +1218,9 @@ export default function SettingsPage() {
                   ) : (
                     <AtSign className="w-5 h-5" />
                   )}
-                  <span>{changingUserId ? 'Changing User ID...' : 'Change User ID'}</span>
+                  <span>
+                    {changingUserId ? "Changing User ID..." : "Change User ID"}
+                  </span>
                 </button>
               </div>
             </div>
@@ -1095,15 +1233,17 @@ export default function SettingsPage() {
                 </div>
                 <span>Change Password</span>
               </h2>
-              
+
               {passwordMessage && (
-                <div className={`mb-6 p-4 rounded-xl border backdrop-blur-sm ${
-                  passwordMessage.type === 'success' 
-                    ? 'bg-emerald-900/20 border-emerald-500/50 text-emerald-300 shadow-lg shadow-emerald-500/10' 
-                    : 'bg-red-50 border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-500/50 dark:text-red-300 shadow-lg shadow-red-500/10'
-                }`}>
+                <div
+                  className={`mb-6 p-4 rounded-xl border backdrop-blur-sm ${
+                    passwordMessage.type === "success"
+                      ? "bg-emerald-900/20 border-emerald-500/50 text-emerald-300 shadow-lg shadow-emerald-500/10"
+                      : "bg-red-50 border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-500/50 dark:text-red-300 shadow-lg shadow-red-500/10"
+                  }`}
+                >
                   <div className="flex items-center space-x-3">
-                    {passwordMessage.type === 'success' ? (
+                    {passwordMessage.type === "success" ? (
                       <div className="p-1 bg-emerald-500/20 rounded-full">
                         <CheckCircle className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                       </div>
@@ -1116,25 +1256,39 @@ export default function SettingsPage() {
                   </div>
                 </div>
               )}
-              
+
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">Current Password</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Current Password
+                  </label>
                   <input
                     type="password"
                     value={passwordData.currentPassword}
-                    onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
+                    onChange={(e) =>
+                      setPasswordData((prev) => ({
+                        ...prev,
+                        currentPassword: e.target.value,
+                      }))
+                    }
                     className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500/50 transition-all duration-300 backdrop-blur-sm"
                     placeholder="Enter your current password"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">New Password</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    New Password
+                  </label>
                   <input
                     type="password"
                     value={passwordData.newPassword}
-                    onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
+                    onChange={(e) =>
+                      setPasswordData((prev) => ({
+                        ...prev,
+                        newPassword: e.target.value,
+                      }))
+                    }
                     className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500/50 transition-all duration-300 backdrop-blur-sm"
                     placeholder="Enter your new secure password"
                   />
@@ -1146,11 +1300,18 @@ export default function SettingsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">Confirm New Password</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Confirm New Password
+                  </label>
                   <input
                     type="password"
                     value={passwordData.confirmPassword}
-                    onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                    onChange={(e) =>
+                      setPasswordData((prev) => ({
+                        ...prev,
+                        confirmPassword: e.target.value,
+                      }))
+                    }
                     className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500/50 transition-all duration-300 backdrop-blur-sm"
                     placeholder="Confirm your new secure password"
                   />
@@ -1158,7 +1319,12 @@ export default function SettingsPage() {
 
                 <button
                   onClick={handlePasswordChange}
-                  disabled={changingPassword || !passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword}
+                  disabled={
+                    changingPassword ||
+                    !passwordData.currentPassword ||
+                    !passwordData.newPassword ||
+                    !passwordData.confirmPassword
+                  }
                   className="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 disabled:from-gray-400 disabled:to-gray-400 dark:disabled:from-slate-600 dark:disabled:to-slate-600 text-white rounded-xl font-medium transition-all duration-300 disabled:cursor-not-allowed shadow-lg"
                 >
                   {changingPassword ? (
@@ -1166,7 +1332,11 @@ export default function SettingsPage() {
                   ) : (
                     <Lock className="w-5 h-5" />
                   )}
-                  <span>{changingPassword ? 'Changing Password...' : 'Change Password'}</span>
+                  <span>
+                    {changingPassword
+                      ? "Changing Password..."
+                      : "Change Password"}
+                  </span>
                 </button>
               </div>
             </div>
@@ -1187,23 +1357,31 @@ export default function SettingsPage() {
                   <Mail className="w-4 h-4 text-slate-400" />
                   <div>
                     <p className="text-xs text-slate-500">Email</p>
-                    <p className="text-slate-300 text-sm font-medium">{user.email}</p>
+                    <p className="text-slate-300 text-sm font-medium">
+                      {user.email}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3 p-3 bg-slate-700/20 rounded-lg">
                   <User className="w-4 h-4 text-slate-400" />
                   <div>
                     <p className="text-xs text-slate-500">Role</p>
-                    <p className="text-slate-300 text-sm font-medium capitalize">{user.role}</p>
+                    <p className="text-slate-300 text-sm font-medium capitalize">
+                      {user.role}
+                    </p>
                   </div>
                 </div>
                 <div className="p-3 bg-slate-700/20 rounded-lg">
                   <p className="text-xs text-slate-500 mb-1">Status</p>
-                  <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                    user.status === 'approved' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/30' :
-                    user.status === 'rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border border-red-300 dark:border-red-500/30' :
-                    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 border border-yellow-300 dark:border-yellow-500/30'
-                  }`}>
+                  <div
+                    className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                      user.status === "approved"
+                        ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-500/30"
+                        : user.status === "rejected"
+                          ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border border-red-300 dark:border-red-500/30"
+                          : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 border border-yellow-300 dark:border-yellow-500/30"
+                    }`}
+                  >
                     {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
                   </div>
                 </div>
@@ -1220,11 +1398,11 @@ export default function SettingsPage() {
           onCropComplete={handleCropComplete}
           onCancel={() => {
             setShowImageCropper(false);
-            setSelectedImage('');
+            setSelectedImage("");
           }}
           aspectRatio={1}
         />
       )}
     </div>
   );
-} 
+}

@@ -220,8 +220,9 @@ export default function ContentManagement() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center space-x-2 mb-2">
                       <CheckCircle className="h-5 w-5 text-white" />
-                      <h3 className="text-lg font-bold text-white tracking-wide">
-                        🎉 {blogCount} Blog{blogCount > 1 ? "s" : ""} Published!
+                      <h3 className="text-lg font-bold text-white tracking-wide flex items-center gap-2">
+                        <CheckCircle className="h-5 w-5" /> {blogCount} Blog
+                        {blogCount > 1 ? "s" : ""} Published!
                       </h3>
                     </div>
 
@@ -234,8 +235,9 @@ export default function ContentManagement() {
 
                     <div className="flex items-center space-x-2">
                       <Sparkles className="h-4 w-4 text-yellow-200 animate-pulse" />
-                      <span className="text-xs font-medium text-emerald-100 opacity-90">
-                        Bulk action completed successfully ✨
+                      <span className="text-xs font-medium text-emerald-100 opacity-90 flex items-center gap-1">
+                        Bulk action completed successfully{" "}
+                        <Sparkles className="h-3 w-3 inline" />
                       </span>
                     </div>
                   </div>
@@ -455,8 +457,8 @@ export default function ContentManagement() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-white">
-                📝 Content Management
+              <h1 className="text-3xl font-bold text-white flex items-center gap-2">
+                <FileText className="h-8 w-8" /> Content Management
               </h1>
               <p className="text-gray-300 mt-2">
                 Manage all blogs, categories, and content

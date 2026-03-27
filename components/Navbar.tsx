@@ -115,8 +115,8 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                 <h1 className="text-xl font-bold bg-gradient-to-r from-orange-600 via-pink-600 to-purple-600 bg-clip-text text-transparent group-hover:scale-105 transition-transform duration-300 inline-block">
                   सनातन Blogs
                 </h1>
-                <p className="text-xs text-gray-500 -mt-1 font-medium">
-                  Spiritual Wisdom ✨
+                <p className="text-xs text-gray-500 -mt-1 font-medium flex items-center gap-1">
+                  Spiritual Wisdom <Sparkles className="h-3 w-3 inline" />
                 </p>
               </div>
             </Link>
@@ -258,11 +258,22 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                               : "text-gray-500"
                         }`}
                       >
-                        {user.role === "super_admin"
-                          ? "👑 Super Admin"
-                          : user.role === "admin"
-                            ? "🛡️ Admin"
-                            : "👤 Member"}
+                        {user.role === "super_admin" ? (
+                          <>
+                            <Crown className="h-3 w-3 inline mr-1" />
+                            Super Admin
+                          </>
+                        ) : user.role === "admin" ? (
+                          <>
+                            <Shield className="h-3 w-3 inline mr-1" />
+                            Admin
+                          </>
+                        ) : (
+                          <>
+                            <User className="h-3 w-3 inline mr-1" />
+                            Member
+                          </>
+                        )}
                       </div>
                     </div>
 
@@ -328,11 +339,22 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                                     : "bg-gray-200 text-gray-800"
                               }`}
                             >
-                              {user.role === "super_admin"
-                                ? "👑 Super Admin"
-                                : user.role === "admin"
-                                  ? "🛡️ Admin"
-                                  : "👤 Member"}
+                              {user.role === "super_admin" ? (
+                                <>
+                                  <Crown className="h-3 w-3 inline mr-1" />
+                                  Super Admin
+                                </>
+                              ) : user.role === "admin" ? (
+                                <>
+                                  <Shield className="h-3 w-3 inline mr-1" />
+                                  Admin
+                                </>
+                              ) : (
+                                <>
+                                  <User className="h-3 w-3 inline mr-1" />
+                                  Member
+                                </>
+                              )}
                             </span>
                           </div>
                         </div>

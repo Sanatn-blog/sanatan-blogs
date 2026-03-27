@@ -31,6 +31,9 @@ import {
   Edit,
   Trash2,
   Reply,
+  CheckCircle,
+  BookOpen,
+  AlertCircle,
 } from "lucide-react";
 import Image from "next/image";
 import RelatedArticles from "@/components/RelatedArticles";
@@ -1038,7 +1041,9 @@ export default function BlogDetailPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="text-6xl mb-4">📖</div>
+          <div className="mb-4 flex justify-center">
+            <BookOpen className="h-16 w-16 text-gray-400" />
+          </div>
           <h2 className="text-2xl font-bold text-gray-100 mb-4">
             Article Not Found
           </h2>
@@ -1060,7 +1065,9 @@ export default function BlogDetailPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="text-6xl mb-4">📖</div>
+          <div className="mb-4 flex justify-center">
+            <BookOpen className="h-16 w-16 text-gray-400" />
+          </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-4">
             Article Not Found
           </h2>
@@ -1296,7 +1303,7 @@ export default function BlogDetailPage() {
                     />
                     {commentError && (
                       <p className="text-red-500 text-sm mt-2 flex items-center">
-                        <span className="mr-2">⚠️</span>
+                        <AlertCircle className="h-4 w-4 mr-2" />
                         {commentError}
                       </p>
                     )}
@@ -1631,7 +1638,7 @@ export default function BlogDetailPage() {
       {showSuccessMessage && (
         <div className="fixed top-4 right-4 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg animate-fade-in">
           <div className="flex items-center space-x-2">
-            <span>✅</span>
+            <CheckCircle className="h-5 w-5" />
             <span>Comment posted successfully!</span>
           </div>
         </div>

@@ -25,7 +25,7 @@ async function testEmail() {
     // Verify connection
     console.log("Verifying SMTP connection...");
     await transporter.verify();
-    console.log("✓ SMTP connection verified successfully!\n");
+    console.log("[SUCCESS] SMTP connection verified successfully!\n");
 
     // Send test email
     console.log("Sending test email...");
@@ -37,11 +37,11 @@ async function testEmail() {
       html: "<p>This is a test email to verify <strong>Zoho Mail</strong> configuration.</p>",
     });
 
-    console.log("✓ Test email sent successfully!");
+    console.log("[SUCCESS] Test email sent successfully!");
     console.log("Message ID:", info.messageId);
-    console.log("\n✅ Email configuration is working correctly!");
+    console.log("\n[SUCCESS] Email configuration is working correctly!");
   } catch (error) {
-    console.error("❌ Email configuration test failed:");
+    console.error("[ERROR] Email configuration test failed:");
     console.error("Error:", error.message);
     if (error.code) console.error("Error Code:", error.code);
     if (error.command) console.error("Failed Command:", error.command);

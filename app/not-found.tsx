@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { Home, Search, ArrowLeft, BookOpen, Users } from 'lucide-react';
+import Link from "next/link";
+import { Home, Search, ArrowLeft, BookOpen, Users } from "lucide-react";
 
 export default function NotFound() {
   return (
@@ -28,8 +28,8 @@ export default function NotFound() {
             Page Not Found
           </h2>
           <p className="text-lg text-gray-600 max-w-md mx-auto">
-            Sorry, the page you are looking for doesn&apos;t exist or has been moved. 
-            Let&apos;s get you back on track!
+            Sorry, the page you are looking for doesn&apos;t exist or has been
+            moved. Let&apos;s get you back on track!
           </p>
         </div>
 
@@ -42,7 +42,7 @@ export default function NotFound() {
             <Home className="h-5 w-5 mr-2" />
             Go to Homepage
           </Link>
-          
+
           <Link
             href="/blogs"
             className="inline-flex items-center px-6 py-3 border-2 border-orange-600 text-orange-600 rounded-lg font-semibold hover:bg-orange-600 hover:text-white transition-colors"
@@ -57,7 +57,7 @@ export default function NotFound() {
           <h3 className="text-lg font-semibold text-gray-900 mb-6">
             या फिर इन pages पर जाएं:
           </h3>
-          
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Link
               href="/"
@@ -66,15 +66,17 @@ export default function NotFound() {
               <Home className="h-6 w-6 text-orange-600 mx-auto mb-2" />
               <span className="text-sm font-medium text-gray-700">Home</span>
             </Link>
-            
+
             <Link
               href="/about"
               className="p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-100 hover:border-orange-200"
             >
               <Users className="h-6 w-6 text-orange-600 mx-auto mb-2" />
-              <span className="text-sm font-medium text-gray-700">About Us</span>
+              <span className="text-sm font-medium text-gray-700">
+                About Us
+              </span>
             </Link>
-            
+
             <Link
               href="/login"
               className="p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-100 hover:border-orange-200"
@@ -84,7 +86,7 @@ export default function NotFound() {
               </div>
               <span className="text-sm font-medium text-gray-700">Login</span>
             </Link>
-            
+
             <Link
               href="/register"
               className="p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-100 hover:border-orange-200"
@@ -112,7 +114,7 @@ export default function NotFound() {
         <div className="mt-8">
           <div className="bg-orange-100 border border-orange-200 rounded-lg p-4">
             <div className="flex items-center justify-center space-x-2">
-              <div className="text-2xl">🤔</div>
+              <Search className="h-6 w-6 text-orange-600" />
               <p className="text-orange-800 font-medium">
                 Lost in the world of blogs? Let us help you find your way!
               </p>
@@ -122,4 +124,4 @@ export default function NotFound() {
       </div>
     </div>
   );
-} 
+}

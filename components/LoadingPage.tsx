@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { BookOpen, Heart, Sparkles, Sun, Moon } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { BookOpen, Heart, Sparkles, Sun, Moon } from "lucide-react";
 
 interface LoadingPageProps {
   message?: string;
@@ -9,17 +9,17 @@ interface LoadingPageProps {
   progress?: number;
 }
 
-export default function LoadingPage({ 
-  message = "Loading spiritual wisdom...", 
-  showProgress = false, 
-  progress = 0 
+export default function LoadingPage({
+  message = "Loading spiritual wisdom...",
+  showProgress = false,
+  progress = 0,
 }: LoadingPageProps) {
   const [currentDot, setCurrentDot] = useState(0);
   const [fadeIn, setFadeIn] = useState(false);
 
   useEffect(() => {
     setFadeIn(true);
-    
+
     const dotInterval = setInterval(() => {
       setCurrentDot((prev) => (prev + 1) % 4);
     }, 500);
@@ -28,31 +28,35 @@ export default function LoadingPage({
   }, []);
 
   return (
-    <div className={`fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-orange-50 via-white to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-opacity duration-1000 ${fadeIn ? 'opacity-100' : 'opacity-0'}`}>
+    <div
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-orange-50 via-white to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-opacity duration-1000 ${fadeIn ? "opacity-100" : "opacity-0"}`}
+    >
       <div className="relative">
         {/* Main Loading Container */}
         <div className="relative flex flex-col items-center space-y-8 p-12">
-          
           {/* Sacred Symbol Container */}
           <div className="relative">
             {/* Outer Ring */}
             <div className="w-32 h-32 border-4 border-orange-200 dark:border-orange-800 rounded-full animate-spin-slow">
               <div className="absolute inset-2 border-4 border-pink-200 dark:border-pink-800 rounded-full animate-spin-slow-reverse"></div>
             </div>
-            
+
             {/* Center Logo */}
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-pink-500 rounded-xl flex items-center justify-center text-white font-bold text-2xl shadow-2xl animate-pulse">
                 <BookOpen className="w-8 h-8" />
               </div>
             </div>
-            
+
             {/* Floating Elements */}
             <div className="absolute -top-4 -left-4">
               <Sparkles className="w-6 h-6 text-orange-400 animate-bounce" />
             </div>
             <div className="absolute -top-4 -right-4">
-              <Heart className="w-6 h-6 text-pink-400 animate-bounce" style={{ animationDelay: '0.5s' }} />
+              <Heart
+                className="w-6 h-6 text-pink-400 animate-bounce"
+                style={{ animationDelay: "0.5s" }}
+              />
             </div>
             <div className="absolute -bottom-4 -left-4">
               <Sun className="w-6 h-6 text-yellow-400 animate-spin" />
@@ -70,7 +74,7 @@ export default function LoadingPage({
             <p className="text-lg text-gray-600 dark:text-gray-300 font-medium">
               {message}
               <span className="inline-block ml-1">
-                {'.'.repeat(currentDot)}
+                {".".repeat(currentDot)}
               </span>
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -81,7 +85,7 @@ export default function LoadingPage({
           {/* Progress Bar */}
           {showProgress && (
             <div className="w-64 bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
-              <div 
+              <div
                 className="h-full bg-gradient-to-r from-orange-500 to-pink-500 rounded-full transition-all duration-300 ease-out"
                 style={{ width: `${progress}%` }}
               ></div>
@@ -91,18 +95,27 @@ export default function LoadingPage({
           {/* Sacred Geometry Pattern */}
           <div className="absolute inset-0 pointer-events-none">
             <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-orange-400 rounded-full animate-ping"></div>
-            <div className="absolute top-1/3 right-1/4 w-2 h-2 bg-pink-400 rounded-full animate-ping" style={{ animationDelay: '0.5s' }}></div>
-            <div className="absolute bottom-1/4 left-1/3 w-2 h-2 bg-yellow-400 rounded-full animate-ping" style={{ animationDelay: '1s' }}></div>
-            <div className="absolute bottom-1/3 right-1/3 w-2 h-2 bg-blue-400 rounded-full animate-ping" style={{ animationDelay: '1.5s' }}></div>
+            <div
+              className="absolute top-1/3 right-1/4 w-2 h-2 bg-pink-400 rounded-full animate-ping"
+              style={{ animationDelay: "0.5s" }}
+            ></div>
+            <div
+              className="absolute bottom-1/4 left-1/3 w-2 h-2 bg-yellow-400 rounded-full animate-ping"
+              style={{ animationDelay: "1s" }}
+            ></div>
+            <div
+              className="absolute bottom-1/3 right-1/3 w-2 h-2 bg-blue-400 rounded-full animate-ping"
+              style={{ animationDelay: "1.5s" }}
+            ></div>
           </div>
         </div>
 
         {/* Background Sacred Symbols */}
         <div className="absolute inset-0 pointer-events-none opacity-5">
           <div className="absolute top-10 left-10 text-6xl">ॐ</div>
-          <div className="absolute top-20 right-20 text-4xl">🕉</div>
-          <div className="absolute bottom-20 left-20 text-4xl">☸</div>
-          <div className="absolute bottom-10 right-10 text-6xl">🕉</div>
+          <div className="absolute top-20 right-20 text-4xl">ॐ</div>
+          <div className="absolute bottom-20 left-20 text-4xl">ॐ</div>
+          <div className="absolute bottom-10 right-10 text-6xl">ॐ</div>
         </div>
       </div>
     </div>
@@ -128,7 +141,7 @@ export function FullScreenLoading() {
   }, []);
 
   return (
-    <LoadingPage 
+    <LoadingPage
       message="Initializing spiritual journey..."
       showProgress={true}
       progress={progress}
@@ -145,9 +158,7 @@ export function SimpleLoading({ message }: { message?: string }) {
           <div className="w-16 h-16 border-4 border-orange-200 border-t-orange-500 rounded-full animate-spin"></div>
         </div>
         {message && (
-          <p className="text-gray-600 dark:text-gray-300 text-sm">
-            {message}
-          </p>
+          <p className="text-gray-600 dark:text-gray-300 text-sm">{message}</p>
         )}
       </div>
     </div>
@@ -172,4 +183,4 @@ export function SkeletonLoading() {
       </div>
     </div>
   );
-} 
+}

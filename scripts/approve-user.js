@@ -56,7 +56,7 @@ async function approveUser(identifier) {
     console.log(`  Role: ${user.role}`);
 
     if (user.status === "approved") {
-      console.log("\n✓ User is already approved!");
+      console.log("\n[SUCCESS] User is already approved!");
       process.exit(0);
     }
 
@@ -64,7 +64,7 @@ async function approveUser(identifier) {
     user.status = "approved";
     await user.save();
 
-    console.log("\n✓ User approved successfully!");
+    console.log("\n[SUCCESS] User approved successfully!");
     console.log(`  New Status: ${user.status}`);
 
     process.exit(0);
@@ -78,7 +78,7 @@ async function listPendingUsers() {
   try {
     // Connect to MongoDB
     if (!process.env.MONGODB_URI) {
-      throw new Error("MONGODB_URI not found in environment variables");   
+      throw new Error("MONGODB_URI not found in environment variables");
     }
 
     console.log("Connecting to MongoDB...");

@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import React, { Component, ErrorInfo, ReactNode } from "react";
 
 interface Props {
   children: ReactNode;
@@ -25,12 +25,16 @@ class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     // Log the error to console for debugging
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
-    
+    console.error("ErrorBoundary caught an error:", error, errorInfo);
+
     // Check if it's a message channel error
-    if (error.message.includes('message channel closed') || 
-        error.message.includes('asynchronous response')) {
-      console.warn('Message channel error detected. This is usually caused by browser extensions or development tools.');
+    if (
+      error.message.includes("message channel closed") ||
+      error.message.includes("asynchronous response")
+    ) {
+      console.warn(
+        "Message channel error detected. This is usually caused by browser extensions or development tools.",
+      );
     }
   }
 
@@ -44,15 +48,30 @@ class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
           <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-6 text-center">
-            <div className="text-6xl mb-4">⚠️</div>
+            <div className="mb-4 flex justify-center">
+              <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center">
+                <svg
+                  className="w-10 h-10 text-yellow-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+              </div>
+            </div>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">
               Something went wrong
             </h2>
             <p className="text-gray-600 mb-4">
-              {this.state.error?.message.includes('message channel') 
-                ? 'A browser communication error occurred. This is usually caused by browser extensions or development tools.'
-                : 'An unexpected error occurred. Please try refreshing the page.'
-              }
+              {this.state.error?.message.includes("message channel")
+                ? "A browser communication error occurred. This is usually caused by browser extensions or development tools."
+                : "An unexpected error occurred. Please try refreshing the page."}
             </p>
             <div className="space-y-2">
               <button
@@ -62,13 +81,15 @@ class ErrorBoundary extends Component<Props, State> {
                 Refresh Page
               </button>
               <button
-                onClick={() => this.setState({ hasError: false, error: undefined })}
+                onClick={() =>
+                  this.setState({ hasError: false, error: undefined })
+                }
                 className="w-full bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
               >
                 Try Again
               </button>
             </div>
-            {process.env.NODE_ENV === 'development' && this.state.error && (
+            {process.env.NODE_ENV === "development" && this.state.error && (
               <details className="mt-4 text-left">
                 <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-700">
                   Error Details (Development)
@@ -87,4 +108,4 @@ class ErrorBoundary extends Component<Props, State> {
   }
 }
 
-export default ErrorBoundary; 
+export default ErrorBoundary;

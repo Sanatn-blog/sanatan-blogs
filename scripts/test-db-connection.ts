@@ -7,11 +7,13 @@ async function testConnection() {
     const MONGODB_URI = process.env.MONGODB_URI;
 
     if (!MONGODB_URI) {
-      console.error("❌ MONGODB_URI is not defined in environment variables");
+      console.error(
+        "[ERROR] MONGODB_URI is not defined in environment variables",
+      );
       process.exit(1);
     }
 
-    console.log("✓ MONGODB_URI found");
+    console.log("[SUCCESS] MONGODB_URI found");
     console.log(
       "Connecting to:",
       MONGODB_URI.replace(/\/\/([^:]+):([^@]+)@/, "//$1:****@"),
@@ -22,7 +24,7 @@ async function testConnection() {
       socketTimeoutMS: 45000,
     });
 
-    console.log("✓ Successfully connected to MongoDB");
+    console.log("[SUCCESS] Successfully connected to MongoDB");
     console.log("Connection state:", mongoose.connection.readyState);
     console.log("Database name:", mongoose.connection.db?.databaseName);
 
@@ -31,16 +33,16 @@ async function testConnection() {
       ?.listCollections()
       .toArray();
     console.log(
-      "✓ Available collections:",
+      "[SUCCESS] Available collections:",
       collections?.map((c) => c.name).join(", "),
     );
 
     await mongoose.disconnect();
-    console.log("✓ Disconnected successfully");
+    console.log("[SUCCESS] Disconnected successfully");
 
     process.exit(0);
   } catch (error) {
-    console.error("❌ Connection test failed:", error);
+    console.error("[ERROR] Connection test failed:", error);
     if (error instanceof Error) {
       console.error("Error message:", error.message);
       console.error("Error stack:", error.stack);

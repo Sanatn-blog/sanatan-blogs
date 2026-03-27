@@ -85,10 +85,10 @@ This document outlines the redesign improvements for the `/write-blog` page to e
 
 ## Implementation Status
 
-- ✅ Backup created
-- 🔄 Applying redesign changes
-- ⏳ Testing and validation
-- ⏳ Documentation update
+- [x] Backup created
+- [ ] Applying redesign changes
+- [ ] Testing and validation
+- [ ] Documentation update
 
 ## Next Steps
 
