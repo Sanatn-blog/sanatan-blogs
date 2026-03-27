@@ -10,7 +10,8 @@
     "lint": "next lint",
     "setup": "node scripts/setup-env.js",
     "seed": "node scripts/seed-db.js",
-    "debug": "node scripts/debug-my-blogs.js"
+    "debug": "node scripts/debug-my-blogs.js",
+    "test:db": "tsx scripts/test-db-connection.ts"
   },
   "dependencies": {
     "@next/third-parties": "^16.1.7",

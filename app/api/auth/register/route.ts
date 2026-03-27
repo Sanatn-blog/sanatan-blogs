@@ -1,28 +1,32 @@
-import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import User from '@/models/User';
-import { rateLimit } from '@/middleware/auth';
-import { sendEmail, generateEmailVerificationEmail } from '@/lib/email';
+import { NextRequest, NextResponse } from "next/server";
+import connectDB from "@/lib/mongodb";
+import User from "@/models/User";
+import { rateLimit } from "@/middleware/auth";
+import { sendEmail, generateEmailVerificationEmail } from "@/lib/email";
 
 async function registerHandler(request: NextRequest) {
   try {
     await connectDB();
 
     const body = await request.json();
-    const { name, username, email, password, phoneNumber, bio, socialLinks } = body;
+    const { name, username, email, password, phoneNumber, bio, socialLinks } =
+      body;
 
     // Basic validation
     if (!name || !username || !email || !password || !phoneNumber) {
       return NextResponse.json(
-        { error: 'Name, username, email, phone number, and password are required' },
-        { status: 400 }
+        {
+          error:
+            "Name, username, email, phone number, and password are required",
+        },
+        { status: 400 },
       );
     }
 
     if (password.length < 6) {
       return NextResponse.json(
-        { error: 'Password must be at least 6 characters long' },
-        { status: 400 }
+        { error: "Password must be at least 6 characters long" },
+        { status: 400 },
       );
     }
 
@@ -30,8 +34,11 @@ async function registerHandler(request: NextRequest) {
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
     if (!passwordRegex.test(password)) {
       return NextResponse.json(
-        { error: 'Password must contain at least one uppercase letter, one lowercase letter, and one number' },
-        { status: 400 }
+        {
+          error:
+            "Password must contain at least one uppercase letter, one lowercase letter, and one number",
+        },
+        { status: 400 },
       );
     }
 
@@ -39,54 +46,67 @@ async function registerHandler(request: NextRequest) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return NextResponse.json(
-        { error: 'Please enter a valid email address' },
-        { status: 400 }
+        { error: "Please enter a valid email address" },
+        { status: 400 },
       );
     }
 
     // Username validation
     const usernameRegex = /^[a-zA-Z0-9_]+$/;
-    if (username.length < 3 || username.length > 30 || !usernameRegex.test(username)) {
+    if (
+      username.length < 3 ||
+      username.length > 30 ||
+      !usernameRegex.test(username)
+    ) {
       return NextResponse.json(
-        { error: 'Username must be 3-30 characters and contain only letters, numbers, and underscores' },
-        { status: 400 }
+        {
+          error:
+            "Username must be 3-30 characters and contain only letters, numbers, and underscores",
+        },
+        { status: 400 },
       );
     }
 
     // Phone number validation (required)
     const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
-    if (!phoneRegex.test(phoneNumber.replace(/\s/g, ''))) {
+    if (!phoneRegex.test(phoneNumber.replace(/\s/g, ""))) {
       return NextResponse.json(
-        { error: 'Please enter a valid phone number' },
-        { status: 400 }
+        { error: "Please enter a valid phone number" },
+        { status: 400 },
       );
     }
 
     // Check if user already exists with email
-    const existingUserByEmail = await User.findOne({ email: email.toLowerCase() });
+    const existingUserByEmail = await User.findOne({
+      email: email.toLowerCase(),
+    });
     if (existingUserByEmail) {
       return NextResponse.json(
-        { error: 'User with this email already exists' },
-        { status: 409 }
+        { error: "User with this email already exists" },
+        { status: 409 },
       );
     }
 
     // Check if user already exists with username
-    const existingUserByUsername = await User.findOne({ username: username.toLowerCase() });
+    const existingUserByUsername = await User.findOne({
+      username: username.toLowerCase(),
+    });
     if (existingUserByUsername) {
       return NextResponse.json(
-        { error: 'Username already exists' },
-        { status: 409 }
+        { error: "Username already exists" },
+        { status: 409 },
       );
     }
 
     // Check if user already exists with phone number (if provided)
     if (phoneNumber) {
-      const existingUserByPhone = await User.findOne({ phoneNumber: phoneNumber.trim() });
+      const existingUserByPhone = await User.findOne({
+        phoneNumber: phoneNumber.trim(),
+      });
       if (existingUserByPhone) {
         return NextResponse.json(
-          { error: 'User with this phone number already exists' },
-          { status: 409 }
+          { error: "User with this phone number already exists" },
+          { status: 409 },
         );
       }
     }
@@ -104,31 +124,58 @@ async function registerHandler(request: NextRequest) {
       phoneNumber: phoneNumber?.trim(),
       bio: bio?.trim(),
       socialLinks: socialLinks || {},
-      status: 'pending', // Always pending until email verification
-      authProvider: 'email',
+      status: "pending", // Always pending until email verification
+      authProvider: "email",
       emailVerified: false,
       otp: otp,
       otpExpiry: otpExpiry,
-      isActive: false // Not active until email verification
+      isActive: false, // Not active until email verification
     });
 
     await newUser.save();
 
     // Send email verification OTP
     const emailContent = generateEmailVerificationEmail(email, otp, name);
-    const emailSent = await sendEmail({
-      to: email,
-      subject: emailContent.subject,
-      html: emailContent.html,
-      text: emailContent.text
-    });
+
+    let emailSent = false;
+    try {
+      emailSent = await sendEmail({
+        to: email,
+        subject: emailContent.subject,
+        html: emailContent.html,
+        text: emailContent.text,
+      });
+    } catch (emailError) {
+      console.error("Email sending error:", emailError);
+      // Continue with registration even if email fails
+      emailSent = false;
+    }
 
     if (!emailSent) {
-      // If email sending fails, delete the user and return error
-      await User.findByIdAndDelete(newUser._id);
+      console.warn("Failed to send verification email, but user was created");
+      // Don't delete user, just warn that email failed
+      const userResponse = {
+        _id: newUser._id,
+        name: newUser.name,
+        username: newUser.username,
+        email: newUser.email,
+        phoneNumber: newUser.phoneNumber,
+        role: newUser.role,
+        status: newUser.status,
+        bio: newUser.bio,
+        socialLinks: newUser.socialLinks,
+        createdAt: newUser.createdAt,
+      };
+
       return NextResponse.json(
-        { error: 'Failed to send verification email. Please try again.' },
-        { status: 500 }
+        {
+          message:
+            "Registration successful but email verification failed. Please contact support.",
+          user: userResponse,
+          requiresVerification: true,
+          emailWarning: "Verification email could not be sent",
+        },
+        { status: 201 },
       );
     }
 
@@ -143,61 +190,110 @@ async function registerHandler(request: NextRequest) {
       status: newUser.status,
       bio: newUser.bio,
       socialLinks: newUser.socialLinks,
-      createdAt: newUser.createdAt
+      createdAt: newUser.createdAt,
     };
 
-    return NextResponse.json({
-      message: 'Registration successful! Please check your email for verification code.',
-      user: userResponse,
-      requiresVerification: true
-    }, { status: 201 });
-
+    return NextResponse.json(
+      {
+        message:
+          "Registration successful! Please check your email for verification code.",
+        user: userResponse,
+        requiresVerification: true,
+      },
+      { status: 201 },
+    );
   } catch (error: unknown) {
-    console.error('Registration error:', error);
+    console.error("Registration error:", error);
+    
+    // Log detailed error information
+    if (error instanceof Error) {
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
+    }
 
     // Handle mongoose validation errors
-    if (error && typeof error === 'object' && 'name' in error && error.name === 'ValidationError' && 'errors' in error) {
-      const mongooseError = error as { errors: Record<string, { message: string }> };
-      const errors = Object.values(mongooseError.errors).map((err: { message: string }) => err.message);
+    if (
+      error &&
+      typeof error === "object" &&
+      "name" in error &&
+      error.name === "ValidationError" &&
+      "errors" in error
+    ) {
+      const mongooseError = error as {
+        errors: Record<string, { message: string }>;
+      };
+      const errors = Object.values(mongooseError.errors).map(
+        (err: { message: string }) => err.message,
+      );
       return NextResponse.json(
-        { error: 'Validation failed', details: errors },
-        { status: 400 }
+        { error: "Validation failed", details: errors },
+        { status: 400 },
       );
     }
 
     // Handle duplicate key error
-    if (error && typeof error === 'object' && 'code' in error && error.code === 11000) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "code" in error &&
+      error.code === 11000
+    ) {
       const duplicateError = error as { keyPattern?: Record<string, number> };
       if (duplicateError.keyPattern?.username) {
         return NextResponse.json(
-          { error: 'Username already exists' },
-          { status: 409 }
+          { error: "Username already exists" },
+          { status: 409 },
         );
       }
       if (duplicateError.keyPattern?.email) {
         return NextResponse.json(
-          { error: 'User with this email already exists' },
-          { status: 409 }
+          { error: "User with this email already exists" },
+          { status: 409 },
         );
       }
       if (duplicateError.keyPattern?.phoneNumber) {
         return NextResponse.json(
-          { error: 'User with this phone number already exists' },
-          { status: 409 }
+          { error: "User with this phone number already exists" },
+          { status: 409 },
         );
       }
       return NextResponse.json(
-        { error: 'User already exists' },
-        { status: 409 }
+        { error: "User already exists" },
+        { status: 409 },
+      );
+    }
+    
+    // Handle database connection errors
+    if (error instanceof Error && (error.message.includes('ECONNREFUSED') || error.message.includes('connection'))) {
+      return NextResponse.json(
+        { error: 'Database connection failed. Please try again later.' },
+        { status: 503 }
       );
     }
 
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: "Internal server error", details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined },
+      { status: 500 },
+    );
+  }
+          { status: 409 },
+        );
+      }
+      return NextResponse.json(
+        { error: "User already exists" },
+        { status: 409 },
+      );
+    }
+
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
     );
   }
 }
 
 // Apply rate limiting (5 registration attempts per 15 minutes)
-export const POST = rateLimit(5, 15 * 60 * 1000)(registerHandler); 
+export const POST = rateLimit(5, 15 * 60 * 1000)(registerHandler);
