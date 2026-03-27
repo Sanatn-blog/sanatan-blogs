@@ -78,7 +78,7 @@ async function listPendingUsers() {
   try {
     // Connect to MongoDB
     if (!process.env.MONGODB_URI) {
-      throw new Error("MONGODB_URI not found in environment variables");
+      throw new Error("MONGODB_URI not found in environment variables");   
     }
 
     console.log("Connecting to MongoDB...");
