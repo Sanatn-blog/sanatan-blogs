@@ -7,7 +7,7 @@ import {
   Award,
   Lock,
   FileText,
-  Image,
+  Image, 
   TrendingUp,
   UserCog,
   Smartphone,
