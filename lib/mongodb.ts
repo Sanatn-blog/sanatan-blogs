@@ -51,10 +51,13 @@ async function connectDB() {
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 10000, // Increased for Vercel cold starts
       socketTimeoutMS: 45000,
+      maxPoolSize: 10,
+      minPoolSize: 1,
     };
 
+    console.log("Creating new MongoDB connection...");
     cached.promise = mongoose
       .connect(MONGODB_URI, opts)
       .then((mongoose) => {
@@ -63,6 +66,11 @@ async function connectDB() {
       })
       .catch((error) => {
         console.error("MongoDB connection error:", error);
+        console.error("Connection error details:", {
+          name: error.name,
+          message: error.message,
+          code: error.code,
+        });
         cached.promise = null;
         throw error;
       });

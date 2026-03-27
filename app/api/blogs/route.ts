@@ -67,50 +67,23 @@ async function getBlogsHandler(request: Request) {
     console.log("Fetching blogs...");
     const blogs = await Blog.find(query)
       .populate("author", "name avatar bio")
-      .populate("likes", "_id")
       .select(
         "title excerpt slug featuredImage author category tags status isPublished publishedAt views likes comments readingTime createdAt updatedAt",
       )
       .sort({ publishedAt: -1, createdAt: -1 })
       .skip(skip)
       .limit(limit)
-      .lean();
-
-    // Get comment counts for each blog
-    const blogsWithCommentCounts = await Promise.all(
-      blogs.map(async (blog) => {
-        try {
-          const commentCount = await Blog.aggregate([
-            { $match: { _id: blog._id } },
-            {
-              $lookup: {
-                from: "comments",
-                localField: "_id",
-                foreignField: "blog",
-                as: "commentDetails",
-              },
-            },
-            { $project: { commentCount: { $size: "$commentDetails" } } },
-          ]);
-
-          return {
-            ...blog,
-            commentCount: commentCount[0]?.commentCount || 0,
-          };
-        } catch (error) {
-          console.error(
-            `Error fetching comment count for blog ${blog._id}:`,
-            error,
-          );
-          return {
-            ...blog,
-            commentCount: 0,
-          };
-        }
-      }),
-    );
+      .lean()
+      .exec();
 
     console.log(`Found ${blogs.length} blogs`);
+
+    // Get comment counts for each blog - simplified approach
+    const blogsWithCommentCounts = blogs.map((blog) => ({
+      ...blog,
+      likesCount: Array.isArray(blog.likes) ? blog.likes.length : 0,
+      commentCount: Array.isArray(blog.comments) ? blog.comments.length : 0,
+    }));
 
     // Get total count for pagination
     const totalBlogs = await Blog.countDocuments(query);
@@ -148,27 +121,58 @@ async function getBlogsHandler(request: Request) {
     return NextResponse.json(response);
   } catch (error) {
     console.error("Get blogs error:", error);
+    console.error(
+      "Error stack:",
+      error instanceof Error ? error.stack : "No stack trace",
+    );
+    console.error(
+      "Error name:",
+      error instanceof Error ? error.name : "Unknown",
+    );
+    console.error(
+      "Error message:",
+      error instanceof Error ? error.message : String(error),
+    );
 
     // Provide more specific error messages
     if (error instanceof Error) {
       if (error.message.includes("ECONNREFUSED")) {
         return NextResponse.json(
-          { error: "Database connection failed. Please try again later." },
+          {
+            error: "Database connection failed. Please try again later.",
+            details: error.message,
+          },
           { status: 503 },
         );
       }
 
       if (error.message.includes("MONGODB_URI")) {
         return NextResponse.json(
-          { error: "Database configuration error" },
+          { error: "Database configuration error", details: error.message },
           { status: 500 },
         );
       }
 
       if (error.message.includes("timeout")) {
         return NextResponse.json(
-          { error: "Request timeout. Please try again." },
+          {
+            error: "Request timeout. Please try again.",
+            details: error.message,
+          },
           { status: 408 },
+        );
+      }
+
+      // Return detailed error in development/staging
+      if (process.env.NODE_ENV !== "production") {
+        return NextResponse.json(
+          {
+            error: "Failed to fetch blogs",
+            details: error.message,
+            stack: error.stack,
+            name: error.name,
+          },
+          { status: 500 },
         );
       }
     }
