@@ -10,13 +10,20 @@ async function getBlogsHandler(request: Request) {
     // Check for required environment variables
     if (!process.env.MONGODB_URI) {
       console.error("MONGODB_URI environment variable is not set");
+      console.error(
+        "Available env vars:",
+        Object.keys(process.env).filter((k) => !k.includes("SECRET")),
+      );
       return NextResponse.json(
-        { error: "Database configuration error" },
+        { error: "Database configuration error - MONGODB_URI not set" },
         { status: 500 },
       );
     }
 
     console.log("Connecting to database...");
+    console.log("Environment:", process.env.NODE_ENV);
+    console.log("Vercel:", process.env.VERCEL ? "Yes" : "No");
+
     await connectDB();
     console.log("Database connected successfully");
 
