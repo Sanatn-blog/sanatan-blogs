@@ -204,13 +204,13 @@ async function registerHandler(request: NextRequest) {
     );
   } catch (error: unknown) {
     console.error("Registration error:", error);
-    
+
     // Log detailed error information
     if (error instanceof Error) {
-      console.error('Error details:', {
+      console.error("Error details:", {
         message: error.message,
         stack: error.stack,
-        name: error.name
+        name: error.name,
       });
     }
 
@@ -265,31 +265,29 @@ async function registerHandler(request: NextRequest) {
         { status: 409 },
       );
     }
-    
+
     // Handle database connection errors
-    if (error instanceof Error && (error.message.includes('ECONNREFUSED') || error.message.includes('connection'))) {
+    if (
+      error instanceof Error &&
+      (error.message.includes("ECONNREFUSED") ||
+        error.message.includes("connection"))
+    ) {
       return NextResponse.json(
-        { error: 'Database connection failed. Please try again later.' },
-        { status: 503 }
+        { error: "Database connection failed. Please try again later." },
+        { status: 503 },
       );
     }
 
     return NextResponse.json(
-      { error: "Internal server error", details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : 'Unknown error') : undefined },
-      { status: 500 },
-    );
-  }
-          { status: 409 },
-        );
-      }
-      return NextResponse.json(
-        { error: "User already exists" },
-        { status: 409 },
-      );
-    }
-
-    return NextResponse.json(
-      { error: "Internal server error" },
+      {
+        error: "Internal server error",
+        details:
+          process.env.NODE_ENV === "development"
+            ? error instanceof Error
+              ? error.message
+              : "Unknown error"
+            : undefined,
+      },
       { status: 500 },
     );
   }
