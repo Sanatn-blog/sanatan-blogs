@@ -240,6 +240,14 @@ export default function WriteBlog() {
 
         const blog = data.blog || data;
 
+        // Map API response field names to frontend field names
+        // API uses: metaTitle, metaDescription, metaKeywords
+        // Frontend uses: title, description, keywords
+        const seoData = blog.seo || {};
+        const seoKeywords = Array.isArray(seoData.metaKeywords)
+          ? seoData.metaKeywords.join(", ")
+          : seoData.metaKeywords || "";
+
         setFormData({
           _id: blog._id,
           title: blog.title || "",
@@ -249,10 +257,10 @@ export default function WriteBlog() {
           tags: Array.isArray(blog.tags) ? blog.tags : [],
           featuredImage: blog.featuredImage || "",
           status: blog.status || "draft",
-          seo: blog.seo || {
-            title: "",
-            description: "",
-            keywords: "",
+          seo: {
+            title: seoData.metaTitle || "",
+            description: seoData.metaDescription || "",
+            keywords: seoKeywords,
           },
         });
       } else {
@@ -743,7 +751,7 @@ export default function WriteBlog() {
                 </div>
                 <div>
                   <h1 className="text-xl font-bold text-white">
-                    {editBlogId ? "Edit Your Story" : "Create New Story"}
+                    {editBlogId ? "Edit Your Blog" : "Create New Blog"}
                   </h1>
                   <p className="text-xs text-gray-400 flex items-center gap-1">
                     {formData.status === "draft" ? (
@@ -1455,27 +1463,39 @@ You can write your thoughts here...
                       </label>
                       <input
                         type="text"
-                        value={formData.seo.title || ""}
+                        value={formData.seo?.title || ""}
                         onChange={(e) =>
                           setFormData((prev) => ({
                             ...prev,
-                            seo: { ...prev.seo, title: e.target.value },
+                            seo: {
+                              title: e.target.value,
+                              description: prev.seo?.description || "",
+                              keywords: prev.seo?.keywords || "",
+                            },
                           }))
                         }
                         placeholder="SEO friendly title..."
+                        maxLength={60}
                         className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white transition-all duration-200"
                       />
+                      <p className="text-gray-500 text-xs mt-1">
+                        {(formData.seo?.title || "").length}/60 characters
+                      </p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-300 mb-1">
                         Meta Description
                       </label>
                       <textarea
-                        value={formData.seo.description || ""}
+                        value={formData.seo?.description || ""}
                         onChange={(e) =>
                           setFormData((prev) => ({
                             ...prev,
-                            seo: { ...prev.seo, description: e.target.value },
+                            seo: {
+                              title: prev.seo?.title || "",
+                              description: e.target.value,
+                              keywords: prev.seo?.keywords || "",
+                            },
                           }))
                         }
                         placeholder="Brief description for search engines..."
@@ -1484,7 +1504,8 @@ You can write your thoughts here...
                         className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none text-white transition-all duration-200"
                       />
                       <p className="text-gray-500 text-xs mt-1">
-                        {(formData.seo.description || "").length}/160 characters
+                        {(formData.seo?.description || "").length}/160
+                        characters
                       </p>
                     </div>
                     <div>
@@ -1493,11 +1514,15 @@ You can write your thoughts here...
                       </label>
                       <input
                         type="text"
-                        value={formData.seo.keywords || ""}
+                        value={formData.seo?.keywords || ""}
                         onChange={(e) =>
                           setFormData((prev) => ({
                             ...prev,
-                            seo: { ...prev.seo, keywords: e.target.value },
+                            seo: {
+                              title: prev.seo?.title || "",
+                              description: prev.seo?.description || "",
+                              keywords: e.target.value,
+                            },
                           }))
                         }
                         placeholder="keyword1, keyword2, keyword3..."

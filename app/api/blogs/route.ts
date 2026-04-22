@@ -250,13 +250,22 @@ async function createBlogHandler(request: AuthenticatedRequest) {
     // Transform SEO data to match model structure
     const transformedSeo = seo
       ? {
-          metaTitle: seo.title,
-          metaDescription: seo.description,
+          metaTitle: seo.title
+            ? seo.title.substring(0, 60) // Truncate to 60 characters max
+            : title.substring(0, 60), // Use blog title as fallback
+          metaDescription: seo.description
+            ? seo.description.substring(0, 160) // Truncate to 160 characters max
+            : excerpt.substring(0, 160), // Use excerpt as fallback
           metaKeywords: seo.keywords
             ? seo.keywords.split(",").map((k: string) => k.trim().toLowerCase())
             : [],
         }
-      : {};
+      : {
+          // If no SEO data provided, use blog title and excerpt
+          metaTitle: title.substring(0, 60),
+          metaDescription: excerpt.substring(0, 160),
+          metaKeywords: [],
+        };
 
     // Create new blog
     const newBlog = new Blog({
