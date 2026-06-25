@@ -84,7 +84,7 @@ export async function uploadBlogImage(file: Buffer | string): Promise<Cloudinary
     folder: 'sanatan-blogs/blog-images',
     width: 1200,
     height: 630,
-    crop: 'fill',
+    crop: 'limit',
     quality: '85',
     format: 'jpg'
   });

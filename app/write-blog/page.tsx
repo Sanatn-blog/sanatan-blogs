@@ -1205,7 +1205,7 @@ You can write your thoughts here...
                         alt="Featured"
                         width={400}
                         height={200}
-                        className="w-full h-40 object-cover rounded-lg"
+                        className="w-full h-40 object-contain rounded-lg bg-gray-900"
                       />
                       <button
                         onClick={() => {
