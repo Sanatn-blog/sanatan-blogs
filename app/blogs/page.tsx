@@ -320,7 +320,7 @@ export default function BlogsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-yellow-50">
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-r from-orange-500 to-orange-500 text-white py-20 overflow-hidden">
+      <section className="relative bg-gradient-to-r from-orange-500 to-orange-500 text-white py-12 sm:py-16 md:py-20 overflow-hidden">
         <div className="absolute inset-0 bg-black opacity-20"></div>
         <div className="absolute top-0 left-0 w-full h-full">
           <div className="absolute top-10 left-10 w-20 h-20 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
@@ -329,47 +329,49 @@ export default function BlogsPage() {
         </div>
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6">
             Sanatan <span className="text-yellow-300">Blogs</span>
           </h1>
-          <p className="text-xl md:text-2xl mb-8 text-orange-100 max-w-3xl mx-auto">
+          <p className="text-base sm:text-lg md:text-xl lg:text-2xl mb-6 sm:mb-8 text-orange-100 max-w-3xl mx-auto px-2">
             Read deep articles connecting ancient Indian knowledge with modern
             life
           </p>
           <div className="flex items-center justify-center space-x-2 text-yellow-200">
-            <Star className="h-5 w-5 fill-current" />
-            <span className="text-lg">Begin Your Spiritual Journey</span>
-            <Star className="h-5 w-5 fill-current" />
+            <Star className="h-4 w-4 sm:h-5 sm:w-5 fill-current" />
+            <span className="text-sm sm:text-base md:text-lg">
+              Begin Your Spiritual Journey
+            </span>
+            <Star className="h-4 w-4 sm:h-5 sm:w-5 fill-current" />
           </div>
         </div>
       </section>
 
       {/* Search and Filter Section */}
-      <section className="py-16 bg-gradient-to-br from-orange-100 via-white to-yellow-100">
+      <section className="py-8 sm:py-12 md:py-16 bg-gradient-to-br from-orange-100 via-white to-yellow-100">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Search Bar - Centered and Prominent */}
-          <div className="text-center mb-12">
-            <h3 className="text-2xl font-bold text-gray-800 mb-6">
+          <div className="text-center mb-8 sm:mb-12">
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6 px-2">
               Find Your Spiritual Path
             </h3>
             <div className="relative max-w-2xl mx-auto">
-              <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
-                <Search className="h-7 w-7 text-orange-500" />
+              <div className="absolute inset-y-0 left-0 pl-4 sm:pl-6 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7 text-orange-500" />
               </div>
               <input
                 type="text"
-                placeholder="Search for wisdom, spirituality, yoga, philosophy, meditation..."
+                placeholder="Search for wisdom, spirituality, yoga..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="block w-full pl-16 pr-16 py-5 bg-white border-0 rounded-3xl focus:outline-none focus:ring-4 focus:ring-orange-300 shadow-2xl text-xl placeholder-gray-400 font-medium text-gray-900"
+                className="block w-full pl-12 sm:pl-14 md:pl-16 pr-12 sm:pr-14 md:pr-16 py-3 sm:py-4 md:py-5 bg-white border-0 rounded-2xl sm:rounded-3xl focus:outline-none focus:ring-4 focus:ring-orange-300 shadow-xl sm:shadow-2xl text-sm sm:text-base md:text-xl placeholder-gray-400 font-medium text-gray-900"
               />
               {searchTerm && (
                 <button
                   onClick={() => setSearchTerm("")}
-                  className="absolute inset-y-0 right-0 pr-6 flex items-center text-gray-400 hover:text-orange-600 transition-colors"
+                  className="absolute inset-y-0 right-0 pr-4 sm:pr-6 flex items-center text-gray-400 hover:text-orange-600 transition-colors"
                 >
                   <svg
-                    className="h-6 w-6"
+                    className="h-5 w-5 sm:h-6 sm:w-6"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -388,20 +390,20 @@ export default function BlogsPage() {
 
           {/* Category Filter - Redesigned */}
           <div className="text-center">
-            <div className="inline-flex items-center space-x-3 bg-white px-6 py-3 rounded-2xl shadow-lg mb-6">
-              <Filter className="h-5 w-5 text-orange-600" />
-              <span className="text-sm font-bold text-gray-700">
+            <div className="inline-flex items-center space-x-2 sm:space-x-3 bg-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl shadow-lg mb-4 sm:mb-6">
+              <Filter className="h-4 w-4 sm:h-5 sm:w-5 text-orange-600" />
+              <span className="text-xs sm:text-sm font-bold text-gray-700">
                 Browse Categories:
               </span>
             </div>
-            <div className="flex flex-wrap justify-center gap-4">
+            <div className="flex flex-wrap justify-center gap-2 sm:gap-3 md:gap-4">
               {categories.map((category) => (
                 <button
                   key={category}
                   onClick={() => setSelectedCategory(category)}
-                  className={`px-6 py-3 rounded-full text-sm font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 ${
+                  className={`px-3 sm:px-4 md:px-6 py-2 sm:py-2.5 md:py-3 rounded-full text-xs sm:text-sm font-bold transition-all duration-300 shadow-md sm:shadow-lg hover:shadow-xl transform hover:scale-105 ${
                     selectedCategory === category
-                      ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-2xl scale-110"
+                      ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-xl sm:shadow-2xl scale-105 sm:scale-110"
                       : "bg-white text-gray-700 hover:bg-orange-50 hover:text-orange-600 border-2 border-orange-200"
                   }`}
                 >
@@ -412,7 +414,7 @@ export default function BlogsPage() {
           </div>
 
           {/* Results Count */}
-          <div className="mt-6 text-gray-600">
+          <div className="mt-4 sm:mt-6 text-gray-600 text-sm sm:text-base text-center sm:text-left">
             <span className="font-medium">{pagination.totalBlogs}</span>{" "}
             articles found
           </div>

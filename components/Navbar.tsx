@@ -102,13 +102,18 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo Section */}
-          <div className="flex items-center space-x-8">
-            <Link href="/" className="flex items-center space-x-3 group">
-              <div className="w-10 h-10 bg-orange-600 rounded-lg flex items-center justify-center">
-                <BookOpen className="h-5 w-5 text-white" />
+          <div className="flex items-center space-x-4 sm:space-x-8">
+            <Link
+              href="/"
+              className="flex items-center space-x-2 sm:space-x-3 group"
+            >
+              <div className="w-9 h-9 sm:w-10 sm:h-10 bg-orange-600 rounded-lg flex items-center justify-center">
+                <BookOpen className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
               </div>
               <div className="hidden sm:block">
-                <h1 className="text-xl font-bold text-gray-900">सनातन Blogs</h1>
+                <h1 className="text-lg sm:text-xl font-bold text-gray-900">
+                  सनातन Blogs
+                </h1>
                 <p className="text-xs text-gray-600 -mt-1">Spiritual Wisdom</p>
               </div>
             </Link>
@@ -137,11 +142,11 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
           </div>
 
           {/* Right Section */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2 sm:space-x-3">
             {/* Donate Button */}
             <Link
               href="/donate"
-              className="hidden sm:flex items-center space-x-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors"
+              className="hidden sm:flex items-center space-x-2 bg-red-500 hover:bg-red-600 text-white px-3 sm:px-4 py-2 rounded-lg font-medium text-sm transition-colors"
             >
               <Heart className="h-4 w-4" />
               <span className="hidden md:inline">Donate</span>
@@ -464,16 +469,16 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                 </div>
               </>
             ) : (
-              <div className="flex items-center space-x-3">
+              <div className="hidden sm:flex items-center space-x-2 sm:space-x-3">
                 <Link
                   href="/login"
-                  className="px-4 py-2 text-gray-700 hover:text-orange-600 font-medium text-sm transition-colors"
+                  className="px-3 sm:px-4 py-2 text-gray-700 hover:text-orange-600 font-medium text-sm transition-colors"
                 >
                   Login
                 </Link>
                 <Link
                   href="/register"
-                  className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium text-sm transition-colors"
+                  className="px-3 sm:px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium text-sm transition-colors"
                 >
                   Sign Up
                 </Link>
@@ -521,8 +526,30 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
                 );
               })}
 
+              {/* Mobile Login/Signup for non-logged in users */}
+              {!user && (
+                <div className="pt-3 space-y-2 border-t border-gray-200">
+                  <Link
+                    href="/login"
+                    className="flex items-center justify-center space-x-2 bg-white border-2 border-orange-600 text-orange-600 hover:bg-orange-50 px-4 py-2.5 rounded-lg font-medium text-sm transition-colors"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <User className="h-5 w-5" />
+                    <span>Login</span>
+                  </Link>
+                  <Link
+                    href="/register"
+                    className="flex items-center justify-center space-x-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2.5 rounded-lg font-medium text-sm transition-colors"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <User className="h-5 w-5" />
+                    <span>Sign Up</span>
+                  </Link>
+                </div>
+              )}
+
               {/* Mobile Action Buttons */}
-              <div className="pt-3 space-y-2">
+              <div className="pt-3 space-y-2 border-t border-gray-200">
                 <Link
                   href="/donate"
                   className="flex items-center justify-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-lg font-medium text-sm transition-colors"
