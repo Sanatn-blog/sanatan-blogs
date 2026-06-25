@@ -133,11 +133,8 @@ export default function BlogHeader({
       {featuredImage && (
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mb-12 mt-6">
           <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl">
-            {/* Aspect ratio container using padding-bottom technique */}
-            <div
-              className="relative w-full"
-              style={{ paddingBottom: "56.25%" }}
-            >
+            {/* Aspect ratio container using Tailwind aspect-ratio */}
+            <div className="relative w-full aspect-video">
               <img
                 src={featuredImage}
                 alt={title}

@@ -24,7 +24,6 @@ export default function DonatePage() {
   const [customAmount, setCustomAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("upi");
   const [copied, setCopied] = useState(false);
-  const [isMonthly, setIsMonthly] = useState(false);
   const [donorDetails, setDonorDetails] = useState({
     name: "",
     email: "",
@@ -62,7 +61,7 @@ export default function DonatePage() {
     await initiatePayment({
       amount: finalAmount,
       currency: "INR",
-      isMonthly,
+      isMonthly: false,
       name: donorDetails.name,
       email: donorDetails.email,
       phone: donorDetails.phone,
@@ -76,7 +75,7 @@ export default function DonatePage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-orange-600 to-orange-700 text-white">
+      <div className="relative overflow-hidden bg-gradient-to-br from-orange-300 to-orange-600 text-white">
         <div className="absolute inset-0 bg-[url('/pattern.svg')] opacity-10"></div>
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-24 lg:py-28">
@@ -152,32 +151,6 @@ export default function DonatePage() {
                 </p>
               </div>
 
-              {/* One-time vs Monthly Toggle */}
-              <div className="flex items-center justify-center mb-8">
-                <div className="bg-gray-100 rounded-lg p-1 inline-flex">
-                  <button
-                    onClick={() => setIsMonthly(false)}
-                    className={`px-6 py-2 rounded-md font-medium transition-all ${
-                      !isMonthly
-                        ? "bg-white text-orange-600 shadow-sm"
-                        : "text-gray-600"
-                    }`}
-                  >
-                    One-time
-                  </button>
-                  <button
-                    onClick={() => setIsMonthly(true)}
-                    className={`px-6 py-2 rounded-md font-medium transition-all ${
-                      isMonthly
-                        ? "bg-white text-orange-600 shadow-sm"
-                        : "text-gray-600"
-                    }`}
-                  >
-                    Monthly
-                  </button>
-                </div>
-              </div>
-
               {/* Amount Selection */}
               <div className="mb-8">
                 <label className="block text-sm font-semibold text-gray-900 mb-4 uppercase tracking-wide">
@@ -195,13 +168,6 @@ export default function DonatePage() {
                       }`}
                     >
                       <div className="text-xl">₹{amount}</div>
-                      {isMonthly && (
-                        <div
-                          className={`text-xs mt-1 ${selectedAmount === amount ? "text-orange-100" : "text-gray-500"}`}
-                        >
-                          /month
-                        </div>
-                      )}
                     </button>
                   ))}
                 </div>
@@ -402,9 +368,7 @@ export default function DonatePage() {
               >
                 <Heart className="h-5 w-5" />
                 <span>
-                  {isLoading
-                    ? "Processing..."
-                    : `Donate ₹${finalAmount || 0}${isMonthly ? "/month" : ""}`}
+                  {isLoading ? "Processing..." : `Donate ₹${finalAmount || 0}`}
                 </span>
                 {!isLoading && <ArrowRight className="h-5 w-5" />}
               </button>
@@ -494,7 +458,7 @@ export default function DonatePage() {
             </div>
 
             {/* Why Donate Section */}
-            <div className="bg-orange-600 text-white rounded-lg shadow-sm p-6">
+            <div className="bg-orange-500 text-white rounded-lg shadow-sm p-6">
               <div className="mb-5">
                 <h3 className="text-xl font-bold mb-2">
                   Why Your Support Matters
@@ -562,14 +526,6 @@ export default function DonatePage() {
                     donation.
                   </p>
                 </div>
-                <div>
-                  <h4 className="font-semibold text-gray-900 mb-1 text-sm">
-                    Can I cancel monthly donations?
-                  </h4>
-                  <p className="text-xs text-gray-600">
-                    Yes, you can cancel anytime from your account settings.
-                  </p>
-                </div>
               </div>
             </div>
           </div>
@@ -577,7 +533,7 @@ export default function DonatePage() {
 
         {/* Bottom CTA */}
         <div className="mt-16 text-center">
-          <div className="bg-gray-900 rounded-lg p-10 text-white">
+          <div className="bg-gray-600 rounded-lg p-10 text-white">
             <h2 className="text-3xl sm:text-4xl font-bold mb-4">
               Join Our Community
             </h2>

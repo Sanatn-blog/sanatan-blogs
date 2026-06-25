@@ -2,7 +2,6 @@
 
 import React, { useState, useRef, useCallback } from 'react';
 import ReactCrop, { Crop, PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop';
-import 'react-image-crop/dist/ReactCrop.css';
 import { X, RotateCw, Check } from 'lucide-react';
 
 interface ImageCropperProps {
@@ -132,12 +131,8 @@ export default function ImageCropper({
               alt="Crop me"
               src={imageSrc}
               onLoad={onImageLoad}
-              style={{ 
-                transform: `rotate(${rotation}deg)`,
-                maxWidth: '100%',
-                maxHeight: '60vh'
-              }}
-              className="rounded-lg"
+              style={{ transform: `rotate(${rotation}deg)` }}
+              className="rounded-lg max-w-full max-h-[60vh]"
             />
           </ReactCrop>
         </div>

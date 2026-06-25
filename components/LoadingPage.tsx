@@ -55,7 +55,7 @@ export default function LoadingPage({
             <div className="absolute -top-4 -right-4">
               <Heart
                 className="w-6 h-6 text-pink-400 animate-bounce"
-                style={{ animationDelay: "0.5s" }}
+                style={{ animationDelay: '0.5s' }}
               />
             </div>
             <div className="absolute -bottom-4 -left-4">
@@ -97,15 +97,15 @@ export default function LoadingPage({
             <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-orange-400 rounded-full animate-ping"></div>
             <div
               className="absolute top-1/3 right-1/4 w-2 h-2 bg-pink-400 rounded-full animate-ping"
-              style={{ animationDelay: "0.5s" }}
+              style={{ animationDelay: '0.5s' }}
             ></div>
             <div
               className="absolute bottom-1/4 left-1/3 w-2 h-2 bg-yellow-400 rounded-full animate-ping"
-              style={{ animationDelay: "1s" }}
+              style={{ animationDelay: '1s' }}
             ></div>
             <div
               className="absolute bottom-1/3 right-1/3 w-2 h-2 bg-blue-400 rounded-full animate-ping"
-              style={{ animationDelay: "1.5s" }}
+              style={{ animationDelay: '1.5s' }}
             ></div>
           </div>
         </div>

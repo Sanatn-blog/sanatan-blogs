@@ -320,12 +320,12 @@ export default function BlogsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-yellow-50">
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-r from-orange-600 to-orange-800 text-white py-20 overflow-hidden">
+      <section className="relative bg-gradient-to-r from-orange-500 to-orange-500 text-white py-20 overflow-hidden">
         <div className="absolute inset-0 bg-black opacity-20"></div>
         <div className="absolute top-0 left-0 w-full h-full">
           <div className="absolute top-10 left-10 w-20 h-20 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
-          <div className="absolute top-0 right-0 w-32 h-32 bg-orange-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
-          <div className="absolute -bottom-8 left-20 w-24 h-24 bg-yellow-400 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
+          <div className="absolute top-0 right-0 w-32 h-32 bg-orange-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-[2000ms]"></div>
+          <div className="absolute -bottom-8 left-20 w-24 h-24 bg-yellow-400 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-[4000ms]"></div>
         </div>
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -439,26 +439,25 @@ export default function BlogsPage() {
                   key={blog._id}
                   className="bg-white rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 flex flex-col h-full"
                 >
-                  <div className="relative h-56">
+                  <div className="relative overflow-hidden">
                     {blog.featuredImage ? (
                       <Image
                         src={blog.featuredImage}
                         alt={blog.title}
-                        fill
-                        className="object-cover"
+                        width={800}
+                        height={600}
+                        className="w-full h-auto"
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       />
                     ) : (
-                      <div className="absolute inset-0 bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600">
-                        <div className="absolute inset-0 bg-black opacity-10"></div>
+                      <div className="w-full h-56 bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600">
+                        <div className="w-full h-full bg-black opacity-10"></div>
                       </div>
                     )}
-                    <div className="absolute top-4 left-4">
+                    <div className="mt-3 px-4 flex items-center gap-2">
                       <span className="bg-yellow-400 text-gray-900 px-3 py-1 rounded-full text-xs font-bold shadow-lg inline-flex items-center gap-1">
                         <Star className="h-3 w-3 fill-current" /> Featured
                       </span>
-                    </div>
-                    <div className="absolute bottom-4 left-4 right-4">
                       <span className="bg-orange-600 text-white px-3 py-1 rounded-full text-xs font-medium shadow-md">
                         {blog.category}
                       </span>
@@ -656,11 +655,11 @@ export default function BlogsPage() {
                   <div className="w-2 h-2 bg-orange-400 rounded-full animate-bounce"></div>
                   <div
                     className="w-2 h-2 bg-orange-400 rounded-full animate-bounce"
-                    style={{ animationDelay: "0.1s" }}
+                    style={{ animationDelay: '0.1s' }}
                   ></div>
                   <div
                     className="w-2 h-2 bg-orange-400 rounded-full animate-bounce"
-                    style={{ animationDelay: "0.2s" }}
+                    style={{ animationDelay: '0.2s' }}
                   ></div>
                 </div>
               </div>
@@ -700,27 +699,26 @@ export default function BlogsPage() {
                   key={blog._id}
                   className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 flex flex-col h-full"
                 >
-                  <div className="relative h-56">
+                  <div className="relative overflow-hidden">
                     {blog.featuredImage ? (
                       <Image
                         src={blog.featuredImage}
                         alt={blog.title}
-                        fill
-                        className="object-cover"
+                        width={800}
+                        height={600}
+                        className="w-full h-auto"
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       />
                     ) : (
-                      <div className="absolute inset-0 bg-gradient-to-br from-gray-400 via-gray-500 to-gray-600">
-                        <div className="absolute inset-0 bg-black opacity-10"></div>
+                      <div className="w-full h-56 bg-gradient-to-br from-gray-400 via-gray-500 to-gray-600">
+                        <div className="w-full h-full bg-black opacity-10"></div>
                       </div>
                     )}
-                    <div className="absolute top-4 left-4">
+                    <div className="mt-3 px-4">
                       <span className="bg-white bg-opacity-95 text-gray-900 px-3 py-1 rounded-full text-xs font-medium shadow-md">
                         {blog.category}
                       </span>
-                    </div>
-                    <div className="absolute bottom-4 left-4 right-4">
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-2 mt-2">
                         {(blog.tags || []).slice(0, 2).map((tag) => (
                           <span
                             key={tag}
@@ -893,55 +891,6 @@ export default function BlogsPage() {
         </div>
       </section>
 
-      {/* Custom CSS for animations */}
-      <style jsx>{`
-        @keyframes blob {
-          0% {
-            transform: translate(0px, 0px) scale(1);
-          }
-          33% {
-            transform: translate(30px, -50px) scale(1.1);
-          }
-          66% {
-            transform: translate(-20px, 20px) scale(0.9);
-          }
-          100% {
-            transform: translate(0px, 0px) scale(1);
-          }
-        }
-        .animate-blob {
-          animation: blob 7s infinite;
-        }
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-        .animation-delay-4000 {
-          animation-delay: 4s;
-        }
-        @keyframes shimmer {
-          0% {
-            transform: translateX(-100%);
-          }
-          100% {
-            transform: translateX(100%);
-          }
-        }
-        .animate-shimmer {
-          animation: shimmer 2s infinite;
-        }
-        .line-clamp-2 {
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
-        .line-clamp-3 {
-          display: -webkit-box;
-          -webkit-line-clamp: 3;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
-      `}</style>
     </div>
   );
 }

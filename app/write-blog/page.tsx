@@ -721,7 +721,7 @@ export default function WriteBlog() {
             <div className="w-20 h-20 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
             <div
               className="absolute inset-0 w-20 h-20 border-4 border-orange-600 border-t-transparent rounded-full animate-spin mx-auto"
-              style={{ animationDelay: "-0.5s" }}
+              style={{ animationDelay: '-0.5s' }}
             ></div>
           </div>
           <p className="mt-8 text-gray-300 text-lg font-medium">

@@ -141,7 +141,7 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
             {/* Donate Button */}
             <Link
               href="/donate"
-              className="hidden sm:flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors"
+              className="hidden sm:flex items-center space-x-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors"
             >
               <Heart className="h-4 w-4" />
               <span className="hidden md:inline">Donate</span>
