@@ -655,11 +655,11 @@ export default function BlogsPage() {
                   <div className="w-2 h-2 bg-orange-400 rounded-full animate-bounce"></div>
                   <div
                     className="w-2 h-2 bg-orange-400 rounded-full animate-bounce"
-                    style={{ animationDelay: '0.1s' }}
+                    style={{ animationDelay: "0.1s" }}
                   ></div>
                   <div
                     className="w-2 h-2 bg-orange-400 rounded-full animate-bounce"
-                    style={{ animationDelay: '0.2s' }}
+                    style={{ animationDelay: "0.2s" }}
                   ></div>
                 </div>
               </div>
@@ -890,7 +890,6 @@ export default function BlogsPage() {
           </div>
         </div>
       </section>
-
     </div>
   );
 }

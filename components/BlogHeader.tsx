@@ -133,29 +133,29 @@ export default function BlogHeader({
       {featuredImage && (
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mb-12 mt-6">
           <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl">
-            {/* Aspect ratio container using Tailwind aspect-ratio */}
-            <div className="relative w-full aspect-video">
+            {/* Full image container without cropping */}
+            <div className="relative w-full">
               <img
                 src={featuredImage}
                 alt={title}
-                className="absolute top-0 left-0 w-full h-full object-cover object-center"
+                className="w-full h-auto object-contain"
               />
             </div>
+          </div>
 
-            {/* Reading Time Badge on Image */}
-            <div className="absolute bottom-6 left-6 right-6 z-10">
-              <div className="bg-white/95 backdrop-blur-md rounded-2xl p-4 shadow-xl inline-flex items-center space-x-3 max-w-full">
-                <div className="bg-orange-100 p-2 rounded-lg flex-shrink-0">
-                  <Clock className="h-5 w-5 text-orange-600" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm text-gray-600 font-medium truncate">
-                    Estimated reading time
-                  </p>
-                  <p className="text-lg font-bold text-gray-900 whitespace-nowrap">
-                    {readingTime} minutes
-                  </p>
-                </div>
+          {/* Reading Time Badge Below Image */}
+          <div className="mt-6">
+            <div className="bg-white/95 backdrop-blur-md rounded-2xl p-4 shadow-xl inline-flex items-center space-x-3">
+              <div className="bg-orange-100 p-2 rounded-lg flex-shrink-0">
+                <Clock className="h-5 w-5 text-orange-600" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm text-gray-600 font-medium truncate">
+                  Estimated reading time
+                </p>
+                <p className="text-lg font-bold text-gray-900 whitespace-nowrap">
+                  {readingTime} minutes
+                </p>
               </div>
             </div>
           </div>
