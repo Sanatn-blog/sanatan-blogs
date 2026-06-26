@@ -535,40 +535,42 @@ export default function BlogDetailPage() {
         const newComment = await response.json();
         console.log("Comment submitted successfully:", newComment);
 
-        // Create a properly structured comment object with current user data
+        // Create a properly structured comment object with the actual response data
         const commentToAdd: Comment = {
-          _id:
-            newComment.comment?._id || newComment._id || Date.now().toString(),
-          content: commentContent,
-          author: {
+          _id: newComment._id,
+          content: newComment.content,
+          author: newComment.author || {
             _id: currentUser._id,
             name: currentUser.name,
             avatar: currentUser.avatar,
           },
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+          createdAt: newComment.createdAt || new Date().toISOString(),
+          updatedAt: newComment.updatedAt || new Date().toISOString(),
           replies: [],
-          likes: [],
+          likes: newComment.likes || [],
         };
 
-        // Optimistically add the new comment to the list immediately
+        // Smoothly add the new comment to the top of the list
         setComments((prevComments) => [commentToAdd, ...prevComments]);
 
         // Update blog comment count
-        if (blog) {
-          setBlog({
-            ...blog,
-            commentsCount: (blog.commentsCount || 0) + 1,
-          });
-        }
+        setBlog((prevBlog) =>
+          prevBlog
+            ? {
+                ...prevBlog,
+                commentsCount: (prevBlog.commentsCount || 0) + 1,
+              }
+            : null,
+        );
 
         setCommentContent("");
         setCommentError(null);
-        // Show success message
+
+        // Show success message with animation
         setShowSuccessMessage(true);
         setTimeout(() => setShowSuccessMessage(false), 3000);
 
-        // Smooth scroll to comments section after posting
+        // Smooth scroll to the new comment after a brief delay
         setTimeout(() => {
           const commentsSection = document.getElementById("comments-list");
           if (commentsSection) {
@@ -577,7 +579,7 @@ export default function BlogDetailPage() {
               block: "start",
             });
           }
-        }, 300);
+        }, 100);
       } else {
         const errorData = await response.json();
         console.error("Comment submission failed:", errorData);
@@ -642,22 +644,22 @@ export default function BlogDetailPage() {
       if (response.ok) {
         const newReply = await response.json();
 
-        // Create a properly structured reply object with current user data
+        // Create a properly structured reply object with the actual response data
         const replyToAdd: Comment = {
-          _id: newReply.comment?._id || newReply._id || Date.now().toString(),
-          content: replyContent,
-          author: {
+          _id: newReply._id,
+          content: newReply.content,
+          author: newReply.author || {
             _id: currentUser._id,
             name: currentUser.name,
             avatar: currentUser.avatar,
           },
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+          createdAt: newReply.createdAt || new Date().toISOString(),
+          updatedAt: newReply.updatedAt || new Date().toISOString(),
           replies: [],
-          likes: [],
+          likes: newReply.likes || [],
         };
 
-        // Optimistically add the reply to the parent comment
+        // Smoothly add the reply to the parent comment
         setComments((prevComments) =>
           prevComments.map((comment) => {
             if (comment._id === parentCommentId) {
@@ -671,16 +673,22 @@ export default function BlogDetailPage() {
         );
 
         // Update blog comment count
-        if (blog) {
-          setBlog({
-            ...blog,
-            commentsCount: (blog.commentsCount || 0) + 1,
-          });
-        }
+        setBlog((prevBlog) =>
+          prevBlog
+            ? {
+                ...prevBlog,
+                commentsCount: (prevBlog.commentsCount || 0) + 1,
+              }
+            : null,
+        );
 
         setReplyContent("");
         setReplyingTo(null);
         setCommentError(null);
+
+        // Show success message
+        setShowSuccessMessage(true);
+        setTimeout(() => setShowSuccessMessage(false), 2000);
       } else {
         const errorData = await response.json();
         setCommentError(errorData.error || "Failed to post reply");
@@ -724,15 +732,15 @@ export default function BlogDetailPage() {
       if (response.ok) {
         const updatedComment = await response.json();
 
-        // Optimistically update the comment in the list
+        // Smoothly update the comment in the list with the actual response data
         setComments((prevComments) =>
           prevComments.map((comment) => {
             // Check if it's a top-level comment
             if (comment._id === commentId) {
               return {
                 ...comment,
-                content: editContent,
-                updatedAt: new Date().toISOString(),
+                content: updatedComment.content,
+                updatedAt: updatedComment.updatedAt,
               };
             }
             // Check if it's a reply
@@ -741,8 +749,8 @@ export default function BlogDetailPage() {
                 reply._id === commentId
                   ? {
                       ...reply,
-                      content: editContent,
-                      updatedAt: new Date().toISOString(),
+                      content: updatedComment.content,
+                      updatedAt: updatedComment.updatedAt,
                     }
                   : reply,
               );
@@ -755,6 +763,10 @@ export default function BlogDetailPage() {
         setEditingComment(null);
         setEditContent("");
         setCommentError(null);
+
+        // Show success message
+        setShowSuccessMessage(true);
+        setTimeout(() => setShowSuccessMessage(false), 2000);
       } else {
         const errorData = await response.json();
         setCommentError(errorData.error || "Failed to update comment");
@@ -777,6 +789,7 @@ export default function BlogDetailPage() {
 
     setCommentLoading(true);
     setShowDeleteModal(false);
+    setCommentError(null);
 
     try {
       const token = localStorage.getItem("accessToken");
@@ -796,19 +809,33 @@ export default function BlogDetailPage() {
       );
 
       if (response.ok) {
-        // Optimistically remove the comment from the list
+        // Count how many comments are being deleted (1 top-level or 1 reply)
+        let deletedCount = 0;
+
+        // Smoothly remove the comment from the list
         setComments((prevComments) => {
-          // Filter out top-level comments
-          const filteredComments = prevComments.filter(
-            (comment) => comment._id !== commentToDelete,
+          // Check if it's a top-level comment
+          const isTopLevel = prevComments.some(
+            (comment) => comment._id === commentToDelete,
           );
 
-          // Also check and remove from replies
-          return filteredComments.map((comment) => {
+          if (isTopLevel) {
+            deletedCount = 1;
+            return prevComments.filter(
+              (comment) => comment._id !== commentToDelete,
+            );
+          }
+
+          // Otherwise, remove from replies
+          return prevComments.map((comment) => {
             if (comment.replies) {
+              const originalLength = comment.replies.length;
               const filteredReplies = comment.replies.filter(
                 (reply) => reply._id !== commentToDelete,
               );
+              if (filteredReplies.length < originalLength) {
+                deletedCount = 1;
+              }
               return { ...comment, replies: filteredReplies };
             }
             return comment;
@@ -816,12 +843,21 @@ export default function BlogDetailPage() {
         });
 
         // Update blog comment count
-        if (blog) {
-          setBlog({
-            ...blog,
-            commentsCount: Math.max(0, (blog.commentsCount || 0) - 1),
-          });
-        }
+        setBlog((prevBlog) =>
+          prevBlog
+            ? {
+                ...prevBlog,
+                commentsCount: Math.max(
+                  0,
+                  (prevBlog.commentsCount || 0) - deletedCount,
+                ),
+              }
+            : null,
+        );
+
+        // Show success message
+        setShowSuccessMessage(true);
+        setTimeout(() => setShowSuccessMessage(false), 2000);
       } else {
         const errorData = await response.json();
         setCommentError(errorData.error || "Failed to delete comment");
