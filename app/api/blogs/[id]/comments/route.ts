@@ -38,6 +38,7 @@ async function getCommentsHandler(
       .populate("author", "name avatar")
       .populate({
         path: "replies",
+        match: { isApproved: true }, // Only show approved replies
         populate: {
           path: "author",
           select: "name avatar",
@@ -48,6 +49,11 @@ async function getCommentsHandler(
       .limit(limit)
       .lean();
 
+    // Filter out comments with missing or invalid author
+    const validComments = comments.filter(
+      (comment) => comment.author && comment.author._id,
+    );
+
     // Get total count
     const total = await Comment.countDocuments({
       blog: blog._id,
@@ -56,7 +62,7 @@ async function getCommentsHandler(
     });
 
     return NextResponse.json({
-      comments,
+      comments: validComments,
       pagination: {
         page,
         limit,

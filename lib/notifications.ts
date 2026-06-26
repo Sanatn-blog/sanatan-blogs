@@ -63,7 +63,7 @@ export async function createCommentNotification(
       type: "comment",
       title: "New Comment",
       message: `${commentAuthor.name} commented on your blog post "${blog.title}"`,
-      link: `/blogs/${blog.slug}`,
+      link: `/blogs/${blog._id}`,
       blogId: blog._id.toString(),
     });
   } catch (error) {
@@ -88,7 +88,7 @@ export async function createLikeNotification(blogId: string, likerId: string) {
       type: "like",
       title: "New Like",
       message: `${liker.name} liked your article "${blog.title}"`,
-      link: `/blogs/${blog.slug}`,
+      link: `/blogs/${blog._id}`,
       blogId: blog._id.toString(),
     });
   } catch (error) {
@@ -122,7 +122,7 @@ export async function createBlogPublishedNotification(
   authorId: string,
 ) {
   try {
-    const blog = await Blog.findById(blogId).select("title slug");
+    const blog = await Blog.findById(blogId).select("title");
     if (!blog) return;
 
     await createNotification({
@@ -130,7 +130,7 @@ export async function createBlogPublishedNotification(
       type: "blog_published",
       title: "Blog Published",
       message: `Your blog post "${blog.title}" has been published successfully`,
-      link: `/blogs/${blog.slug}`,
+      link: `/blogs/${blog._id}`,
       blogId: blog._id.toString(),
     });
   } catch (error) {
@@ -143,7 +143,7 @@ export async function createBlogApprovedNotification(
   authorId: string,
 ) {
   try {
-    const blog = await Blog.findById(blogId).select("title slug");
+    const blog = await Blog.findById(blogId).select("title");
     if (!blog) return;
 
     await createNotification({
@@ -151,7 +151,7 @@ export async function createBlogApprovedNotification(
       type: "blog_approved",
       title: "Blog Approved",
       message: `Your blog post "${blog.title}" has been approved by admin`,
-      link: `/blogs/${blog.slug}`,
+      link: `/blogs/${blog._id}`,
       blogId: blog._id.toString(),
     });
   } catch (error) {
@@ -168,7 +168,7 @@ export async function createReplyNotification(
     const Comment = (await import("@/models/Comment")).default;
     const comment = await Comment.findById(commentId)
       .populate("author", "name _id")
-      .populate("blog", "title slug");
+      .populate("blog", "_id");
 
     if (!comment || !comment.author || !comment.blog) return;
 
@@ -184,7 +184,7 @@ export async function createReplyNotification(
       type: "reply",
       title: "New Reply",
       message: `${replyAuthor.name} replied to your comment`,
-      link: `/blogs/${comment.blog.slug}#comment-${commentId}`,
+      link: `/blogs/${comment.blog._id}#comment-${commentId}`,
       commentId: comment._id.toString(),
     });
   } catch (error) {
