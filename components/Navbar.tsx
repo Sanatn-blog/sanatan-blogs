@@ -23,6 +23,7 @@ import {
   Mail,
   BookmarkPlus,
   Bell,
+  MessageCircle,
 } from "lucide-react";
 
 interface User {
@@ -42,7 +43,11 @@ interface NavbarProps {
 export default function Navbar({ user, onLogout }: NavbarProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [loadingNotifications, setLoadingNotifications] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -55,22 +60,155 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Fetch notifications when user is logged in
+  useEffect(() => {
+    if (user) {
+      fetchNotifications();
+      // Poll for new notifications every 30 seconds
+      const interval = setInterval(fetchNotifications, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [user]);
+
+  const fetchNotifications = async () => {
+    if (!user) return;
+
+    try {
+      setLoadingNotifications(true);
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch("/api/notifications?limit=5", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setNotifications(data.notifications || []);
+        setUnreadCount(data.unreadCount || 0);
+      }
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+    } finally {
+      setLoadingNotifications(false);
+    }
+  };
+
+  const markAllAsRead = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch("/api/notifications", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ markAll: true }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUnreadCount(data.unreadCount || 0);
+        // Update local state to mark all as read
+        setNotifications(notifications.map((n) => ({ ...n, read: true })));
+      }
+    } catch (error) {
+      console.error("Error marking notifications as read:", error);
+    }
+  };
+
+  const markAsRead = async (notificationId: string) => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch("/api/notifications", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ notificationIds: [notificationId] }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUnreadCount(data.unreadCount || 0);
+        // Update local state
+        setNotifications(
+          notifications.map((n) =>
+            n._id === notificationId ? { ...n, read: true } : n,
+          ),
+        );
+      }
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+    }
+  };
+
+  const getTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    if (seconds < 60) return "just now";
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+    if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+    return date.toLocaleDateString();
+  };
+
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case "comment":
+      case "reply":
+        return MessageCircle;
+      case "like":
+        return Heart;
+      case "follow":
+        return Users;
+      case "blog_published":
+      case "blog_approved":
+        return BookOpen;
+      default:
+        return Bell;
+    }
+  };
+
+  const getNotificationColor = (type: string) => {
+    switch (type) {
+      case "comment":
+      case "reply":
+        return "bg-blue-100 text-blue-600";
+      case "like":
+        return "bg-green-100 text-green-600";
+      case "follow":
+        return "bg-orange-100 text-orange-600";
+      case "blog_published":
+      case "blog_approved":
+        return "bg-purple-100 text-purple-600";
+      default:
+        return "bg-gray-100 text-gray-600";
+    }
+  };
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Element;
       if (!target.closest('[data-dropdown="profile"]')) {
         setShowProfileMenu(false);
       }
+      if (!target.closest('[data-dropdown="notifications"]')) {
+        setShowNotifications(false);
+      }
     };
 
-    if (showProfileMenu) {
+    if (showProfileMenu || showNotifications) {
       document.addEventListener("click", handleClickOutside);
     }
 
     return () => {
       document.removeEventListener("click", handleClickOutside);
     };
-  }, [showProfileMenu]);
+  }, [showProfileMenu, showNotifications]);
 
   const handleLogout = () => {
     if (onLogout) {
@@ -155,14 +293,123 @@ export default function Navbar({ user, onLogout }: NavbarProps) {
             {/* User Section */}
             {user ? (
               <>
-                {/* Notifications Button */}
-                <button
-                  className="hidden md:flex relative p-2 rounded-lg hover:bg-gray-100 text-gray-700 transition-colors"
-                  aria-label="Notifications"
-                >
-                  <Bell className="h-5 w-5" />
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                </button>
+                {/* Notifications Dropdown */}
+                <div className="relative" data-dropdown="notifications">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowNotifications(!showNotifications);
+                    }}
+                    className={`hidden md:flex relative p-2 rounded-lg transition-colors ${
+                      showNotifications ? "bg-gray-100" : "hover:bg-gray-100"
+                    } text-gray-700`}
+                    aria-label="Notifications"
+                    aria-expanded={showNotifications}
+                    aria-haspopup="true"
+                  >
+                    <Bell className="h-5 w-5" />
+                    {unreadCount > 0 && (
+                      <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                    )}
+                  </button>
+
+                  {/* Notifications Dropdown Menu */}
+                  {showNotifications && (
+                    <div
+                      className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-lg border border-gray-200 z-[60]"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {/* Header */}
+                      <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+                        <h3 className="font-semibold text-gray-900">
+                          Notifications
+                        </h3>
+                        {unreadCount > 0 && (
+                          <button
+                            onClick={markAllAsRead}
+                            className="text-xs text-orange-600 hover:text-orange-700 font-medium"
+                          >
+                            Mark all as read
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Notifications List */}
+                      <div className="max-h-96 overflow-y-auto">
+                        {loadingNotifications ? (
+                          <div className="px-4 py-12 text-center">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto"></div>
+                            <p className="text-sm text-gray-500 mt-2">
+                              Loading...
+                            </p>
+                          </div>
+                        ) : notifications.length === 0 ? (
+                          <div className="px-4 py-12 text-center">
+                            <Bell className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                            <p className="text-sm text-gray-500">
+                              No notifications yet
+                            </p>
+                          </div>
+                        ) : (
+                          notifications.map((notification) => {
+                            const IconComponent = getNotificationIcon(
+                              notification.type,
+                            );
+                            return (
+                              <div
+                                key={notification._id}
+                                className={`px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-100 cursor-pointer ${
+                                  !notification.read ? "bg-orange-50/30" : ""
+                                }`}
+                                onClick={() => {
+                                  if (!notification.read) {
+                                    markAsRead(notification._id);
+                                  }
+                                  if (notification.link) {
+                                    router.push(notification.link);
+                                    setShowNotifications(false);
+                                  }
+                                }}
+                              >
+                                <div className="flex items-start space-x-3">
+                                  <div
+                                    className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${getNotificationColor(
+                                      notification.type,
+                                    )}`}
+                                  >
+                                    <IconComponent className="h-5 w-5" />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm text-gray-900">
+                                      {notification.message}
+                                    </p>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                      {getTimeAgo(notification.createdAt)}
+                                    </p>
+                                  </div>
+                                  {!notification.read && (
+                                    <div className="w-2 h-2 bg-orange-500 rounded-full flex-shrink-0 mt-2"></div>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+
+                      {/* Footer */}
+                      <div className="px-4 py-3 border-t border-gray-200">
+                        <Link
+                          href="/dashboard/notifications"
+                          className="block text-center text-sm text-orange-600 hover:text-orange-700 font-medium"
+                          onClick={() => setShowNotifications(false)}
+                        >
+                          View all notifications
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 {/* Write Blog Button - Only for logged in users */}
                 <Link
