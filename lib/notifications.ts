@@ -51,6 +51,9 @@ export async function createCommentNotification(
     const blog = await Blog.findById(blogId).populate("author", "name _id");
     if (!blog || !blog.author) return;
 
+    // Only create notifications for published blogs
+    if (blog.status !== "published" || !blog.isPublished) return;
+
     // Don't notify if the comment author is the blog author
     if (blog.author._id.toString() === commentAuthorId) return;
 
@@ -75,6 +78,9 @@ export async function createLikeNotification(blogId: string, likerId: string) {
   try {
     const blog = await Blog.findById(blogId).populate("author", "name _id");
     if (!blog || !blog.author) return;
+
+    // Only create notifications for published blogs
+    if (blog.status !== "published" || !blog.isPublished) return;
 
     // Don't notify if the liker is the blog author
     if (blog.author._id.toString() === likerId) return;

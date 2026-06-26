@@ -65,24 +65,48 @@ async function getBlogHandler(
     // Build query based on authentication status
     let query: Record<string, unknown>;
 
+    // Check if ID is a valid MongoDB ObjectId
+    const mongoose = await import("mongoose");
+    const isValidObjectId = mongoose.Types.ObjectId.isValid(id);
+
     if (isAuthenticated) {
       // For authenticated users, allow access to their own blogs regardless of status
       // or published blogs from other authors
-      query = {
-        $or: [
-          { _id: id, author: userId }, // User's own blog (any status)
-          { slug: id, author: userId }, // User's own blog (any status)
-          { _id: id, status: "published", isPublished: true }, // Published blogs from others
-          { slug: id, status: "published", isPublished: true }, // Published blogs from others
-        ],
-      };
+      if (isValidObjectId) {
+        query = {
+          $or: [
+            { _id: id, author: userId }, // User's own blog (any status)
+            { slug: id, author: userId }, // User's own blog by slug (any status)
+            { _id: id, status: "published", isPublished: true }, // Published blogs from others by ID
+            { slug: id, status: "published", isPublished: true }, // Published blogs from others by slug
+          ],
+        };
+      } else {
+        // If not a valid ObjectId, only search by slug
+        query = {
+          $or: [
+            { slug: id, author: userId }, // User's own blog by slug (any status)
+            { slug: id, status: "published", isPublished: true }, // Published blogs from others by slug
+          ],
+        };
+      }
     } else {
       // For public access, only show published blogs
-      query = {
-        $or: [{ _id: id }, { slug: id }],
-        status: "published",
-        isPublished: true,
-      };
+      if (isValidObjectId) {
+        query = {
+          $or: [
+            { _id: id, status: "published", isPublished: true },
+            { slug: id, status: "published", isPublished: true },
+          ],
+        };
+      } else {
+        // If not a valid ObjectId, only search by slug
+        query = {
+          slug: id,
+          status: "published",
+          isPublished: true,
+        };
+      }
     }
 
     // Find blog by ID or slug

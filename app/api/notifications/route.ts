@@ -39,6 +39,10 @@ export async function GET(request: NextRequest) {
     const [notifications, total, unreadCount] = await Promise.all([
       Notification.find(query)
         .populate("sender", "name avatar username")
+        .populate({
+          path: "blog",
+          select: "title status isPublished _id slug",
+        })
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
@@ -47,9 +51,25 @@ export async function GET(request: NextRequest) {
       Notification.countDocuments({ recipient: decoded.userId, read: false }),
     ]);
 
+    // Filter and enhance notifications
+    const enhancedNotifications = notifications.map((notification: any) => {
+      // Check if blog exists and is published
+      if (notification.blog) {
+        const blogAvailable =
+          notification.blog.status === "published" &&
+          notification.blog.isPublished;
+
+        return {
+          ...notification,
+          blogAvailable,
+        };
+      }
+      return notification;
+    });
+
     return NextResponse.json({
       success: true,
-      notifications,
+      notifications: enhancedNotifications,
       pagination: {
         total,
         page,

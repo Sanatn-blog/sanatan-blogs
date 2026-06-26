@@ -1041,22 +1041,41 @@ export default function BlogDetailPage() {
 
   // Error state
   if (error) {
+    const isNotFoundError = error.includes("not found");
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="mb-4 flex justify-center">
-            <BookOpen className="h-16 w-16 text-gray-400" />
+      <div className="min-h-screen bg-white flex items-center justify-center px-4">
+        <div className="text-center max-w-lg">
+          <div className="mb-6 flex justify-center">
+            <div className="bg-orange-100 p-6 rounded-full">
+              {isNotFoundError ? (
+                <AlertCircle className="h-16 w-16 text-orange-600" />
+              ) : (
+                <BookOpen className="h-16 w-16 text-orange-600" />
+              )}
+            </div>
           </div>
-          <h2 className="text-2xl font-bold text-gray-100 mb-4">
-            Article Not Found
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            {isNotFoundError
+              ? "Article Not Available"
+              : "Unable to Load Article"}
           </h2>
-          <p className="text-gray-100 mb-8">{error}</p>
+          <p className="text-gray-600 mb-2 text-lg">
+            {isNotFoundError
+              ? "This article may have been removed, unpublished, or you may not have permission to view it."
+              : error}
+          </p>
+          {isNotFoundError && (
+            <p className="text-gray-500 mb-8 text-sm">
+              If you came here from a notification, the content may no longer be
+              available.
+            </p>
+          )}
           <Link
             href="/blogs"
-            className="inline-flex items-center space-x-2 text-orange-600 hover:text-orange-700 font-medium"
+            className="inline-flex items-center space-x-2 px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium shadow-md hover:shadow-lg transition-all"
           >
             <ChevronLeft className="h-5 w-5" />
-            <span>Back to All Articles</span>
+            <span>Browse All Articles</span>
           </Link>
         </div>
       </div>
@@ -1066,23 +1085,26 @@ export default function BlogDetailPage() {
   // No blog data
   if (!blog) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="mb-4 flex justify-center">
-            <BookOpen className="h-16 w-16 text-gray-400" />
+      <div className="min-h-screen bg-white flex items-center justify-center px-4">
+        <div className="text-center max-w-lg">
+          <div className="mb-6 flex justify-center">
+            <div className="bg-gray-100 p-6 rounded-full">
+              <BookOpen className="h-16 w-16 text-gray-400" />
+            </div>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">
             Article Not Found
           </h2>
-          <p className="text-gray-600 mb-8">
-            The requested article could not be found.
+          <p className="text-gray-600 mb-8 text-lg">
+            The requested article could not be found. It may have been removed
+            or you may not have permission to view it.
           </p>
           <Link
             href="/blogs"
-            className="inline-flex items-center space-x-2 text-orange-600 hover:text-orange-700 font-medium"
+            className="inline-flex items-center space-x-2 px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium shadow-md hover:shadow-lg transition-all"
           >
             <ChevronLeft className="h-5 w-5" />
-            <span>Back to All Articles</span>
+            <span>Browse All Articles</span>
           </Link>
         </div>
       </div>

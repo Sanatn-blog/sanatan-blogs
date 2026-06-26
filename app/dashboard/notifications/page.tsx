@@ -32,6 +32,7 @@ interface Notification {
   read: boolean;
   createdAt: string;
   link?: string;
+  blogAvailable?: boolean;
   sender?: {
     _id: string;
     name: string;
@@ -358,13 +359,21 @@ export default function NotificationsPage() {
                       {/* Actions */}
                       <div className="flex items-center space-x-3 mt-3">
                         {notification.link && (
-                          <Link
-                            href={notification.link}
-                            className="text-xs text-orange-600 hover:text-orange-700 font-medium"
-                            onClick={() => markAsRead(notification._id)}
-                          >
-                            View
-                          </Link>
+                          <>
+                            {notification.blogAvailable === false ? (
+                              <span className="text-xs text-gray-500 italic">
+                                Content no longer available
+                              </span>
+                            ) : (
+                              <Link
+                                href={notification.link}
+                                className="text-xs text-orange-600 hover:text-orange-700 font-medium"
+                                onClick={() => markAsRead(notification._id)}
+                              >
+                                View
+                              </Link>
+                            )}
+                          </>
                         )}
                         {!notification.read && (
                           <button
