@@ -24,7 +24,14 @@ export async function GET(request: NextRequest) {
     const unreadOnly = searchParams.get("unreadOnly") === "true";
     const type = searchParams.get("type");
 
-    const query: any = { recipient: decoded.userId };
+    const query: any = {
+      recipient: decoded.userId,
+      // Exclude self-notifications (e.g., commenting on own blog)
+      $or: [
+        { sender: { $exists: false } }, // System notifications without sender
+        { sender: { $ne: decoded.userId } }, // Notifications where sender is not the user
+      ],
+    };
 
     if (unreadOnly) {
       query.read = false;

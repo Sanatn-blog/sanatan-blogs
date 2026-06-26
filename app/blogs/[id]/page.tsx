@@ -320,6 +320,8 @@ export default function BlogDetailPage() {
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [commentError, setCommentError] = useState<string | null>(null);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
 
   // Check if user is logged in and get current user
   useEffect(() => {
@@ -442,29 +444,36 @@ export default function BlogDetailPage() {
   };
 
   // Comment functions
-  const fetchComments = useCallback(async () => {
-    if (!blog) return;
+  const fetchComments = useCallback(
+    async (showLoading: boolean = true) => {
+      if (!blog) return;
 
-    setCommentsLoading(true);
-    try {
-      console.log("Fetching comments for blog:", blogId);
-      const response = await fetch(`/api/blogs/${blogId}/comments`);
-      console.log("Comments response status:", response.status);
-
-      if (response.ok) {
-        const data: CommentResponse = await response.json();
-        console.log("Comments fetched successfully:", data.comments.length);
-        setComments(data.comments);
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        console.error("Failed to fetch comments:", errorData);
+      if (showLoading) {
+        setCommentsLoading(true);
       }
-    } catch (error) {
-      console.error("Error fetching comments:", error);
-    } finally {
-      setCommentsLoading(false);
-    }
-  }, [blog, blogId]);
+      try {
+        console.log("Fetching comments for blog:", blogId);
+        const response = await fetch(`/api/blogs/${blogId}/comments`);
+        console.log("Comments response status:", response.status);
+
+        if (response.ok) {
+          const data: CommentResponse = await response.json();
+          console.log("Comments fetched successfully:", data.comments.length);
+          setComments(data.comments);
+        } else {
+          const errorData = await response.json().catch(() => ({}));
+          console.error("Failed to fetch comments:", errorData);
+        }
+      } catch (error) {
+        console.error("Error fetching comments:", error);
+      } finally {
+        if (showLoading) {
+          setCommentsLoading(false);
+        }
+      }
+    },
+    [blog, blogId],
+  );
 
   // Function to refetch blog data to get updated comment count
   const refetchBlogData = useCallback(async () => {
@@ -525,15 +534,50 @@ export default function BlogDetailPage() {
       if (response.ok) {
         const newComment = await response.json();
         console.log("Comment submitted successfully:", newComment);
-        // Refetch comments to ensure consistency with server state
-        await fetchComments();
-        // Refetch blog data to get updated comment count
-        await refetchBlogData();
+
+        // Create a properly structured comment object with current user data
+        const commentToAdd: Comment = {
+          _id:
+            newComment.comment?._id || newComment._id || Date.now().toString(),
+          content: commentContent,
+          author: {
+            _id: currentUser._id,
+            name: currentUser.name,
+            avatar: currentUser.avatar,
+          },
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          replies: [],
+          likes: [],
+        };
+
+        // Optimistically add the new comment to the list immediately
+        setComments((prevComments) => [commentToAdd, ...prevComments]);
+
+        // Update blog comment count
+        if (blog) {
+          setBlog({
+            ...blog,
+            commentsCount: (blog.commentsCount || 0) + 1,
+          });
+        }
+
         setCommentContent("");
         setCommentError(null);
         // Show success message
         setShowSuccessMessage(true);
         setTimeout(() => setShowSuccessMessage(false), 3000);
+
+        // Smooth scroll to comments section after posting
+        setTimeout(() => {
+          const commentsSection = document.getElementById("comments-list");
+          if (commentsSection) {
+            commentsSection.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
+          }
+        }, 300);
       } else {
         const errorData = await response.json();
         console.error("Comment submission failed:", errorData);
@@ -596,11 +640,44 @@ export default function BlogDetailPage() {
       });
 
       if (response.ok) {
-        await response.json();
-        // Refetch comments to ensure consistency with server state
-        await fetchComments();
-        // Refetch blog data to get updated comment count
-        await refetchBlogData();
+        const newReply = await response.json();
+
+        // Create a properly structured reply object with current user data
+        const replyToAdd: Comment = {
+          _id: newReply.comment?._id || newReply._id || Date.now().toString(),
+          content: replyContent,
+          author: {
+            _id: currentUser._id,
+            name: currentUser.name,
+            avatar: currentUser.avatar,
+          },
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          replies: [],
+          likes: [],
+        };
+
+        // Optimistically add the reply to the parent comment
+        setComments((prevComments) =>
+          prevComments.map((comment) => {
+            if (comment._id === parentCommentId) {
+              return {
+                ...comment,
+                replies: [...(comment.replies || []), replyToAdd],
+              };
+            }
+            return comment;
+          }),
+        );
+
+        // Update blog comment count
+        if (blog) {
+          setBlog({
+            ...blog,
+            commentsCount: (blog.commentsCount || 0) + 1,
+          });
+        }
+
         setReplyContent("");
         setReplyingTo(null);
         setCommentError(null);
@@ -645,11 +722,36 @@ export default function BlogDetailPage() {
       );
 
       if (response.ok) {
-        await response.json();
-        // Refetch comments to ensure consistency with server state
-        await fetchComments();
-        // Refetch blog data to get updated comment count
-        await refetchBlogData();
+        const updatedComment = await response.json();
+
+        // Optimistically update the comment in the list
+        setComments((prevComments) =>
+          prevComments.map((comment) => {
+            // Check if it's a top-level comment
+            if (comment._id === commentId) {
+              return {
+                ...comment,
+                content: editContent,
+                updatedAt: new Date().toISOString(),
+              };
+            }
+            // Check if it's a reply
+            if (comment.replies) {
+              const updatedReplies = comment.replies.map((reply) =>
+                reply._id === commentId
+                  ? {
+                      ...reply,
+                      content: editContent,
+                      updatedAt: new Date().toISOString(),
+                    }
+                  : reply,
+              );
+              return { ...comment, replies: updatedReplies };
+            }
+            return comment;
+          }),
+        );
+
         setEditingComment(null);
         setEditContent("");
         setCommentError(null);
@@ -666,9 +768,15 @@ export default function BlogDetailPage() {
   };
 
   const handleDeleteComment = async (commentId: string) => {
-    if (!confirm("Are you sure you want to delete this comment?")) return;
+    setCommentToDelete(commentId);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteComment = async () => {
+    if (!commentToDelete) return;
 
     setCommentLoading(true);
+    setShowDeleteModal(false);
 
     try {
       const token = localStorage.getItem("accessToken");
@@ -678,7 +786,7 @@ export default function BlogDetailPage() {
       }
 
       const response = await fetch(
-        `/api/blogs/${blogId}/comments/${commentId}`,
+        `/api/blogs/${blogId}/comments/${commentToDelete}`,
         {
           method: "DELETE",
           headers: {
@@ -688,19 +796,42 @@ export default function BlogDetailPage() {
       );
 
       if (response.ok) {
-        // Refetch comments to ensure consistency with server state
-        await fetchComments();
-        // Refetch blog data to get updated comment count
-        await refetchBlogData();
+        // Optimistically remove the comment from the list
+        setComments((prevComments) => {
+          // Filter out top-level comments
+          const filteredComments = prevComments.filter(
+            (comment) => comment._id !== commentToDelete,
+          );
+
+          // Also check and remove from replies
+          return filteredComments.map((comment) => {
+            if (comment.replies) {
+              const filteredReplies = comment.replies.filter(
+                (reply) => reply._id !== commentToDelete,
+              );
+              return { ...comment, replies: filteredReplies };
+            }
+            return comment;
+          });
+        });
+
+        // Update blog comment count
+        if (blog) {
+          setBlog({
+            ...blog,
+            commentsCount: Math.max(0, (blog.commentsCount || 0) - 1),
+          });
+        }
       } else {
         const errorData = await response.json();
-        alert(errorData.error || "Failed to delete comment");
+        setCommentError(errorData.error || "Failed to delete comment");
       }
     } catch (error) {
       console.error("Error deleting comment:", error);
-      alert("Failed to delete comment");
+      setCommentError("Failed to delete comment");
     } finally {
       setCommentLoading(false);
+      setCommentToDelete(null);
     }
   };
 
@@ -804,10 +935,12 @@ export default function BlogDetailPage() {
   const formatDate = (dateString?: string) => {
     if (!dateString) return "Recently";
     const date = new Date(dateString);
-    return date.toLocaleDateString("hi-IN", {
+    return date.toLocaleString("hi-IN", {
       year: "numeric",
       month: "long",
       day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -1326,9 +1459,10 @@ export default function BlogDetailPage() {
                       value={commentContent}
                       onChange={(e) => setCommentContent(e.target.value)}
                       placeholder="Share your thoughts on this article..."
-                      className="w-full p-3 sm:p-4 border border-gray-200 rounded-xl resize-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-gray-900 placeholder-gray-500 text-sm sm:text-base"
+                      className="w-full p-3 sm:p-4 border border-gray-200 rounded-xl resize-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-gray-900 placeholder-gray-500 text-sm sm:text-base transition-all duration-200"
                       rows={3}
                       maxLength={1000}
+                      disabled={commentLoading}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && e.ctrlKey) {
                           e.preventDefault();
@@ -1350,14 +1484,14 @@ export default function BlogDetailPage() {
                         <button
                           onClick={() => setCommentContent("")}
                           disabled={!commentContent.trim() || commentLoading}
-                          className="px-3 py-2 sm:px-4 sm:py-2 text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
+                          className="px-3 py-2 sm:px-4 sm:py-2 text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 text-sm"
                         >
                           Clear
                         </button>
                         <button
                           onClick={handleSubmitComment}
                           disabled={commentLoading || !commentContent.trim()}
-                          className="flex items-center space-x-1 sm:space-x-2 px-4 py-2 sm:px-6 sm:py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm min-h-[40px]"
+                          className="flex items-center space-x-1 sm:space-x-2 px-4 py-2 sm:px-6 sm:py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 active:scale-95 text-sm min-h-[40px]"
                         >
                           {commentLoading ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
@@ -1394,17 +1528,18 @@ export default function BlogDetailPage() {
           </div>
 
           {/* Comments List */}
-          <div className="space-y-6">
+          <div id="comments-list" className="space-y-6">
             {commentsLoading ? (
               <div className="text-center py-8">
                 <Loader2 className="h-8 w-8 animate-spin text-orange-600 mx-auto mb-4" />
                 <p className="text-gray-600">Loading comments...</p>
               </div>
             ) : comments.length > 0 ? (
-              comments.map((comment) => (
+              comments.map((comment, index) => (
                 <div
                   key={comment._id}
-                  className="bg-white rounded-2xl shadow-lg p-4 sm:p-6"
+                  className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 animate-fade-in-up"
+                  style={{ animationDelay: `${index * 0.1}s` }}
                 >
                   <div className="flex items-start space-x-3 sm:space-x-4">
                     {comment.author.avatar ? (
@@ -1497,7 +1632,7 @@ export default function BlogDetailPage() {
                         </div>
                       ) : (
                         <div>
-                          <p className="text-gray-700 mb-3 text-sm sm:text-base">
+                          <p className="text-gray-700 mb-3 text-sm sm:text-base break-words">
                             {comment.content}
                           </p>
 
@@ -1515,7 +1650,7 @@ export default function BlogDetailPage() {
 
                           {/* Reply Form */}
                           {replyingTo === comment._id && (
-                            <div className="mt-4 p-3 sm:p-4 bg-gray-50 rounded-lg">
+                            <div className="mt-4 p-3 sm:p-4 bg-gray-50 rounded-lg animate-fade-in-up">
                               <div className="flex items-start space-x-3">
                                 <div className="flex-1 min-w-0">
                                   <textarea
@@ -1524,9 +1659,10 @@ export default function BlogDetailPage() {
                                       setReplyContent(e.target.value)
                                     }
                                     placeholder="Write a reply..."
-                                    className="w-full p-3 border border-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-gray-900 placeholder-gray-500 text-sm sm:text-base"
+                                    className="w-full p-3 border border-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-gray-900 placeholder-gray-500 text-sm sm:text-base transition-all duration-200"
                                     rows={2}
                                     maxLength={1000}
+                                    disabled={commentLoading}
                                   />
                                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-2 space-y-2 sm:space-y-0">
                                     <span className="text-xs sm:text-sm text-gray-500">
@@ -1538,7 +1674,7 @@ export default function BlogDetailPage() {
                                           setReplyingTo(null);
                                           setReplyContent("");
                                         }}
-                                        className="px-3 py-2 sm:px-3 sm:py-1 text-gray-600 hover:text-gray-800 transition-colors text-sm min-h-[36px]"
+                                        className="px-3 py-2 sm:px-3 sm:py-1 text-gray-600 hover:text-gray-800 transition-all duration-200 text-sm min-h-[36px]"
                                       >
                                         Cancel
                                       </button>
@@ -1547,7 +1683,7 @@ export default function BlogDetailPage() {
                                         disabled={
                                           commentLoading || !replyContent.trim()
                                         }
-                                        className="px-4 py-2 sm:px-3 sm:py-1 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 transition-colors text-sm min-h-[36px]"
+                                        className="px-4 py-2 sm:px-3 sm:py-1 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 transition-all duration-200 transform hover:scale-105 active:scale-95 text-sm min-h-[36px]"
                                       >
                                         {commentLoading
                                           ? "Posting..."
@@ -1563,10 +1699,13 @@ export default function BlogDetailPage() {
                           {/* Replies */}
                           {comment.replies && comment.replies.length > 0 && (
                             <div className="mt-4 space-y-3">
-                              {comment.replies.map((reply) => (
+                              {comment.replies.map((reply, replyIndex) => (
                                 <div
                                   key={reply._id}
-                                  className="ml-4 sm:ml-8 p-3 sm:p-4 bg-gray-50 rounded-lg"
+                                  className="ml-4 sm:ml-8 p-3 sm:p-4 bg-gray-50 rounded-lg animate-fade-in-up"
+                                  style={{
+                                    animationDelay: `${replyIndex * 0.05}s`,
+                                  }}
                                 >
                                   <div className="flex items-start space-x-2 sm:space-x-3">
                                     {reply.author.avatar ? (
@@ -1625,7 +1764,7 @@ export default function BlogDetailPage() {
                                           </div>
                                         )}
                                       </div>
-                                      <p className="text-gray-700 text-sm">
+                                      <p className="text-gray-700 text-sm break-words">
                                         {reply.content}
                                       </p>
                                     </div>
@@ -1675,6 +1814,56 @@ export default function BlogDetailPage() {
           <div className="flex items-center space-x-2">
             <CheckCircle className="h-5 w-5" />
             <span>Comment posted successfully!</span>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 sm:p-8 animate-fade-in-up">
+            <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-red-100 rounded-full">
+              <AlertCircle className="h-6 w-6 text-red-600" />
+            </div>
+
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-900 text-center mb-2">
+              Delete Comment?
+            </h3>
+
+            <p className="text-gray-600 text-center mb-6">
+              Are you sure you want to delete this comment? This action cannot
+              be undone.
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setCommentToDelete(null);
+                }}
+                disabled={commentLoading}
+                className="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-all duration-200 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeleteComment}
+                disabled={commentLoading}
+                className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center space-x-2"
+              >
+                {commentLoading ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span>Deleting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-5 w-5" />
+                    <span>Delete</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}
