@@ -1,40 +1,37 @@
-import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import Blog from '@/models/Blog';
-import { verifyToken } from '@/lib/jwt';
+import { NextRequest, NextResponse } from "next/server";
+import connectDB from "@/lib/mongodb";
+import Blog from "@/models/Blog";
+import { verifyToken } from "@/lib/jwt";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     await connectDB();
-    
+
     const { id: blogId } = await params;
     if (!blogId) {
       return NextResponse.json(
-        { error: 'Blog ID is required' },
-        { status: 400 }
+        { error: "Blog ID is required" },
+        { status: 400 },
       );
     }
 
     // Get authorization header
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    const authHeader = request.headers.get("authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
+        { error: "Authentication required" },
+        { status: 401 },
       );
     }
 
     const token = authHeader.substring(7);
     const decoded = verifyToken(token);
-    
+
     if (!decoded || !decoded.userId) {
-      return NextResponse.json(
-        { error: 'Invalid token' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
 
     const userId = decoded.userId;
@@ -42,17 +39,14 @@ export async function POST(
     // Find the blog
     const blog = await Blog.findById(blogId);
     if (!blog) {
-      return NextResponse.json(
-        { error: 'Blog not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Blog not found" }, { status: 404 });
     }
 
     // Check if blog is published
-    if (!blog.isPublished || blog.status !== 'published') {
+    if (!blog.isPublished || blog.status !== "published") {
       return NextResponse.json(
-        { error: 'Cannot like unpublished blog' },
-        { status: 403 }
+        { error: "Cannot like unpublished blog" },
+        { status: 403 },
       );
     }
 
@@ -62,56 +56,61 @@ export async function POST(
     if (isLiked) {
       // Unlike the blog
       await Blog.findByIdAndUpdate(blogId, {
-        $pull: { likes: userId }
+        $pull: { likes: userId },
       });
-      
+
       return NextResponse.json({
-        message: 'Blog unliked successfully',
+        message: "Blog unliked successfully",
         liked: false,
-        likesCount: blog.likes.length - 1
+        likesCount: blog.likes.length - 1,
       });
     } else {
       // Like the blog
       await Blog.findByIdAndUpdate(blogId, {
-        $addToSet: { likes: userId }
+        $addToSet: { likes: userId },
       });
-      
+
+      // Create notification for blog author (async, don't wait)
+      const { createLikeNotification } = await import("@/lib/notifications");
+      createLikeNotification(blogId, userId).catch((err) =>
+        console.error("Failed to create like notification:", err),
+      );
+
       return NextResponse.json({
-        message: 'Blog liked successfully',
+        message: "Blog liked successfully",
         liked: true,
-        likesCount: blog.likes.length + 1
+        likesCount: blog.likes.length + 1,
       });
     }
-
   } catch (error) {
-    console.error('Error handling blog like:', error);
+    console.error("Error handling blog like:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: "Internal server error" },
+      { status: 500 },
     );
   }
 }
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     await connectDB();
-    
+
     const { id: blogId } = await params;
     if (!blogId) {
       return NextResponse.json(
-        { error: 'Blog ID is required' },
-        { status: 400 }
+        { error: "Blog ID is required" },
+        { status: 400 },
       );
     }
 
     // Get authorization header (optional for getting like status)
-    const authHeader = request.headers.get('authorization');
+    const authHeader = request.headers.get("authorization");
     let userId = null;
-    
-    if (authHeader && authHeader.startsWith('Bearer ')) {
+
+    if (authHeader && authHeader.startsWith("Bearer ")) {
       const token = authHeader.substring(7);
       const decoded = verifyToken(token);
       if (decoded && decoded.userId) {
@@ -122,10 +121,7 @@ export async function GET(
     // Find the blog
     const blog = await Blog.findById(blogId);
     if (!blog) {
-      return NextResponse.json(
-        { error: 'Blog not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Blog not found" }, { status: 404 });
     }
 
     const isLiked = userId ? blog.likes.includes(userId) : false;
@@ -134,14 +130,13 @@ export async function GET(
     return NextResponse.json({
       liked: isLiked,
       likesCount,
-      totalLikes: likesCount
+      totalLikes: likesCount,
     });
-
   } catch (error) {
-    console.error('Error getting blog like status:', error);
+    console.error("Error getting blog like status:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: "Internal server error" },
+      { status: 500 },
     );
   }
-} 
+}

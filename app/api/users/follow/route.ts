@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import User from '@/models/User';
-import { verifyToken } from '@/lib/jwt';
+import { NextRequest, NextResponse } from "next/server";
+import connectDB from "@/lib/mongodb";
+import User from "@/models/User";
+import { verifyToken } from "@/lib/jwt";
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,11 +9,11 @@ export async function POST(request: NextRequest) {
     await connectDB();
 
     // Get the authorization header
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    const authHeader = request.headers.get("authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return NextResponse.json(
-        { error: 'Authorization token required' },
-        { status: 401 }
+        { error: "Authorization token required" },
+        { status: 401 },
       );
     }
 
@@ -22,8 +22,8 @@ export async function POST(request: NextRequest) {
     const decoded = await verifyToken(token);
     if (!decoded || !decoded.userId) {
       return NextResponse.json(
-        { error: 'Invalid or expired token' },
-        { status: 401 }
+        { error: "Invalid or expired token" },
+        { status: 401 },
       );
     }
 
@@ -32,16 +32,16 @@ export async function POST(request: NextRequest) {
 
     if (!targetUserId) {
       return NextResponse.json(
-        { error: 'Target user ID is required' },
-        { status: 400 }
+        { error: "Target user ID is required" },
+        { status: 400 },
       );
     }
 
     // Check if user is trying to follow themselves
     if (decoded.userId === targetUserId) {
       return NextResponse.json(
-        { error: 'You cannot follow yourself' },
-        { status: 400 }
+        { error: "You cannot follow yourself" },
+        { status: 400 },
       );
     }
 
@@ -51,15 +51,15 @@ export async function POST(request: NextRequest) {
 
     if (!currentUser) {
       return NextResponse.json(
-        { error: 'Current user not found' },
-        { status: 404 }
+        { error: "Current user not found" },
+        { status: 404 },
       );
     }
 
     if (!targetUser) {
       return NextResponse.json(
-        { error: 'Target user not found' },
-        { status: 404 }
+        { error: "Target user not found" },
+        { status: 404 },
       );
     }
 
@@ -69,46 +69,51 @@ export async function POST(request: NextRequest) {
     if (isFollowing) {
       // Unfollow: Remove from following and followers
       await User.findByIdAndUpdate(decoded.userId, {
-        $pull: { following: targetUserId }
+        $pull: { following: targetUserId },
       });
-      
+
       await User.findByIdAndUpdate(targetUserId, {
-        $pull: { followers: decoded.userId }
+        $pull: { followers: decoded.userId },
       });
 
       // Get updated target user to get accurate follower count
       const updatedTargetUser = await User.findById(targetUserId);
 
       return NextResponse.json({
-        message: 'User unfollowed successfully',
+        message: "User unfollowed successfully",
         isFollowing: false,
-        followersCount: updatedTargetUser?.followers?.length || 0
+        followersCount: updatedTargetUser?.followers?.length || 0,
       });
     } else {
       // Follow: Add to following and followers
       await User.findByIdAndUpdate(decoded.userId, {
-        $addToSet: { following: targetUserId }
+        $addToSet: { following: targetUserId },
       });
-      
+
       await User.findByIdAndUpdate(targetUserId, {
-        $addToSet: { followers: decoded.userId }
+        $addToSet: { followers: decoded.userId },
       });
+
+      // Create notification for followed user (async, don't wait)
+      const { createFollowNotification } = await import("@/lib/notifications");
+      createFollowNotification(targetUserId, decoded.userId).catch((err) =>
+        console.error("Failed to create follow notification:", err),
+      );
 
       // Get updated target user to get accurate follower count
       const updatedTargetUser = await User.findById(targetUserId);
 
       return NextResponse.json({
-        message: 'User followed successfully',
+        message: "User followed successfully",
         isFollowing: true,
-        followersCount: updatedTargetUser?.followers?.length || 0
+        followersCount: updatedTargetUser?.followers?.length || 0,
       });
     }
-
   } catch (error) {
-    console.error('Follow/Unfollow error:', error);
+    console.error("Follow/Unfollow error:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: "Internal server error" },
+      { status: 500 },
     );
   }
 }
@@ -119,11 +124,11 @@ export async function GET(request: NextRequest) {
     await connectDB();
 
     // Get the authorization header
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    const authHeader = request.headers.get("authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return NextResponse.json(
-        { error: 'Authorization token required' },
-        { status: 401 }
+        { error: "Authorization token required" },
+        { status: 401 },
       );
     }
 
@@ -132,37 +137,34 @@ export async function GET(request: NextRequest) {
     const decoded = await verifyToken(token);
     if (!decoded || !decoded.userId) {
       return NextResponse.json(
-        { error: 'Invalid or expired token' },
-        { status: 401 }
+        { error: "Invalid or expired token" },
+        { status: 401 },
       );
     }
 
     // Get the target user ID from query params
     const { searchParams } = new URL(request.url);
-    const targetUserId = searchParams.get('userId');
+    const targetUserId = searchParams.get("userId");
 
     if (!targetUserId) {
       return NextResponse.json(
-        { error: 'Target user ID is required' },
-        { status: 400 }
+        { error: "Target user ID is required" },
+        { status: 400 },
       );
     }
 
     // Get current user and target user
     const currentUser = await User.findById(decoded.userId);
     const targetUser = await User.findById(targetUserId);
-    
+
     if (!currentUser) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     if (!targetUser) {
       return NextResponse.json(
-        { error: 'Target user not found' },
-        { status: 404 }
+        { error: "Target user not found" },
+        { status: 404 },
       );
     }
 
@@ -172,14 +174,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       isFollowing,
       followersCount: targetUser.followers?.length || 0,
-      followingCount: targetUser.following?.length || 0
+      followingCount: targetUser.following?.length || 0,
     });
-
   } catch (error) {
-    console.error('Get follow status error:', error);
+    console.error("Get follow status error:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: "Internal server error" },
+      { status: 500 },
     );
   }
-} 
+}
