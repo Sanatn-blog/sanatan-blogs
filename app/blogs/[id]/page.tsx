@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Head from "next/head";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
@@ -39,6 +40,8 @@ import Image from "next/image";
 import RelatedArticles from "@/components/RelatedArticles";
 import BlogHeader from "@/components/BlogHeader";
 import AuthorBio from "@/components/AuthorBio";
+import BlogArticleStructuredData from "@/components/BlogArticleStructuredData";
+import Breadcrumbs, { generateBlogBreadcrumbs } from "@/components/Breadcrumbs";
 
 // TypeScript interfaces
 interface Author {
@@ -1088,6 +1091,16 @@ export default function BlogDetailPage() {
 
   return (
     <div className="min-h-screen bg-white">
+      {/* Add Structured Data for SEO */}
+      {blog && <BlogArticleStructuredData blog={blog} />}
+
+      {/* Add Breadcrumbs for SEO */}
+      {blog && (
+        <Breadcrumbs
+          items={generateBlogBreadcrumbs(blog.title, blog._id, blog.category)}
+        />
+      )}
+
       {/* Navigation Breadcrumb */}
       <nav className="bg-gray-50 py-4">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">

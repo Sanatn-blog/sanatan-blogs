@@ -70,18 +70,32 @@ export async function generateMetadata({
     const shareUrl = `${baseUrl}/blogs/${params.id}`;
     const imageUrl = blog.featuredImage || `${baseUrl}/og-image.jpg`;
 
-    // Truncate description to optimal length
+    // Truncate description to optimal length (150-160 characters for best SEO)
     const metaDescription = blog.seo?.metaDescription || blog.excerpt;
     const truncatedDescription =
-      metaDescription.length > 160
-        ? metaDescription.substring(0, 157) + "..."
+      metaDescription.length > 155
+        ? metaDescription.substring(0, 152) + "..."
         : metaDescription;
+
+    // Generate focus keywords from title and tags
+    const focusKeywords = [
+      blog.title,
+      ...blog.tags,
+      blog.category,
+      "Sanatan Dharma",
+      "spiritual wisdom",
+    ].slice(0, 10);
 
     return {
       title: blog.seo?.metaTitle || `${blog.title} | Sanatan Blogs`,
       description: truncatedDescription,
-      keywords: blog.seo?.metaKeywords || blog.tags,
-      authors: [{ name: blog.author.name }],
+      keywords: blog.seo?.metaKeywords || focusKeywords,
+      authors: [
+        {
+          name: blog.author.name,
+          url: `${baseUrl}/authors/${blog.author._id}`,
+        },
+      ],
       creator: blog.author.name,
       publisher: "Sanatan Blogs",
       category: blog.category,
@@ -128,6 +142,10 @@ export async function generateMetadata({
       },
       alternates: {
         canonical: shareUrl,
+        languages: {
+          "en-US": shareUrl,
+          "hi-IN": `/hi/blogs/${params.id}`,
+        },
       },
       other: {
         "article:author": blog.author.name,
@@ -135,6 +153,7 @@ export async function generateMetadata({
         "article:modified_time": blog.updatedAt,
         "article:section": blog.category,
         "article:tag": blog.tags.join(", "),
+        "og:see_also": `${baseUrl}/blogs?category=${encodeURIComponent(blog.category)}`,
       },
     };
   } catch (error) {
