@@ -3,6 +3,10 @@ import dbConnect from "@/lib/mongodb";
 import Notification from "@/models/Notification";
 import { verifyToken } from "@/lib/jwt";
 
+// Force dynamic rendering and disable caching for fresh notification data
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 // GET /api/notifications - Get user's notifications
 export async function GET(request: NextRequest) {
   try {

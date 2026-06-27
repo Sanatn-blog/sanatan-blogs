@@ -3,6 +3,10 @@ import connectDB from "@/lib/mongodb";
 import Blog from "@/models/Blog";
 import { verifyToken } from "@/lib/jwt";
 
+// Force dynamic rendering and disable caching for fresh like data
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },

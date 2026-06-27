@@ -1,10 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import User from '@/models/User';
+import { NextRequest, NextResponse } from "next/server";
+import connectDB from "@/lib/mongodb";
+import User from "@/models/User";
+
+// Force dynamic rendering and disable caching for fresh followers data
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     // Connect to database
@@ -14,26 +18,22 @@ export async function GET(
 
     // Get user with populated followers
     const user = await User.findById(userId)
-      .populate('followers', 'name username avatar bio')
-      .select('followers');
+      .populate("followers", "name username avatar bio")
+      .select("followers");
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     return NextResponse.json({
       followers: user.followers,
-      followersCount: user.followers.length
+      followersCount: user.followers.length,
     });
-
   } catch (error) {
-    console.error('Get followers error:', error);
+    console.error("Get followers error:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: "Internal server error" },
+      { status: 500 },
     );
   }
-} 
+}

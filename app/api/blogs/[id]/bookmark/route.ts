@@ -1,41 +1,42 @@
-import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import Blog from '@/models/Blog';
-import User from '@/models/User';
-import { verifyToken } from '@/lib/jwt';
+import { NextRequest, NextResponse } from "next/server";
+import connectDB from "@/lib/mongodb";
+import Blog from "@/models/Blog";
+import User from "@/models/User";
+import { verifyToken } from "@/lib/jwt";
+
+// Force dynamic rendering and disable caching for fresh bookmark data
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     await connectDB();
-    
+
     const { id: blogId } = await params;
     if (!blogId) {
       return NextResponse.json(
-        { error: 'Blog ID is required' },
-        { status: 400 }
+        { error: "Blog ID is required" },
+        { status: 400 },
       );
     }
 
     // Get authorization header
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    const authHeader = request.headers.get("authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
+        { error: "Authentication required" },
+        { status: 401 },
       );
     }
 
     const token = authHeader.substring(7);
     const decoded = verifyToken(token);
-    
+
     if (!decoded || !decoded.userId) {
-      return NextResponse.json(
-        { error: 'Invalid token' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
 
     const userId = decoded.userId;
@@ -43,27 +44,21 @@ export async function POST(
     // Find the blog
     const blog = await Blog.findById(blogId);
     if (!blog) {
-      return NextResponse.json(
-        { error: 'Blog not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Blog not found" }, { status: 404 });
     }
 
     // Check if blog is published
-    if (!blog.isPublished || blog.status !== 'published') {
+    if (!blog.isPublished || blog.status !== "published") {
       return NextResponse.json(
-        { error: 'Cannot bookmark unpublished blog' },
-        { status: 403 }
+        { error: "Cannot bookmark unpublished blog" },
+        { status: 403 },
       );
     }
 
     // Find the user
     const user = await User.findById(userId);
     if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     // Check if user has already bookmarked the blog
@@ -71,57 +66,64 @@ export async function POST(
 
     if (isBookmarked) {
       // Remove bookmark
-      const updatedUser = await User.findByIdAndUpdate(userId, {
-        $pull: { bookmarks: blogId }
-      }, { new: true });
-      
+      const updatedUser = await User.findByIdAndUpdate(
+        userId,
+        {
+          $pull: { bookmarks: blogId },
+        },
+        { new: true },
+      );
+
       return NextResponse.json({
-        message: 'Blog unbookmarked successfully',
+        message: "Blog unbookmarked successfully",
         bookmarked: false,
-        bookmarksCount: updatedUser?.bookmarks?.length || 0
+        bookmarksCount: updatedUser?.bookmarks?.length || 0,
       });
     } else {
       // Add bookmark
-      const updatedUser = await User.findByIdAndUpdate(userId, {
-        $addToSet: { bookmarks: blogId }
-      }, { new: true });
-      
+      const updatedUser = await User.findByIdAndUpdate(
+        userId,
+        {
+          $addToSet: { bookmarks: blogId },
+        },
+        { new: true },
+      );
+
       return NextResponse.json({
-        message: 'Blog bookmarked successfully',
+        message: "Blog bookmarked successfully",
         bookmarked: true,
-        bookmarksCount: updatedUser?.bookmarks?.length || 0
+        bookmarksCount: updatedUser?.bookmarks?.length || 0,
       });
     }
-
   } catch (error) {
-    console.error('Error handling blog bookmark:', error);
+    console.error("Error handling blog bookmark:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: "Internal server error" },
+      { status: 500 },
     );
   }
 }
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     await connectDB();
-    
+
     const { id: blogId } = await params;
     if (!blogId) {
       return NextResponse.json(
-        { error: 'Blog ID is required' },
-        { status: 400 }
+        { error: "Blog ID is required" },
+        { status: 400 },
       );
     }
 
     // Get authorization header (optional for getting bookmark status)
-    const authHeader = request.headers.get('authorization');
+    const authHeader = request.headers.get("authorization");
     let userId = null;
-    
-    if (authHeader && authHeader.startsWith('Bearer ')) {
+
+    if (authHeader && authHeader.startsWith("Bearer ")) {
       const token = authHeader.substring(7);
       const decoded = verifyToken(token);
       if (decoded && decoded.userId) {
@@ -132,10 +134,7 @@ export async function GET(
     // Find the blog
     const blog = await Blog.findById(blogId);
     if (!blog) {
-      return NextResponse.json(
-        { error: 'Blog not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Blog not found" }, { status: 404 });
     }
 
     let isBookmarked = false;
@@ -155,14 +154,13 @@ export async function GET(
 
     return NextResponse.json({
       bookmarked: isBookmarked,
-      bookmarksCount
+      bookmarksCount,
     });
-
   } catch (error) {
-    console.error('Error getting blog bookmark status:', error);
+    console.error("Error getting blog bookmark status:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: "Internal server error" },
+      { status: 500 },
     );
   }
-} 
+}

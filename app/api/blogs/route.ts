@@ -4,6 +4,10 @@ import { requireAuth, AuthenticatedRequest } from "@/middleware/auth";
 import Blog from "@/models/Blog";
 import User from "@/models/User";
 
+// Force dynamic rendering and disable caching for fresh blog data
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 // GET - List all published blogs with pagination and filtering (public endpoint)
 async function getBlogsHandler(request: Request) {
   try {

@@ -1,22 +1,26 @@
-import { NextRequest, NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import User from '@/models/User';
-import Blog from '@/models/Blog';
-import mongoose from 'mongoose';
+import { NextRequest, NextResponse } from "next/server";
+import connectDB from "@/lib/mongodb";
+import User from "@/models/User";
+import Blog from "@/models/Blog";
+import mongoose from "mongoose";
+
+// Force dynamic rendering and disable caching for fresh author profile data
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     await connectDB();
-    
+
     const { id: authorId } = await params;
-    
+
     if (!authorId) {
       return NextResponse.json(
-        { error: 'Author ID is required' },
-        { status: 400 }
+        { error: "Author ID is required" },
+        { status: 400 },
       );
     }
 
@@ -24,50 +28,49 @@ export async function GET(
     const authorObjectId = new mongoose.Types.ObjectId(authorId);
 
     // Fetch author data
-    const author = await User.findById(authorObjectId).select('-password');
+    const author = await User.findById(authorObjectId).select("-password");
     if (!author) {
-      return NextResponse.json(
-        { error: 'Author not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Author not found" }, { status: 404 });
     }
 
     // Fetch authors published blogs
-    const blogs = await Blog.find({ 
+    const blogs = await Blog.find({
       author: authorObjectId,
-      status: 'published'
+      status: "published",
     })
-    .select('title slug excerpt featuredImage category readingTime views likes publishedAt status')
-    .sort({ publishedAt: -1 })
-    .limit(12);
+      .select(
+        "title slug excerpt featuredImage category readingTime views likes publishedAt status",
+      )
+      .sort({ publishedAt: -1 })
+      .limit(12);
 
     // Calculate statistics
-    const totalBlogs = await Blog.countDocuments({ 
+    const totalBlogs = await Blog.countDocuments({
       author: authorObjectId,
-      status: 'published'
+      status: "published",
     });
 
     const totalViews = await Blog.aggregate([
-      { $match: { author: authorObjectId, status: 'published' } },
-      { $group: { _id: null, totalViews: { $sum: '$views' } } }
+      { $match: { author: authorObjectId, status: "published" } },
+      { $group: { _id: null, totalViews: { $sum: "$views" } } },
     ]);
 
     const totalLikes = await Blog.aggregate([
-      { $match: { author: authorObjectId, status: 'published' } },
-      { $project: { likesCount: { $size: '$likes' } } },
-      { $group: { _id: null, totalLikes: { $sum: '$likesCount' } } }
+      { $match: { author: authorObjectId, status: "published" } },
+      { $project: { likesCount: { $size: "$likes" } } },
+      { $group: { _id: null, totalLikes: { $sum: "$likesCount" } } },
     ]);
 
     const averageReadingTime = await Blog.aggregate([
-      { $match: { author: authorObjectId, status: 'published' } },
-      { $group: { _id: null, avgReadingTime: { $avg: '$readingTime' } } }
+      { $match: { author: authorObjectId, status: "published" } },
+      { $group: { _id: null, avgReadingTime: { $avg: "$readingTime" } } },
     ]);
 
     const mostPopularCategory = await Blog.aggregate([
-      { $match: { author: authorObjectId, status: 'published' } },
-      { $group: { _id: '$category', count: { $sum: 1 } } },
+      { $match: { author: authorObjectId, status: "published" } },
+      { $group: { _id: "$category", count: { $sum: 1 } } },
       { $sort: { count: -1 } },
-      { $limit: 1 }
+      { $limit: 1 },
     ]);
 
     // Prepare author data with calculated stats
@@ -88,7 +91,7 @@ export async function GET(
       followers: author.followers?.length || 0,
       following: author.following?.length || 0,
       expertise: author.expertise || [],
-      achievements: author.achievements || []
+      achievements: author.achievements || [],
     };
 
     // Prepare stats data
@@ -96,21 +99,22 @@ export async function GET(
       totalBlogs: totalBlogs,
       totalViews: totalViews[0]?.totalViews || 0,
       totalLikes: totalLikes[0]?.totalLikes || 0,
-      averageReadingTime: Math.round(averageReadingTime[0]?.avgReadingTime || 0),
-      mostPopularCategory: mostPopularCategory[0]?._id || 'N/A'
+      averageReadingTime: Math.round(
+        averageReadingTime[0]?.avgReadingTime || 0,
+      ),
+      mostPopularCategory: mostPopularCategory[0]?._id || "N/A",
     };
 
     return NextResponse.json({
       author: authorData,
       blogs: blogs,
-      stats: statsData
+      stats: statsData,
     });
-
   } catch (error) {
-    console.error('Error fetching author:', error);
+    console.error("Error fetching author:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
+      { error: "Internal server error" },
+      { status: 500 },
     );
   }
-} 
+}

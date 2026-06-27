@@ -5,6 +5,10 @@ import Blog from "@/models/Blog";
 import User from "@/models/User";
 import Comment from "@/models/Comment";
 
+// Force dynamic rendering and disable caching for fresh blog data
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 interface LeanBlog {
   _id: string;
   category: string;

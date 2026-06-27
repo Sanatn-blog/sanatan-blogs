@@ -1,7 +1,11 @@
-import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import User from '@/models/User';
-import { requireAuth, AuthenticatedRequest } from '@/middleware/auth';
+import { NextResponse } from "next/server";
+import connectDB from "@/lib/mongodb";
+import User from "@/models/User";
+import { requireAuth, AuthenticatedRequest } from "@/middleware/auth";
+
+// Force dynamic rendering and disable caching for fresh bookmarks
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 // GET - Get current user's bookmarked blogs
 async function getBookmarksHandler(request: AuthenticatedRequest) {
@@ -9,23 +13,20 @@ async function getBookmarksHandler(request: AuthenticatedRequest) {
     await connectDB();
 
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
 
     if (!request.user?._id) {
       return NextResponse.json(
-        { error: 'User not authenticated' },
-        { status: 401 }
+        { error: "User not authenticated" },
+        { status: 401 },
       );
     }
 
     // First check if user exists
-    const user = await User.findById(request.user._id).select('bookmarks');
+    const user = await User.findById(request.user._id).select("bookmarks");
     if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     // If user has no bookmarks, return empty result
@@ -36,67 +37,70 @@ async function getBookmarksHandler(request: AuthenticatedRequest) {
           page,
           limit,
           total: 0,
-          pages: 0
-        }
+          pages: 0,
+        },
       });
     }
 
     // Use aggregation pipeline for efficient querying with pagination
     const skip = (page - 1) * limit;
-    
+
     const bookmarksAggregation = await User.aggregate([
       {
-        $match: { _id: user._id }
+        $match: { _id: user._id },
       },
       {
         $lookup: {
-          from: 'blogs',
-          localField: 'bookmarks',
-          foreignField: '_id',
-          as: 'bookmarkedBlogs',
+          from: "blogs",
+          localField: "bookmarks",
+          foreignField: "_id",
+          as: "bookmarkedBlogs",
           pipeline: [
             {
               $match: {
-                status: 'published',
-                isPublished: true
-              }
+                status: "published",
+                isPublished: true,
+              },
             },
             {
               $lookup: {
-                from: 'users',
-                localField: 'author',
-                foreignField: '_id',
-                as: 'author',
+                from: "users",
+                localField: "author",
+                foreignField: "_id",
+                as: "author",
                 pipeline: [
                   {
                     $project: {
                       name: 1,
                       avatar: 1,
                       bio: 1,
-                      username: 1
-                    }
-                  }
-                ]
-              }
+                      username: 1,
+                    },
+                  },
+                ],
+              },
             },
             {
-              $unwind: '$author'
+              $unwind: "$author",
             },
             {
-              $sort: { createdAt: -1 }
-            }
-          ]
-        }
+              $sort: { createdAt: -1 },
+            },
+          ],
+        },
       },
       {
         $project: {
           bookmarkedBlogs: 1,
-          totalBookmarks: { $size: '$bookmarkedBlogs' }
-        }
-      }
+          totalBookmarks: { $size: "$bookmarkedBlogs" },
+        },
+      },
     ]);
 
-    const result = bookmarksAggregation[0] || { bookmarkedBlogs: [], totalBookmarks: 0 };
+    const result = bookmarksAggregation[0] || {
+      bookmarkedBlogs: [],
+      totalBookmarks: 0,
+    };
     const { bookmarkedBlogs, totalBookmarks } = result;
 
     // Apply pagination to the results
@@ -108,17 +112,16 @@ async function getBookmarksHandler(request: AuthenticatedRequest) {
         page,
         limit,
         total: totalBookmarks,
-        pages: Math.ceil(totalBookmarks / limit)
-      }
+        pages: Math.ceil(totalBookmarks / limit),
+      },
     });
-
   } catch (error) {
-    console.error('Get bookmarks error:', error);
+    console.error("Get bookmarks error:", error);
     return NextResponse.json(
-      { error: 'Failed to get bookmarks' },
-      { status: 500 }
+      { error: "Failed to get bookmarks" },
+      { status: 500 },
     );
   }
 }
 
-export const GET = requireAuth(getBookmarksHandler); 
+export const GET = requireAuth(getBookmarksHandler);

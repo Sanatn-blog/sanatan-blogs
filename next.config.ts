@@ -25,8 +25,8 @@ const nextConfig: NextConfig = {
   // Compression for better performance
   compress: true,
 
-  // Generate ETags for caching
-  generateEtags: true,
+  // Disable ETag generation for dynamic content to prevent caching
+  generateEtags: false,
 
   // Power by header removal for security
   poweredByHeader: false,

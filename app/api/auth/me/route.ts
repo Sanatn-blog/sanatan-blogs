@@ -1,7 +1,11 @@
-import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
-import User from '@/models/User';
-import { requireAuth, AuthenticatedRequest } from '@/middleware/auth';
+import { NextResponse } from "next/server";
+import connectDB from "@/lib/mongodb";
+import User from "@/models/User";
+import { requireAuth, AuthenticatedRequest } from "@/middleware/auth";
+
+// Force dynamic rendering and disable caching for fresh user data
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 async function getCurrentUserHandler(request: AuthenticatedRequest) {
   try {
@@ -11,10 +15,7 @@ async function getCurrentUserHandler(request: AuthenticatedRequest) {
     const user = await User.findById(request.user?._id);
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     // Return user without sensitive information
@@ -29,20 +30,19 @@ async function getCurrentUserHandler(request: AuthenticatedRequest) {
       bio: user.bio,
       socialLinks: user.socialLinks,
       lastLogin: user.lastLogin,
-      createdAt: user.createdAt
+      createdAt: user.createdAt,
     };
 
     return NextResponse.json({
-      user: userResponse
+      user: userResponse,
     });
-
   } catch (error) {
-    console.error('Get current user error:', error);
+    console.error("Get current user error:", error);
     return NextResponse.json(
-      { error: 'Failed to get user information' },
-      { status: 500 }
+      { error: "Failed to get user information" },
+      { status: 500 },
     );
   }
 }
 
-export const GET = requireAuth(getCurrentUserHandler); 
+export const GET = requireAuth(getCurrentUserHandler);

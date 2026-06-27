@@ -4,6 +4,10 @@ import Comment from "@/models/Comment";
 import Blog from "@/models/Blog";
 import { requireAuth, AuthenticatedRequest } from "@/middleware/auth";
 
+// Force dynamic rendering and disable caching for fresh comments
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 // GET - Get comments for a blog
 async function getCommentsHandler(
   request: Request,
