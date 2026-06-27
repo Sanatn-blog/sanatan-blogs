@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import { Calendar, User, Clock, Eye, MessageCircle, Tag } from "lucide-react";
+import { useState } from "react";
 
 interface Author {
   _id: string;
@@ -33,6 +36,8 @@ export default function BlogHeader({
   tags,
   featuredImage,
 }: BlogHeaderProps) {
+  const [imageError, setImageError] = useState(false);
+
   const formatDate = (dateString?: string) => {
     if (!dateString) return "Recently";
     const date = new Date(dateString);
@@ -138,15 +143,24 @@ export default function BlogHeader({
       </div>
 
       {/* Featured Image */}
-      {featuredImage && (
+      {featuredImage && !imageError && (
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mb-12 mt-6">
-          <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl">
+          <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl bg-gray-100">
             {/* Responsive image with proper aspect ratio */}
             <div className="relative w-full h-64 sm:h-80 md:h-96 lg:h-[500px] xl:h-[600px]">
-              <img
+              <Image
                 src={featuredImage}
                 alt={title}
-                className="w-full h-full object-cover"
+                fill
+                className="object-cover"
+                sizes="(max-width: 640px) 100vw, (max-width: 768px) 100vw, (max-width: 1024px) 100vw, 1280px"
+                priority
+                quality={90}
+                onError={() => setImageError(true)}
+                unoptimized={
+                  featuredImage.startsWith("data:") ||
+                  !featuredImage.startsWith("http")
+                }
               />
             </div>
           </div>

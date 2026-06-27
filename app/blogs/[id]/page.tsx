@@ -446,14 +446,16 @@ export default function BlogDetailPage() {
   // Comment functions
   const fetchComments = useCallback(
     async (showLoading: boolean = true) => {
-      if (!blog) return;
+      if (!blogId) return;
 
       if (showLoading) {
         setCommentsLoading(true);
       }
       try {
         console.log("Fetching comments for blog:", blogId);
-        const response = await fetch(`/api/blogs/${blogId}/comments`);
+        const response = await fetch(
+          `/api/blogs/${blogId}/comments?_t=${Date.now()}`,
+        );
         console.log("Comments response status:", response.status);
 
         if (response.ok) {
@@ -472,7 +474,7 @@ export default function BlogDetailPage() {
         }
       }
     },
-    [blog, blogId],
+    [blogId],
   );
 
   // Function to refetch blog data to get updated comment count
@@ -894,7 +896,12 @@ export default function BlogDetailPage() {
         setError(null);
 
         console.log("Fetching blog with ID:", blogId);
-        const response = await fetch(`/api/blogs/${blogId}`);
+        const response = await fetch(`/api/blogs/${blogId}`, {
+          cache: "no-store",
+          headers: {
+            "Cache-Control": "no-cache",
+          },
+        });
 
         if (!response.ok) {
           if (response.status === 404) {
@@ -961,12 +968,12 @@ export default function BlogDetailPage() {
     fetchBlog();
   }, [blogId, currentUser]);
 
-  // Fetch comments when blog is loaded
+  // Fetch comments when blogId changes
   useEffect(() => {
-    if (blog) {
+    if (blogId) {
       fetchComments();
     }
-  }, [blog, fetchComments]);
+  }, [blogId, fetchComments]);
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return "Recently";
