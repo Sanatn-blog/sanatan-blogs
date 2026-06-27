@@ -32,7 +32,7 @@ import {
   Edit,
   Trash2,
   Reply,
-  CheckCircle,
+  CircleCheckBig as CheckCircle,
   BookOpen,
   AlertCircle,
 } from "lucide-react";
