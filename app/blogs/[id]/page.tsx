@@ -896,10 +896,12 @@ export default function BlogDetailPage() {
         setError(null);
 
         console.log("Fetching blog with ID:", blogId);
-        const response = await fetch(`/api/blogs/${blogId}`, {
+        const response = await fetch(`/api/blogs/${blogId}?_t=${Date.now()}`, {
           cache: "no-store",
           headers: {
-            "Cache-Control": "no-cache",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
           },
         });
 

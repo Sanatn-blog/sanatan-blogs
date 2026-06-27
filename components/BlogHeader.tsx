@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Calendar, User, Clock, Eye, MessageCircle, Tag } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface Author {
   _id: string;
@@ -37,6 +37,13 @@ export default function BlogHeader({
   featuredImage,
 }: BlogHeaderProps) {
   const [imageError, setImageError] = useState(false);
+  const [imageKey, setImageKey] = useState(0);
+
+  // Force image reload when featuredImage changes
+  useEffect(() => {
+    setImageError(false);
+    setImageKey((prev) => prev + 1);
+  }, [featuredImage]);
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return "Recently";
@@ -149,7 +156,8 @@ export default function BlogHeader({
             {/* Responsive image with proper aspect ratio */}
             <div className="relative w-full h-64 sm:h-80 md:h-96 lg:h-[500px] xl:h-[600px]">
               <Image
-                src={featuredImage}
+                key={`blog-image-${imageKey}`}
+                src={`${featuredImage}?t=${Date.now()}`}
                 alt={title}
                 fill
                 className="object-cover"

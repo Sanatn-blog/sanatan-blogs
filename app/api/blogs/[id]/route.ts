@@ -198,26 +198,46 @@ async function getBlogHandler(
         .sort({ publishedAt: -1 })
         .lean();
 
-      return NextResponse.json({
-        blog: {
-          ...blog,
-          views: (blog.views || 0) + 1, // Return updated view count
-          commentsCount: commentsCount, // Include comments count
-          likesCount: blog.likes?.length || 0, // Include likes count
+      return NextResponse.json(
+        {
+          blog: {
+            ...blog,
+            views: (blog.views || 0) + 1, // Return updated view count
+            commentsCount: commentsCount, // Include comments count
+            likesCount: blog.likes?.length || 0, // Include likes count
+          },
+          relatedBlogs,
+          navigation: {
+            next: nextBlog,
+            previous: previousBlog,
+          },
         },
-        relatedBlogs,
-        navigation: {
-          next: nextBlog,
-          previous: previousBlog,
+        {
+          headers: {
+            "Cache-Control":
+              "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
         },
-      });
+      );
     } else {
       // For drafts or non-published blogs, return just the blog data with comments count
-      return NextResponse.json({
-        ...blog,
-        commentsCount: commentsCount,
-        likesCount: blog.likes?.length || 0,
-      });
+      return NextResponse.json(
+        {
+          ...blog,
+          commentsCount: commentsCount,
+          likesCount: blog.likes?.length || 0,
+        },
+        {
+          headers: {
+            "Cache-Control":
+              "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        },
+      );
     }
   } catch (error) {
     console.error("Get blog error:", error);
