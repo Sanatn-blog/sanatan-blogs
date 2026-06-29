@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import Notification from "@/models/Notification";
+import Blog from "@/models/Blog";
 import { verifyToken } from "@/lib/jwt";
 
 // Force dynamic rendering and disable caching for fresh notification data
