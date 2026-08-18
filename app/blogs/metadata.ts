@@ -54,10 +54,7 @@ export const metadata: Metadata = {
     images: ["/og-image.jpg"],
   },
   alternates: {
+    // No hi-IN alternate: there is no /hi/blogs route to point at.
     canonical: "/blogs",
-    languages: {
-      "en-US": "/blogs",
-      "hi-IN": "/hi/blogs",
-    },
   },
 };

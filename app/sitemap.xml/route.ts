@@ -3,6 +3,7 @@ import connectDB from "@/lib/mongodb";
 import Blog from "@/models/Blog";
 import User from "@/models/User";
 import mongoose from "mongoose";
+import { SITE_URL } from "@/lib/siteUrl";
 
 interface BlogData {
   _id: string;
@@ -18,7 +19,7 @@ interface AuthorData {
 }
 
 export async function GET() {
-  const baseUrl = process.env.NEXTAUTH_URL || "https://sanatan-blogs.com";
+  const baseUrl = SITE_URL;
 
   try {
     // Connect to database

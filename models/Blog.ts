@@ -1,4 +1,5 @@
 import mongoose, { Document, Schema } from 'mongoose';
+import { generateSlug } from '@/lib/slug';
 
 export interface IBlog extends Document {
   _id: string;
@@ -40,7 +41,12 @@ const BlogSchema = new Schema<IBlog>({
     unique: true,
     lowercase: true,
     trim: true,
-    match: [/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and hyphens']
+    // Unicode-aware: Hindi titles produce Devanagari slugs, which this
+    // validator used to reject outright.
+    match: [
+      /^[\p{L}\p{N}\p{M}-]+$/u,
+      'Slug can only contain letters, numbers, and hyphens'
+    ]
   },
   excerpt: {
     type: String,
@@ -190,11 +196,7 @@ BlogSchema.pre('save', function(next) {
 // Generate slug from title
 BlogSchema.pre('save', function(next) {
   if (this.isModified('title') && !this.slug) {
-    this.slug = this.title
-      .toLowerCase()
-      .replace(/[^a-z0-9 ]/g, '')
-      .replace(/\s+/g, '-')
-      .substring(0, 100);
+    this.slug = generateSlug(this.title);
   }
   next();
 });

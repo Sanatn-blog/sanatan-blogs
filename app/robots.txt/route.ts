@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
+import { SITE_URL } from '@/lib/siteUrl';
 
 export async function GET() {
-  const baseUrl = process.env.NEXTAUTH_URL || 'https://sanatan-blogs.com';
+  const baseUrl = SITE_URL;
   
   const robots = `# Robots.txt for Sanatan Blogs
 # Welcome search engines to index our spiritual content

@@ -4,6 +4,7 @@ import { requireAuth, AuthenticatedRequest } from "@/middleware/auth";
 import Blog from "@/models/Blog";
 import User from "@/models/User";
 import Comment from "@/models/Comment";
+import { generateSlug } from "@/lib/slug";
 
 // Force dynamic rendering and disable caching for fresh blog data
 export const dynamic = "force-dynamic";
@@ -328,11 +329,7 @@ async function updateBlogHandler(
 
     // Update slug if title changed
     if (body.title && body.title !== existingBlog.title) {
-      const baseSlug = body.title
-        .toLowerCase()
-        .replace(/[^a-z0-9 ]/g, "")
-        .replace(/\s+/g, "-")
-        .substring(0, 100);
+      const baseSlug = generateSlug(body.title);
 
       // Ensure slug is unique
       let slug = baseSlug;

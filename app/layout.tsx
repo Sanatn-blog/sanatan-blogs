@@ -3,6 +3,7 @@ import { Inter, Noto_Sans_Devanagari } from 'next/font/google';
 import './globals.css';
 import ClientLayout from '@/components/ClientLayout';
 import GoogleAnalytics from '@/components/GoogleAnalytics';
+import { SITE_URL } from '@/lib/siteUrl';
 
 // Font configurations
 const inter = Inter({ 
@@ -19,7 +20,7 @@ const notoSansDevanagari = Noto_Sans_Devanagari({
 
 // Global metadata configuration
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXTAUTH_URL || 'https://sanatan-blogs.com'),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: 'Sanatan Blogs - Spiritual Knowledge & Ancient Wisdom',
     template: '%s | Sanatan Blogs'
@@ -94,13 +95,11 @@ export const metadata: Metadata = {
     description: 'Discover profound articles on Sanatan Dharma, Yoga, Meditation, and spiritual wisdom.',
     images: ['/og-image.jpg'],
   },
-  alternates: {
-    canonical: '/',
-    languages: {
-      'en-US': '/',
-      'hi-IN': '/hi',
-    },
-  },
+  // No canonical here on purpose. Metadata in the App Router is inherited, so
+  // a canonical set on the root layout is applied to every page that does not
+  // override it - which meant every article, author and static page told Google
+  // it was a duplicate of the homepage. Each page declares its own canonical.
+  // The hi-IN alternate was removed with it: there is no /hi route to point at.
   verification: {
     google: process.env.GOOGLE_SITE_VERIFICATION,
     yandex: process.env.YANDEX_VERIFICATION,

@@ -49,15 +49,9 @@ export function isValidEmail(email: string): boolean {
   return emailRegex.test(email);
 }
 
-// Generate slug from text
-export function generateSlug(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9 ]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '');
-}
+// Generate slug from text. The implementation lives in lib/slug.ts so the
+// Mongoose models can reach it without pulling in the Tailwind helpers above.
+export { generateSlug } from './slug';
 
 // Capitalize first letter
 export function capitalize(text: string): string {

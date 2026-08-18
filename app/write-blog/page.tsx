@@ -740,17 +740,17 @@ export default function WriteBlog() {
       {/* Enhanced Header with Glassmorphism */}
       <div className="bg-gray-800/80 backdrop-blur-xl border-b border-gray-700/50 sticky top-0 z-20 shadow-2xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-3">
+          <div className="flex items-center justify-between gap-2 h-16">
+            <div className="flex items-center min-w-0">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                 <div className="relative">
                   <div className="w-10 h-10 bg-gradient-to-br from-purple-500 via-purple-600 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
                     <FileText className="w-5 h-5 text-white" />
                   </div>
                   <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-gray-800 animate-pulse"></div>
                 </div>
-                <div>
-                  <h1 className="text-xl font-bold text-white">
+                <div className="min-w-0">
+                  <h1 className="text-base sm:text-xl font-bold text-white truncate">
                     {editBlogId ? "Edit Your Blog" : "Create New Blog"}
                   </h1>
                   <p className="text-xs text-gray-400 flex items-center gap-1">
@@ -768,10 +768,10 @@ export default function WriteBlog() {
               </div>
             </div>
 
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               <button
                 onClick={() => setShowPreview(!showPreview)}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all duration-200 font-medium ${
+                className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl transition-all duration-200 font-medium ${
                   showPreview
                     ? "bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50"
                     : "bg-gray-700/70 text-gray-300 hover:bg-gray-600/70"
@@ -783,11 +783,11 @@ export default function WriteBlog() {
                 </span>
               </button>
 
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center gap-2">
                 <button
                   onClick={() => handleSubmit("draft")}
                   disabled={isSubmitting}
-                  className="flex items-center space-x-2 px-4 py-2 bg-gray-700/70 text-gray-300 hover:bg-gray-600/70 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                  className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-gray-700/70 text-gray-300 hover:bg-gray-600/70 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                 >
                   <Save className="h-4 w-4" />
                   <span className="hidden sm:inline">Save Draft</span>
@@ -796,7 +796,7 @@ export default function WriteBlog() {
                 <button
                   onClick={() => handleSubmit("published")}
                   disabled={isSubmitting}
-                  className="flex items-center space-x-2 px-5 py-2 bg-gradient-to-r from-orange-500 via-orange-600 to-orange-700 hover:from-orange-600 hover:via-orange-700 hover:to-orange-800 text-white rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 font-semibold"
+                  className="flex items-center gap-2 px-3 sm:px-5 py-2 bg-gradient-to-r from-orange-500 via-orange-600 to-orange-700 hover:from-orange-600 hover:via-orange-700 hover:to-orange-800 text-white rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-orange-500/30 hover:shadow-orange-500/50 font-semibold"
                 >
                   <Send className="h-4 w-4" />
                   <span className="hidden sm:inline">
@@ -809,14 +809,17 @@ export default function WriteBlog() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
+        {/* The sidebar used to join the layout only at xl (1280px), so every
+            laptop and tablet stacked it under a full-width editor and wasted
+            half the screen. It now sits alongside from lg up. */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
           {/* Main Content Area */}
-          <div className="xl:col-span-3 space-y-6">
+          <div className="lg:col-span-2 xl:col-span-3 space-y-4 sm:space-y-6 min-w-0">
             {!showPreview ? (
               <>
                 {/* Title Input */}
-                <div className="bg-gray-800/90 backdrop-blur-sm rounded-2xl border border-gray-700/50 p-6 shadow-xl hover:shadow-2xl transition-all duration-300">
+                <div className="bg-gray-800/90 backdrop-blur-sm rounded-2xl border border-gray-700/50 p-4 sm:p-6 shadow-xl hover:shadow-2xl transition-all duration-300">
                   <label className="text-sm font-semibold text-gray-300 mb-3 flex items-center">
                     <FileText className="w-4 h-4 mr-2 text-purple-400" />
                     Blog Title *
@@ -837,7 +840,7 @@ export default function WriteBlog() {
                 </div>
 
                 {/* Excerpt Input */}
-                <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
+                <div className="bg-gray-800 rounded-xl border border-gray-700 p-4 sm:p-6">
                   <label className=" text-sm font-semibold text-gray-300 mb-3 flex items-center">
                     <Sparkles className="w-4 h-4 mr-2" />
                     Excerpt *
@@ -866,15 +869,15 @@ export default function WriteBlog() {
                 </div>
 
                 {/* Content Editor */}
-                <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
+                <div className="bg-gray-800 rounded-xl border border-gray-700 p-4 sm:p-6">
                   <label className=" text-sm font-semibold text-gray-300 mb-3 flex items-center">
                     <FileText className="w-4 h-4 mr-2" />
                     Content *
                   </label>
 
                   {/* Formatting Toolbar */}
-                  <div className="flex items-center flex-wrap gap-2 mb-4 p-3 bg-gray-700 rounded-lg border border-gray-600">
-                    <span className="text-sm font-medium text-gray-400 mr-2">
+                  <div className="flex items-center gap-2 mb-4 p-2 sm:p-3 bg-gray-700 rounded-lg border border-gray-600 overflow-x-auto sm:flex-wrap sm:overflow-visible [scrollbar-width:thin]">
+                    <span className="hidden sm:inline text-sm font-medium text-gray-400 mr-2 shrink-0">
                       Format:
                     </span>
 
@@ -1077,7 +1080,7 @@ You can write your thoughts here...
 
 ![Image Alt](image-url)"
                     rows={20}
-                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none font-mono text-sm placeholder-gray-400 leading-relaxed text-white transition-all duration-200"
+                    className="w-full px-3 sm:px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-y font-mono text-sm placeholder-gray-400 leading-relaxed text-white transition-all duration-200 h-[55vh] min-h-[18rem] sm:h-auto sm:min-h-0"
                   />
                   {errors.content && (
                     <p className="text-red-400 text-sm mt-2 flex items-center">
@@ -1108,14 +1111,14 @@ You can write your thoughts here...
                   </span>
                 </div>
                 <article className="prose prose-invert max-w-none">
-                  <h1 className="text-4xl font-bold text-white mb-4 flex items-center gap-3">
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4 flex items-start gap-3 break-words">
                     {formData.title || (
                       <>
                         <FileText className="w-8 h-8" /> Your Blog Title Here
                       </>
                     )}
                   </h1>
-                  <div className="flex items-center space-x-4 text-gray-400 mb-6">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-400 mb-6">
                     <span className="flex items-center">
                       <div className="w-6 h-6 bg-gradient-to-r from-purple-600 to-orange-600 rounded-full mr-2"></div>
                       {user?.name}
@@ -1162,7 +1165,7 @@ You can write your thoughts here...
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6 min-w-0 lg:sticky lg:top-20 lg:self-start lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
             {/* Tab Navigation */}
             <div className="bg-gray-800 rounded-xl border border-gray-700 p-1">
               <div className="flex">
@@ -1192,7 +1195,7 @@ You can write your thoughts here...
             {activeTab === "content" ? (
               <>
                 {/* Featured Image */}
-                <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
+                <div className="bg-gray-800 rounded-xl border border-gray-700 p-4 sm:p-6">
                   <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
                     <ImageIcon className="w-5 h-5 mr-2" />
                     Featured Image
@@ -1269,7 +1272,7 @@ You can write your thoughts here...
                 </div>
 
                 {/* Category */}
-                <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
+                <div className="bg-gray-800 rounded-xl border border-gray-700 p-4 sm:p-6">
                   <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
                     <Tag className="w-5 h-5 mr-2" />
                     Category *
@@ -1297,7 +1300,7 @@ You can write your thoughts here...
                 </div>
 
                 {/* Tags */}
-                <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
+                <div className="bg-gray-800 rounded-xl border border-gray-700 p-4 sm:p-6">
                   <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
                     <Tag className="w-5 h-5 mr-2" />
                     Tags
@@ -1451,7 +1454,7 @@ You can write your thoughts here...
               /* Settings Tab */
               <div className="space-y-6">
                 {/* SEO Settings */}
-                <div className="bg-gray-800 rounded-xl border border-gray-700 p-6">
+                <div className="bg-gray-800 rounded-xl border border-gray-700 p-4 sm:p-6">
                   <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
                     <Search className="w-5 h-5 mr-2" />
                     SEO Settings
@@ -1573,7 +1576,7 @@ You can write your thoughts here...
       {/* Keyboard Shortcuts Modal */}
       {showKeyboardShortcuts && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-5">
-          <div className="bg-gray-800 rounded-xl border border-gray-700 p-6 max-w-md w-full mx-4">
+          <div className="bg-gray-800 rounded-xl border border-gray-700 p-4 sm:p-6 max-w-md w-full mx-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-white flex items-center">
                 <Search className="w-5 h-5 mr-2" />

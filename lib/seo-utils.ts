@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { SITE_URL } from "@/lib/siteUrl";
 
 interface SEOProps {
   title: string;
@@ -27,7 +28,7 @@ export function generateSEO({
   section,
   tags = [],
 }: SEOProps): Metadata {
-  const baseUrl = process.env.NEXTAUTH_URL || "https://www.sanatanblogs.com";
+  const baseUrl = SITE_URL;
   const fullUrl = `${baseUrl}${url}`;
   const fullImageUrl = image.startsWith("http") ? image : `${baseUrl}${image}`;
 
@@ -103,7 +104,7 @@ export function generateBlogPostSchema(post: {
   url: string;
   tags?: string[];
 }) {
-  const baseUrl = process.env.NEXTAUTH_URL || "https://www.sanatanblogs.com";
+  const baseUrl = SITE_URL;
 
   return {
     "@context": "https://schema.org",
@@ -144,7 +145,7 @@ export function generateBlogPostSchema(post: {
 export function generateBreadcrumbSchema(
   items: { name: string; url: string }[],
 ) {
-  const baseUrl = process.env.NEXTAUTH_URL || "https://www.sanatanblogs.com";
+  const baseUrl = SITE_URL;
 
   return {
     "@context": "https://schema.org",
@@ -190,12 +191,5 @@ export function stripHtml(html: string): string {
     .trim();
 }
 
-// Generate slug from title
-export function generateSlug(title: string): string {
-  return title
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .trim();
-}
+// Generate slug from title. Re-exported from lib/slug.ts so there is one rule.
+export { generateSlug } from "./slug";
