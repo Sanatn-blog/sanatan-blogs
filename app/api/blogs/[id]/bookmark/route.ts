@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import Blog from "@/models/Blog";
+import { blogIdOrSlugBranches } from "@/lib/blogLookup";
 import User from "@/models/User";
 import { verifyToken } from "@/lib/jwt";
 
@@ -41,8 +42,8 @@ export async function POST(
 
     const userId = decoded.userId;
 
-    // Find the blog
-    const blog = await Blog.findById(blogId);
+    // Find the blog (the URL segment may be an id or a slug)
+    const blog = await Blog.findOne({ $or: blogIdOrSlugBranches(blogId) });
     if (!blog) {
       return NextResponse.json({ error: "Blog not found" }, { status: 404 });
     }
@@ -62,14 +63,14 @@ export async function POST(
     }
 
     // Check if user has already bookmarked the blog
-    const isBookmarked = user.bookmarks.includes(blogId);
+    const isBookmarked = user.bookmarks.includes(blog._id);
 
     if (isBookmarked) {
       // Remove bookmark
       const updatedUser = await User.findByIdAndUpdate(
         userId,
         {
-          $pull: { bookmarks: blogId },
+          $pull: { bookmarks: blog._id },
         },
         { new: true },
       );
@@ -84,7 +85,7 @@ export async function POST(
       const updatedUser = await User.findByIdAndUpdate(
         userId,
         {
-          $addToSet: { bookmarks: blogId },
+          $addToSet: { bookmarks: blog._id },
         },
         { new: true },
       );
@@ -131,8 +132,8 @@ export async function GET(
       }
     }
 
-    // Find the blog
-    const blog = await Blog.findById(blogId);
+    // Find the blog (the URL segment may be an id or a slug)
+    const blog = await Blog.findOne({ $or: blogIdOrSlugBranches(blogId) });
     if (!blog) {
       return NextResponse.json({ error: "Blog not found" }, { status: 404 });
     }
@@ -144,7 +145,7 @@ export async function GET(
       // Get user's bookmark status
       const user = await User.findById(userId);
       if (user) {
-        isBookmarked = user.bookmarks.includes(blogId);
+        isBookmarked = user.bookmarks.includes(blog._id);
       }
     }
 

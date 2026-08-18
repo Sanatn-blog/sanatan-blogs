@@ -148,6 +148,20 @@ BlogSchema.index({ publishedAt: -1 });
 BlogSchema.index({ views: -1 });
 BlogSchema.index({ createdAt: -1 });
 
+// The public listing always filters on status + isPublished and sorts by
+// publishedAt then createdAt. The single-field indexes above can serve the
+// filter or the sort but not both, which leaves MongoDB sorting the whole
+// matching set in memory on every page load. These cover the filter and the
+// sort in one index, with and without the category facet.
+BlogSchema.index({ status: 1, isPublished: 1, publishedAt: -1, createdAt: -1 });
+BlogSchema.index({
+  status: 1,
+  isPublished: 1,
+  category: 1,
+  publishedAt: -1,
+  createdAt: -1,
+});
+
 // Text search index
 BlogSchema.index({
   title: 'text',

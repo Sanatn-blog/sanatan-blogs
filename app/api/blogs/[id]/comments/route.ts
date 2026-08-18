@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
+import { Types } from "mongoose";
 import connectDB from "@/lib/mongodb";
 import Comment from "@/models/Comment";
 import Blog from "@/models/Blog";
+import { publishedBlogFilter } from "@/lib/blogLookup";
 import { requireAuth, AuthenticatedRequest } from "@/middleware/auth";
 
 // Force dynamic rendering and disable caching for fresh comments
@@ -22,48 +24,47 @@ async function getCommentsHandler(
     const limit = parseInt(searchParams.get("limit") || "10");
     const skip = (page - 1) * limit;
 
-    // First check if the blog exists and is published
-    const blog = await Blog.findOne({
-      $or: [{ _id: id }, { slug: id }],
-      status: "published",
-      isPublished: true,
-    });
+    // First check if the blog exists and is published. Only the _id is used
+    // from here, so skip the rest of the document rather than pulling the full
+    // article content over the wire on every comments fetch.
+    const blog = await Blog.findOne(publishedBlogFilter(id))
+      .select("_id")
+      .lean<{ _id: Types.ObjectId } | null>();
 
     if (!blog) {
       return NextResponse.json({ error: "Blog not found" }, { status: 404 });
     }
 
-    // Get comments for this blog
-    const comments = await Comment.find({
+    const commentFilter = {
       blog: blog._id,
       isApproved: true,
       parentComment: null, // Only top-level comments
-    })
-      .populate("author", "name avatar")
-      .populate({
-        path: "replies",
-        match: { isApproved: true }, // Only show approved replies
-        populate: {
-          path: "author",
-          select: "name avatar",
-        },
-      })
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean();
+    };
+
+    // The page of comments and its total are independent - one round trip
+    // instead of two.
+    const [comments, total] = await Promise.all([
+      Comment.find(commentFilter)
+        .populate("author", "name avatar")
+        .populate({
+          path: "replies",
+          match: { isApproved: true }, // Only show approved replies
+          populate: {
+            path: "author",
+            select: "name avatar",
+          },
+        })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Comment.countDocuments(commentFilter),
+    ]);
 
     // Filter out comments with missing or invalid author
     const validComments = comments.filter(
       (comment) => comment.author && comment.author._id,
     );
-
-    // Get total count
-    const total = await Comment.countDocuments({
-      blog: blog._id,
-      isApproved: true,
-      parentComment: null,
-    });
 
     return NextResponse.json({
       comments: validComments,
@@ -111,11 +112,9 @@ async function createCommentHandler(
     }
 
     // Check if the blog exists and is published
-    const blog = await Blog.findOne({
-      $or: [{ _id: id }, { slug: id }],
-      status: "published",
-      isPublished: true,
-    });
+    const blog = await Blog.findOne(publishedBlogFilter(id))
+      .select("_id")
+      .lean<{ _id: Types.ObjectId } | null>();
 
     if (!blog) {
       return NextResponse.json({ error: "Blog not found" }, { status: 404 });

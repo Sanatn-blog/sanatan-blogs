@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import Blog from "@/models/Blog";
+import { blogIdOrSlugBranches } from "@/lib/blogLookup";
 import { verifyToken } from "@/lib/jwt";
 
 // Force dynamic rendering and disable caching for fresh like data
@@ -40,8 +41,8 @@ export async function POST(
 
     const userId = decoded.userId;
 
-    // Find the blog
-    const blog = await Blog.findById(blogId);
+    // Find the blog (the URL segment may be an id or a slug)
+    const blog = await Blog.findOne({ $or: blogIdOrSlugBranches(blogId) });
     if (!blog) {
       return NextResponse.json({ error: "Blog not found" }, { status: 404 });
     }
@@ -59,7 +60,7 @@ export async function POST(
 
     if (isLiked) {
       // Unlike the blog
-      await Blog.findByIdAndUpdate(blogId, {
+      await Blog.findByIdAndUpdate(blog._id, {
         $pull: { likes: userId },
       });
 
@@ -70,13 +71,13 @@ export async function POST(
       });
     } else {
       // Like the blog
-      await Blog.findByIdAndUpdate(blogId, {
+      await Blog.findByIdAndUpdate(blog._id, {
         $addToSet: { likes: userId },
       });
 
       // Create notification for blog author (async, don't wait)
       const { createLikeNotification } = await import("@/lib/notifications");
-      createLikeNotification(blogId, userId).catch((err) =>
+      createLikeNotification(blog._id.toString(), userId).catch((err) =>
         console.error("Failed to create like notification:", err),
       );
 
@@ -122,8 +123,8 @@ export async function GET(
       }
     }
 
-    // Find the blog
-    const blog = await Blog.findById(blogId);
+    // Find the blog (the URL segment may be an id or a slug)
+    const blog = await Blog.findOne({ $or: blogIdOrSlugBranches(blogId) });
     if (!blog) {
       return NextResponse.json({ error: "Blog not found" }, { status: 404 });
     }

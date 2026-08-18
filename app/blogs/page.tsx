@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -169,7 +169,6 @@ export default function BlogsPage() {
         params.append("search", search);
       }
 
-      console.log("Fetching blogs with params:", params.toString());
       const response = await fetch(`/api/blogs?${params}`);
 
       if (!response.ok) {
@@ -185,7 +184,6 @@ export default function BlogsPage() {
         throw new Error("Invalid response format from server");
       }
 
-      console.log("Received blogs:", data.blogs.length);
       setBlogs(data.blogs);
       setFilteredBlogs(data.blogs);
       setPagination(data.pagination);
@@ -214,21 +212,33 @@ export default function BlogsPage() {
     }
   };
 
-  // Initial load
-  useEffect(() => {
-    fetchBlogs(1);
-  }, []);
+  // Load the list, and reload it when the search term or category changes.
+  // Debounced for typing, but immediate on mount so the first paint is not held
+  // back by half a second. Remembering the last filters actually requested
+  // keeps a repeated effect run (StrictMode in development, a re-render here)
+  // from firing the same request a second time.
+  const lastRequestedFilters = useRef<string | null>(null);
 
-  // Handle search and category changes
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
+    const filters = JSON.stringify([selectedCategory, searchTerm]);
+
+    const run = () => {
+      if (lastRequestedFilters.current === filters) return;
+      lastRequestedFilters.current = filters;
+      setCurrentPage(1);
       fetchBlogs(
         1,
         selectedCategory !== "All" ? selectedCategory : undefined,
         searchTerm || undefined,
       );
-    }, 500);
+    };
 
+    if (lastRequestedFilters.current === null) {
+      run();
+      return;
+    }
+
+    const timeoutId = setTimeout(run, 500);
     return () => clearTimeout(timeoutId);
   }, [searchTerm, selectedCategory]);
 

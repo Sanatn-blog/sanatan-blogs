@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
+import { Types } from 'mongoose';
 import Comment from '@/models/Comment';
 import Blog from '@/models/Blog';
+import { publishedBlogFilter } from '@/lib/blogLookup';
 import { requireAuth, AuthenticatedRequest } from '@/middleware/auth';
 
 // DELETE - Delete a comment (only author or admin can delete)
@@ -12,11 +14,16 @@ async function deleteCommentHandler(request: AuthenticatedRequest, { params }: {
     const { id, commentId } = await params;
 
     // Check if the blog exists
-    const blog = await Blog.findOne({
-      $or: [{ _id: id }, { slug: id }],
-      status: 'published',
-      isPublished: true
-    });
+    if (!Types.ObjectId.isValid(commentId)) {
+      return NextResponse.json(
+        { error: 'Comment not found' },
+        { status: 404 }
+      );
+    }
+
+    const blog = await Blog.findOne(publishedBlogFilter(id))
+      .select('_id')
+      .lean<{ _id: Types.ObjectId } | null>();
 
     if (!blog) {
       return NextResponse.json(
@@ -60,11 +67,21 @@ async function deleteCommentHandler(request: AuthenticatedRequest, { params }: {
     // Delete the comment
     await Comment.findByIdAndDelete(commentId);
 
-    // Remove comment from blog's comments array (only for top-level comments)
-    if (!comment.parentComment) {
-      await Blog.findByIdAndUpdate(blog._id, {
-        $pull: { comments: commentId }
+    if (comment.parentComment) {
+      // A reply: drop it from its parent's replies array, otherwise the parent
+      // keeps pointing at a document that no longer exists.
+      await Comment.findByIdAndUpdate(comment.parentComment, {
+        $pull: { replies: commentId }
       });
+    } else {
+      // A top-level comment: its replies are only reachable through it, so
+      // delete them with it rather than orphaning them in the collection.
+      await Promise.all([
+        Blog.findByIdAndUpdate(blog._id, {
+          $pull: { comments: commentId }
+        }),
+        Comment.deleteMany({ parentComment: commentId })
+      ]);
     }
 
     return NextResponse.json(
@@ -106,11 +123,16 @@ async function updateCommentHandler(request: AuthenticatedRequest, { params }: {
     }
 
     // Check if the blog exists
-    const blog = await Blog.findOne({
-      $or: [{ _id: id }, { slug: id }],
-      status: 'published',
-      isPublished: true
-    });
+    if (!Types.ObjectId.isValid(commentId)) {
+      return NextResponse.json(
+        { error: 'Comment not found' },
+        { status: 404 }
+      );
+    }
+
+    const blog = await Blog.findOne(publishedBlogFilter(id))
+      .select('_id')
+      .lean<{ _id: Types.ObjectId } | null>();
 
     if (!blog) {
       return NextResponse.json(

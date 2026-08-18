@@ -24,12 +24,7 @@ async function getBlogsHandler(request: Request) {
       );
     }
 
-    console.log("Connecting to database...");
-    console.log("Environment:", process.env.NODE_ENV);
-    console.log("Vercel:", process.env.VERCEL ? "Yes" : "No");
-
     await connectDB();
-    console.log("Database connected successfully");
 
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
@@ -39,16 +34,6 @@ async function getBlogsHandler(request: Request) {
     const author = searchParams.get("author");
     const tag = searchParams.get("tag");
     const status = searchParams.get("status"); // New parameter for admin panel
-
-    console.log("Query parameters:", {
-      page,
-      limit,
-      category,
-      search,
-      author,
-      tag,
-      status,
-    });
 
     // Build query - allow all statuses if status parameter is provided (for admin)
     const query: Record<string, unknown> = {};
@@ -69,48 +54,44 @@ async function getBlogsHandler(request: Request) {
       query.$text = { $search: search };
     }
 
-    console.log("Final query:", JSON.stringify(query, null, 2));
-
     // Calculate pagination
     const skip = (page - 1) * limit;
 
-    // Get blogs with author information
-    console.log("Fetching blogs...");
-    const blogs = await Blog.find(query)
-      .populate("author", "name avatar bio")
-      .select(
-        "title excerpt slug featuredImage author category tags status isPublished publishedAt views likes comments readingTime createdAt updatedAt",
-      )
-      .sort({ publishedAt: -1, createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean()
-      .exec();
+    // These four reads are independent of each other. Run together they cost
+    // one round trip to the database instead of four - which on a remote
+    // cluster is most of this endpoint's response time.
+    const [blogs, totalBlogs, categories, tagStats] = await Promise.all([
+      Blog.find(query)
+        .populate("author", "name avatar bio")
+        .select(
+          "title excerpt slug featuredImage author category tags status isPublished publishedAt views likes comments readingTime createdAt updatedAt",
+        )
+        .sort({ publishedAt: -1, createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean()
+        .exec(),
+      Blog.countDocuments(query),
+      Blog.distinct("category", query),
+      Blog.aggregate([
+        { $match: query },
+        { $unwind: "$tags" },
+        { $group: { _id: "$tags", count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 20 },
+      ]),
+    ]);
 
-    console.log(`Found ${blogs.length} blogs`);
-
-    // Get comment counts for each blog - simplified approach
-    const blogsWithCommentCounts = blogs.map((blog) => ({
-      ...blog,
-      likesCount: Array.isArray(blog.likes) ? blog.likes.length : 0,
-      commentCount: Array.isArray(blog.comments) ? blog.comments.length : 0,
-    }));
-
-    // Get total count for pagination
-    const totalBlogs = await Blog.countDocuments(query);
     const totalPages = Math.ceil(totalBlogs / limit);
 
-    // Get categories for filtering
-    const categories = await Blog.distinct("category", query);
-
-    // Get popular tags
-    const tagStats = await Blog.aggregate([
-      { $match: query },
-      { $unwind: "$tags" },
-      { $group: { _id: "$tags", count: { $sum: 1 } } },
-      { $sort: { count: -1 } },
-      { $limit: 20 },
-    ]);
+    // The comments array is only here to be counted - the listing never needs
+    // the ids themselves, so drop it rather than shipping one ObjectId per
+    // comment per card to the browser.
+    const blogsWithCommentCounts = blogs.map(({ comments, ...blog }) => ({
+      ...blog,
+      likesCount: Array.isArray(blog.likes) ? blog.likes.length : 0,
+      commentCount: Array.isArray(comments) ? comments.length : 0,
+    }));
 
     const response = {
       blogs: blogsWithCommentCounts,
@@ -128,7 +109,6 @@ async function getBlogsHandler(request: Request) {
       })),
     };
 
-    console.log("Sending response with", blogs.length, "blogs");
     return NextResponse.json(response);
   } catch (error) {
     console.error("Get blogs error:", error);

@@ -69,6 +69,10 @@ CommentSchema.index({ parentComment: 1 });
 CommentSchema.index({ isApproved: 1 });
 CommentSchema.index({ createdAt: -1 });
 
+// The comments list filters on blog + isApproved + parentComment and sorts by
+// createdAt - covered in one index rather than intersecting four.
+CommentSchema.index({ blog: 1, isApproved: 1, parentComment: 1, createdAt: -1 });
+
 // Model registration with proper error handling for circular references
 const Comment = mongoose.models.Comment || mongoose.model<IComment>('Comment', CommentSchema);
 
