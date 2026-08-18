@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
+import { Types } from "mongoose";
 import connectDB from "@/lib/mongodb";
 import { requireAuth, AuthenticatedRequest } from "@/middleware/auth";
 // Import all models to ensure they are registered before use
 import Blog from "@/models/Blog";
+import Comment from "@/models/Comment";
 
 // Disable caching for this route
 export const dynamic = "force-dynamic";
@@ -20,108 +22,118 @@ async function getMyBlogsHandler(request: AuthenticatedRequest) {
       );
     }
 
-    console.log("Connecting to database for my-blogs...");
     await connectDB();
-    console.log("Database connected successfully");
 
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
     const status = searchParams.get("status");
 
-    console.log("My blogs request params:", { page, limit, status });
-    console.log("User ID:", request.user?._id);
-
     if (!request.user?._id) {
-      console.log("No user ID found in request");
       return NextResponse.json(
         { error: "User not authenticated" },
         { status: 401 },
       );
     }
 
+    // Aggregation pipelines are not cast by Mongoose the way queries are, so a
+    // string here silently matches nothing - which is why the comment total on
+    // the dashboard always read zero.
+    const authorId = new Types.ObjectId(request.user._id);
+
     // Build query for user's blogs
     const query: Record<string, unknown> = {
-      author: request.user._id,
+      author: authorId,
     };
 
     if (status && status !== "all") {
       query.status = status;
     }
 
-    console.log("Query for user blogs:", JSON.stringify(query, null, 2));
-
     // Calculate pagination
     const skip = (page - 1) * limit;
 
-    // Get user's blogs
-    console.log("Fetching user blogs...");
-    const blogs = await Blog.find(query)
-      .populate("author", "name avatar bio")
-      .populate("likes", "_id")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean();
-
-    // Get comment counts for each blog
-    const blogsWithCommentCounts = await Promise.all(
-      blogs.map(async (blog) => {
-        const commentCount = await Blog.aggregate([
-          { $match: { _id: blog._id } },
-          {
-            $lookup: {
-              from: "comments",
-              localField: "_id",
-              foreignField: "blog",
-              as: "commentDetails",
-            },
+    // One page of blogs, the page count and the author's lifetime stats are
+    // independent of each other, so they go together. The stats used to be
+    // computed by pulling every blog the author has ever written - full article
+    // bodies and all - into this route just to sum a few numbers; the database
+    // can total them without sending the documents.
+    const [blogs, totalBlogs, statsByStatus, commentTotal] = await Promise.all([
+      Blog.find(query)
+        .select(
+          "title excerpt slug featuredImage author category tags status isPublished publishedAt views likes readingTime createdAt updatedAt",
+        )
+        .populate("author", "name avatar bio")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean<Array<Record<string, unknown> & { _id: Types.ObjectId }>>(),
+      Blog.countDocuments(query),
+      Blog.aggregate([
+        { $match: { author: authorId } },
+        {
+          $group: {
+            _id: "$status",
+            count: { $sum: 1 },
+            views: { $sum: { $ifNull: ["$views", 0] } },
+            likes: { $sum: { $size: { $ifNull: ["$likes", []] } } },
           },
-          { $project: { commentCount: { $size: "$commentDetails" } } },
-        ]);
+        },
+      ]),
+      Blog.aggregate([
+        { $match: { author: authorId } },
+        {
+          $lookup: {
+            from: "comments",
+            localField: "_id",
+            foreignField: "blog",
+            as: "commentDetails",
+          },
+        },
+        { $project: { commentCount: { $size: "$commentDetails" } } },
+        { $group: { _id: null, totalComments: { $sum: "$commentCount" } } },
+      ]),
+    ]);
 
-        return {
-          ...blog,
-          commentCount: commentCount[0]?.commentCount || 0,
-        };
-      }),
+    // Comment counts for this page, in one grouped query rather than one
+    // aggregation per blog on the page.
+    const commentCounts = await Comment.aggregate<{
+      _id: Types.ObjectId;
+      count: number;
+    }>([
+      { $match: { blog: { $in: blogs.map((blog) => blog._id) } } },
+      { $group: { _id: "$blog", count: { $sum: 1 } } },
+    ]);
+
+    const countByBlog = new Map(
+      commentCounts.map((entry) => [entry._id.toString(), entry.count]),
     );
 
-    console.log(`Found ${blogsWithCommentCounts.length} blogs for user`);
-    console.log(
-      "Sample blog comment count:",
-      blogsWithCommentCounts[0]?.commentCount || 0,
-      "comments",
-    );
+    const blogsWithCommentCounts = blogs.map((blog) => ({
+      ...blog,
+      commentCount: countByBlog.get(blog._id.toString()) || 0,
+    }));
 
-    // Get total count for pagination
-    const totalBlogs = await Blog.countDocuments(query);
     const totalPages = Math.ceil(totalBlogs / limit);
 
-    // Calculate stats
-    const allUserBlogs = await Blog.find({ author: request.user._id }).lean();
-    const totalViews = allUserBlogs.reduce((sum, blog) => sum + blog.views, 0);
-    const publishedBlogs = allUserBlogs.filter(
-      (blog) => blog.status === "published",
-    ).length;
-    const draftBlogs = allUserBlogs.filter(
-      (blog) => blog.status === "draft",
-    ).length;
-
-    // Calculate total comments across all user blogs
-    const totalComments = await Blog.aggregate([
-      { $match: { author: request.user._id } },
+    const statTotals = statsByStatus.reduce(
+      (totals, group) => ({
+        totalBlogs: totals.totalBlogs + group.count,
+        totalViews: totals.totalViews + group.views,
+        totalLikes: totals.totalLikes + group.likes,
+        publishedBlogs:
+          totals.publishedBlogs + (group._id === "published" ? group.count : 0),
+        draftBlogs:
+          totals.draftBlogs + (group._id === "draft" ? group.count : 0),
+      }),
       {
-        $lookup: {
-          from: "comments",
-          localField: "_id",
-          foreignField: "blog",
-          as: "commentDetails",
-        },
+        totalBlogs: 0,
+        totalViews: 0,
+        totalLikes: 0,
+        publishedBlogs: 0,
+        draftBlogs: 0,
       },
-      { $project: { commentCount: { $size: "$commentDetails" } } },
-      { $group: { _id: null, totalComments: { $sum: "$commentCount" } } },
-    ]);
+    );
 
     const response = {
       blogs: blogsWithCommentCounts,
@@ -133,15 +145,11 @@ async function getMyBlogsHandler(request: AuthenticatedRequest) {
         hasPrev: page > 1,
       },
       stats: {
-        totalBlogs: allUserBlogs.length,
-        totalViews,
-        publishedBlogs,
-        draftBlogs,
-        totalComments: totalComments[0]?.totalComments || 0,
+        ...statTotals,
+        totalComments: commentTotal[0]?.totalComments || 0,
       },
     };
 
-    console.log("Sending my-blogs response with", blogs.length, "blogs");
     return NextResponse.json(response, {
       headers: {
         "Cache-Control":

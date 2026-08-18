@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff, Mail, Lock, LogIn } from "lucide-react";
@@ -21,38 +21,24 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [checkingAuth, setCheckingAuth] = useState(true);
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
 
-  const { login, loading: authLoading } = useAuth();
-
-  const checkExistingAuth = useCallback(async () => {
-    try {
-      const token = localStorage.getItem("accessToken");
-      if (token) {
-        const response = await fetch("/api/auth/me", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (response.ok) {
-          router.push("/");
-          return;
-        }
-      }
-    } catch (error) {
-      console.error("Auth check failed:", error);
-    } finally {
-      setCheckingAuth(false);
-    }
-  }, [router]);
+  const { login, loading: authLoading, user } = useAuth();
 
   useEffect(() => {
     setMounted(true);
-    checkExistingAuth();
-  }, [checkExistingAuth]);
+  }, []);
+
+  // AuthProvider already resolves the session on mount. This page used to call
+  // /api/auth/me a second time to answer the same question, and held the login
+  // form behind a spinner until that second round trip came back - so a signed
+  // in user waited on two identical requests before seeing anything.
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.push("/");
+    }
+  }, [authLoading, user, router]);
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -239,7 +225,7 @@ export default function LoginPage() {
   //   }
   // ];
 
-  if (!mounted || checkingAuth || authLoading) {
+  if (!mounted || authLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-pink-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>

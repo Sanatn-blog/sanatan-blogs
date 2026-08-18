@@ -28,14 +28,6 @@ interface UserStats {
   totalComments: number;
 }
 
-interface Blog {
-  _id: string;
-  title: string;
-  views?: number;
-  likes?: Array<{ _id: string }>;
-  commentCount?: number;
-}
-
 export default function DashboardPage() {
   const { user, loading, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
@@ -66,37 +58,16 @@ export default function DashboardPage() {
 
       if (response.ok) {
         const data = await response.json();
-        console.log("Dashboard received blogs:", data.blogs.length);
-        console.log(
-          "Sample blog comments:",
-          data.blogs[0]?.comments?.length || 0,
-        );
 
-        // Calculate stats from blogs data
-        const totalViews = data.blogs.reduce(
-          (sum: number, blog: Blog) => sum + (blog.views || 0),
-          0,
-        );
-        const totalLikes = data.blogs.reduce(
-          (sum: number, blog: Blog) => sum + (blog.likes?.length || 0),
-          0,
-        );
-        const totalComments = data.blogs.reduce(
-          (sum: number, blog: Blog) => sum + (blog.commentCount || 0),
-          0,
-        );
-
-        console.log("Calculated stats:", {
-          totalViews,
-          totalLikes,
-          totalComments,
-        });
-
+        // Use the totals the API computes across every blog the user owns.
+        // Adding up `data.blogs` instead only ever summed the first page, so
+        // an author with more than one page of posts saw their views, likes and
+        // comments under-reported.
         setStats({
-          totalBlogs: data.blogs.length,
-          totalViews,
-          totalLikes,
-          totalComments,
+          totalBlogs: data.stats?.totalBlogs ?? 0,
+          totalViews: data.stats?.totalViews ?? 0,
+          totalLikes: data.stats?.totalLikes ?? 0,
+          totalComments: data.stats?.totalComments ?? 0,
         });
       }
     } catch (error) {

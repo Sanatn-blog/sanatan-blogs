@@ -6,56 +6,36 @@ import { rateLimit } from "@/middleware/auth";
 
 async function loginHandler(request: NextRequest) {
   try {
-    console.log("[AUTH] Login attempt started");
     await connectDB();
 
     const body = await request.json();
     const { emailOrUsername, password } = body;
 
-    console.log("[AUTH] Login attempt for:", emailOrUsername);
-
     // Basic validation
     if (!emailOrUsername || !password) {
-      console.log("[ERROR] Missing emailOrUsername or password");
       return NextResponse.json(
         { error: "Email or user ID and password are required" },
         { status: 400 },
       );
     }
 
-    // Find user with password field included
-    // Try to find by email, username, or user ID
-    let user = null;
+    // Find the user by id, username or email. These used to be three separate
+    // awaited queries tried in order, so an email login - the common case -
+    // always paid for a username lookup that missed first. One $or does the
+    // same job in a single round trip.
+    const identifier = emailOrUsername.toLowerCase();
+    const branches: Record<string, string>[] = [
+      { username: identifier },
+      { email: identifier },
+    ];
 
-    // Check if it's a valid ObjectId (user ID)
-    if (emailOrUsername.match(/^[0-9a-fA-F]{24}$/)) {
-      console.log("[INFO] Searching by user ID:", emailOrUsername);
-      user = await User.findById(emailOrUsername).select("+password");
+    if (/^[0-9a-fA-F]{24}$/.test(emailOrUsername)) {
+      branches.unshift({ _id: emailOrUsername });
     }
 
-    // If not found by ID, try username
-    if (!user) {
-      console.log("[INFO] Searching by username:", emailOrUsername);
-      const usernameSearch = await User.findOne({
-        username: emailOrUsername.toLowerCase(),
-      }).select("+password");
-      console.log(
-        "[INFO] Username search result:",
-        usernameSearch ? "Found" : "Not found",
-      );
-      user = usernameSearch;
-    }
-
-    // If not found by username, try email
-    if (!user) {
-      console.log("[INFO] Searching by email:", emailOrUsername);
-      user = await User.findOne({
-        email: emailOrUsername.toLowerCase(),
-      }).select("+password");
-    }
+    const user = await User.findOne({ $or: branches }).select("+password");
 
     if (!user) {
-      console.log("[ERROR] User not found");
       return NextResponse.json(
         {
           error:
@@ -65,23 +45,18 @@ async function loginHandler(request: NextRequest) {
       );
     }
 
-    console.log("[SUCCESS] User found:", user.email, "Status:", user.status);
-
     // Check if user is approved and verified
     if (user.status === "rejected") {
-      console.log("[ERROR] User rejected");
       return NextResponse.json(
         { error: "Your account has been rejected. Please contact admin." },
         { status: 403 },
       );
     } else if (user.status === "suspended") {
-      console.log("[ERROR] User suspended");
       return NextResponse.json(
         { error: "Your account has been suspended. Please contact admin." },
         { status: 403 },
       );
     } else if (user.status === "pending" && !user.emailVerified) {
-      console.log("[ERROR] User not verified");
       return NextResponse.json(
         {
           error: "Please verify your email address before logging in.",
@@ -91,18 +66,14 @@ async function loginHandler(request: NextRequest) {
         { status: 403 },
       );
     } else if (user.status === "pending") {
-      console.log("[WARN] User is pending - allowing login for testing");
       // For testing purposes, we'll allow pending users to log in
       // In production, you should remove this and require approval
     }
 
     // Verify password
-    console.log("[AUTH] Verifying password...");
     const isPasswordValid = await user.comparePassword(password);
-    console.log("[AUTH] Password valid:", isPasswordValid);
 
     if (!isPasswordValid) {
-      console.log("[ERROR] Invalid password");
       return NextResponse.json(
         {
           error: "Invalid password. Please check your password and try again.",
@@ -147,8 +118,6 @@ async function loginHandler(request: NextRequest) {
       lastLogin: user.lastLogin,
       createdAt: user.createdAt,
     };
-
-    console.log("[SUCCESS] Login successful for:", user.email);
 
     // Set secure HTTP-only cookies for tokens
     const response = NextResponse.json(

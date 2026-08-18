@@ -1,6 +1,4 @@
 import { NextResponse } from "next/server";
-import connectDB from "@/lib/mongodb";
-import User from "@/models/User";
 import { requireAuth, AuthenticatedRequest } from "@/middleware/auth";
 
 // Force dynamic rendering and disable caching for fresh user data
@@ -9,10 +7,11 @@ export const revalidate = 0;
 
 async function getCurrentUserHandler(request: AuthenticatedRequest) {
   try {
-    await connectDB();
-
-    // Get user from database to ensure latest data
-    const user = await User.findById(request.user?._id);
+    // requireAuth has already read this user from the database on this same
+    // request, with exactly the fields returned below. Reading it a second time
+    // here doubled the cost of the endpoint the whole site calls on every page
+    // load, for data that cannot have changed in between.
+    const user = request.user;
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });

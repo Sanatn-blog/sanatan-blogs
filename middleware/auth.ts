@@ -3,73 +3,95 @@ import { verifyToken } from '@/lib/jwt';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 
+// The profile fields every authenticated route may need. Deliberately narrow:
+// it leaves out the password and the unbounded followers / following /
+// bookmarks arrays, which no caller of authenticateUser reads and which grow
+// without limit as the site is used.
+const AUTH_USER_FIELDS =
+  'name username email role status avatar bio socialLinks lastLogin createdAt';
+
+export interface AuthenticatedUser {
+  userId: string;
+  _id: string;
+  name?: string;
+  username?: string;
+  email: string;
+  role: string;
+  status: string;
+  avatar?: string;
+  bio?: string;
+  socialLinks?: Record<string, string | undefined>;
+  lastLogin?: Date;
+  createdAt?: Date;
+}
+
 export interface AuthenticatedRequest extends NextRequest {
-  user?: {
-    userId: string;
-    _id: string;
-    email: string;
-    role: string;
-    status: string;
-  };
+  user?: AuthenticatedUser;
 }
 
 export async function authenticateUser(request: AuthenticatedRequest): Promise<{
   success: boolean;
-  user?: {
-    userId: string;
-    _id: string;
-    email: string;
-    role: string;
-    status: string;
-  };
+  user?: AuthenticatedUser;
   error?: string;
 }> {
   try {
-    console.log('Authenticating user...');
     const authHeader = request.headers.get('authorization');
-    console.log('Auth header:', authHeader ? 'Present' : 'Missing');
-    
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.log('No valid authorization header');
       return { success: false, error: 'No token provided' };
     }
 
     const token = authHeader.substring(7);
-    console.log('Token length:', token.length);
-    
+
     const decoded = verifyToken(token);
 
     if (!decoded) {
-      console.log('Token verification failed');
       return { success: false, error: 'Invalid token' };
     }
 
-    console.log('Token decoded successfully, userId:', decoded.userId);
-
-    // Connect to database and verify user exists and is approved
+    // Connect to database and verify user exists and is approved. This runs on
+    // every authenticated request, so it reads a projection rather than the
+    // whole document, and skips hydrating a Mongoose model it never mutates.
     await connectDB();
-    const user = await User.findById(decoded.userId);
+    const user = await User.findById(decoded.userId)
+      .select(AUTH_USER_FIELDS)
+      .lean<{
+        _id: { toString(): string };
+        name?: string;
+        username?: string;
+        email?: string;
+        role?: string;
+        status?: string;
+        avatar?: string;
+        bio?: string;
+        socialLinks?: Record<string, string | undefined>;
+        lastLogin?: Date;
+        createdAt?: Date;
+      } | null>();
 
     if (!user) {
-      console.log('User not found in database');
       return { success: false, error: 'User not found' };
     }
 
-    console.log('User found, status:', user.status);
     if (user.status !== 'approved') {
-      console.log('User not approved');
       return { success: false, error: 'User not approved' };
     }
 
-    const userWithDetails = {
+    const userWithDetails: AuthenticatedUser = {
       userId: user._id.toString(),
       _id: user._id.toString(),
-      email: user.email,
-      role: user.role,
-      status: user.status
+      name: user.name,
+      username: user.username,
+      email: user.email ?? '',
+      role: user.role ?? 'user',
+      status: user.status,
+      avatar: user.avatar,
+      bio: user.bio,
+      socialLinks: user.socialLinks,
+      lastLogin: user.lastLogin,
+      createdAt: user.createdAt
     };
 
-    console.log('Authentication successful');
     return { success: true, user: userWithDetails };
   } catch (error) {
     console.error('Authentication error:', error);
@@ -81,18 +103,15 @@ export function requireAuth<T extends { params: Promise<Record<string, string>> 
   handler: (req: AuthenticatedRequest, context: T) => Promise<NextResponse>
 ) {
   return async (request: AuthenticatedRequest, context: T) => {
-    console.log('requireAuth middleware called');
     const authResult = await authenticateUser(request);
-    
+
     if (!authResult.success) {
-      console.log('Authentication failed:', authResult.error);
       return NextResponse.json(
         { error: authResult.error },
         { status: 401 }
       );
     }
 
-    console.log('Authentication successful, calling handler');
     request.user = authResult.user;
     return handler(request, context);
   };
